@@ -59,34 +59,26 @@
             <svg viewBox="0 0 120 120" class="donut" aria-hidden="true">
               <!-- Track -->
               <circle cx="60" cy="60" r="46" fill="none" stroke="#f0edf6" stroke-width="14"/>
-              <!-- Blue segment ~30% -->
-              <circle cx="60" cy="60" r="46" fill="none" stroke="#93c5fd" stroke-width="14"
-                stroke-dasharray="86.7 202.1" stroke-dashoffset="0"
-                stroke-linecap="round" transform="rotate(-90 60 60)"/>
-              <!-- Pink segment ~18% -->
-              <circle cx="60" cy="60" r="46" fill="none" stroke="#fca5a5" stroke-width="14"
-                stroke-dasharray="52.0 236.8" stroke-dashoffset="-86.7"
-                stroke-linecap="round" transform="rotate(-90 60 60)"/>
-              <!-- Orange segment ~12% -->
-              <circle cx="60" cy="60" r="46" fill="none" stroke="#fdba74" stroke-width="14"
-                stroke-dasharray="34.7 254.1" stroke-dashoffset="-138.7"
-                stroke-linecap="round" transform="rotate(-90 60 60)"/>
-              <!-- Green segment ~16% -->
-              <circle cx="60" cy="60" r="46" fill="none" stroke="#86efac" stroke-width="14"
-                stroke-dasharray="46.2 242.6" stroke-dashoffset="-173.4"
-                stroke-linecap="round" transform="rotate(-90 60 60)"/>
-              <!-- Purple segment ~24% -->
-              <circle cx="60" cy="60" r="46" fill="none" stroke="#d8b4fe" stroke-width="14"
-                stroke-dasharray="69.4 219.4" stroke-dashoffset="-219.6"
-                stroke-linecap="round" transform="rotate(-90 60 60)"/>
+              {% for segment in insight_segments %}
+              <circle
+                class="insight-segment"
+                cx="60" cy="60" r="46" fill="none"
+                stroke="{{ segment.color }}"
+                stroke-width="14"
+                stroke-dasharray="{{ segment.dasharray }}"
+                stroke-dashoffset="{{ segment.dashoffset }}"
+                stroke-linecap="round"
+                transform="rotate(-90 60 60)"
+              />
+              {% endfor %}
             </svg>
             <div class="donut-center-label">
-              <span class="donut-amount">₹2,453</span>
+              <span class="donut-amount" id="insightTotal">₹{{ insight_total|floatformat:2 }}</span>
             </div>
           </div>
 
           <!-- Coach message -->
-          <p class="insights-text">{{ coach.message }}</p>
+          <p class="insights-text" id="insightsMessage">{{ coach.message }}</p>
         </div>
       </div>
 
@@ -156,8 +148,8 @@
 
     <!-- Category tiles — dynamic -->
     <div class="tiles-row" id="categoryTiles">
-      {% if cat_data %}
-        {% for cat_key, cat in cat_data.items %}
+      {% if cat_tiles %}
+        {% for cat in cat_tiles %}
         <div class="tile" style="background:{{ cat.color }}20; border:1px solid {{ cat.color }}40;">
           <div class="tile-icon" style="background:{{ cat.color }}40;">
             <span style="font-size:1rem;">{{ cat.icon }}</span>
@@ -359,7 +351,7 @@
         <div class="st-info">
           <div class="st-row">
             <span class="st-label">Saved so far</span>
-            <span class="st-val positive">₹{{ demo_saved|floatformat:2 }}</span>
+            <span class="st-val {% if total_saved >= 0 %}positive{% else %}negative{% endif %}">₹{{ total_saved|floatformat:2 }}</span>
           </div>
           <div class="st-row">
             <span class="st-label">Target</span>
@@ -510,6 +502,7 @@
 <!-- ── Chart data from Django ──────────────────────────── -->
 <script>
   const CHART_DATA = {{ chart_months|safe }};
+  const INITIAL_INSIGHT_SEGMENTS = {{ insight_segments_json|safe }};
 </script>
 
 <script>
@@ -566,6 +559,12 @@
           newBadge.textContent = 'Salary: ' + formatted;
           openBtn.parentElement.insertBefore(newBadge, openBtn);
         }
+        document.getElementById('totalBalance').textContent = formatCurrency(data.total_balance);
+        document.getElementById('totalSaved').textContent = formatCurrency(data.total_saved, { showPlus: true });
+        document.getElementById('savingsAmount').textContent = formatCurrency(data.total_saved, { showPlus: true });
+        renderInsights(data.insight_segments, data.insight_total);
+        renderCategoryTiles(data.cat_tiles);
+        renderInsightMessage(data.coach);
         openBtn.textContent = 'Edit Salary';
         closeModal();
       } else {
@@ -602,7 +601,7 @@
   });
 
   function filterExpenseCards(filter) {
-    const cards = document.querySelectorAll('.expense-card');
+    const cards = document.querySelectorAll('.expense-stack-card');
     const now   = new Date();
     cards.forEach(card => {
       const cardDate = new Date(card.dataset.date);
@@ -824,9 +823,9 @@
 
       if (res.ok && data.success) {
         // Update balance cards
-        document.getElementById('totalBalance').textContent  = '₹' + data.total_income.toLocaleString('en-IN', {minimumFractionDigits:2});
+        document.getElementById('totalBalance').textContent  = formatCurrency(data.total_balance);
         document.getElementById('totalExpense').textContent  = '−₹' + data.total_expense.toLocaleString('en-IN', {minimumFractionDigits:2});
-        document.getElementById('totalSaved').textContent    = (data.total_saved >= 0 ? '+' : '') + '₹' + Math.abs(data.total_saved).toLocaleString('en-IN', {minimumFractionDigits:2});
+        document.getElementById('totalSaved').textContent    = formatCurrency(data.total_saved, { showPlus: true });
 
         // Add to transaction list
         const list  = document.getElementById('txnList');
@@ -928,6 +927,84 @@
       targetSave.disabled = false; targetSave.textContent = 'Save Target';
     }
   });
+
+  function formatCurrency(value, { showPlus = false } = {}) {
+    const number = Number(value || 0);
+    const prefix = number < 0 ? '-' : (showPlus && number > 0 ? '+' : '');
+    return `${prefix}₹${Math.abs(number).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function renderInsights(segments, total) {
+    const svg = document.querySelector('.donut');
+    const totalEl = document.getElementById('insightTotal');
+    if (!svg || !totalEl) return;
+
+    [...svg.querySelectorAll('.insight-segment')].forEach(el => el.remove());
+
+    segments.forEach(segment => {
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('class', 'insight-segment');
+      circle.setAttribute('cx', '60');
+      circle.setAttribute('cy', '60');
+      circle.setAttribute('r', '46');
+      circle.setAttribute('fill', 'none');
+      circle.setAttribute('stroke', segment.color);
+      circle.setAttribute('stroke-width', '14');
+      circle.setAttribute('stroke-dasharray', segment.dasharray);
+      circle.setAttribute('stroke-dashoffset', segment.dashoffset);
+      circle.setAttribute('stroke-linecap', 'round');
+      circle.setAttribute('transform', 'rotate(-90 60 60)');
+      svg.appendChild(circle);
+    });
+
+    totalEl.textContent = formatCurrency(total);
+  }
+
+  function renderInsightMessage(coach) {
+    const messageEl = document.getElementById('insightsMessage');
+    if (messageEl && coach && coach.message) {
+      messageEl.textContent = coach.message;
+    }
+  }
+
+  function renderCategoryTiles(tiles) {
+    const wrap = document.getElementById('categoryTiles');
+    if (!wrap) return;
+
+    if (!tiles.length) {
+      wrap.innerHTML = `
+        <div class="tile tile-cyan">
+          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+          <p class="tile-amount">₹0.00</p><p class="tile-name">Rent</p>
+        </div>
+        <div class="tile tile-purple">
+          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11v6a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-6z"/></svg></div>
+          <p class="tile-amount">₹0.00</p><p class="tile-name">Transport</p>
+        </div>
+        <div class="tile tile-green">
+          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+          <p class="tile-amount">₹0.00</p><p class="tile-name">Health</p>
+        </div>
+        <div class="tile tile-yellow">
+          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></div>
+          <p class="tile-amount">₹0.00</p><p class="tile-name">Groceries</p>
+        </div>
+      `;
+      return;
+    }
+
+    wrap.innerHTML = tiles.map(cat => `
+      <div class="tile" style="background:${cat.color}20; border:1px solid ${cat.color}40;">
+        <div class="tile-icon" style="background:${cat.color}40;">
+          <span style="font-size:1rem;">${cat.icon}</span>
+        </div>
+        <p class="tile-amount" style="color:#1a1a2e;">${formatCurrency(cat.amount)}</p>
+        <p class="tile-name" style="color:#3a3a3c;">${cat.label}</p>
+      </div>
+    `).join('');
+  }
+
+  renderInsights(INITIAL_INSIGHT_SEGMENTS, {{ insight_total|default:0 }});
 </script>
 </body>
 </html>

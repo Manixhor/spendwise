@@ -468,6 +468,7 @@ body {
     max-width: 100%;
     border-radius: var(--radius-md);
     padding: 28px 22px 24px;
+    overflow: visible;
   }
 
   .brand-large {
@@ -475,13 +476,15 @@ body {
   }
 
   .hero-art {
-    height: 160px;
-    margin: 12px 0 18px;
+    height: 220px;
+    margin: 14px 0 20px;
+    overflow: visible;
   }
 
-  .orb-large { width: 120px; height: 120px; }
-  .orb-top   { width: 54px;  height: 54px; }
-  .orb-left  { width: 86px;  height: 86px; }
+  .orb-large { width: 200px; height: 200px; left: 10px; top: 10px; }
+  .orb-top   { width: 90px;  height: 90px;  right: 30px; top: 5px; }
+  .orb-left  { width: 150px; height: 150px; left: 40px; bottom: 0; }
+  .orb-right { width: 140px; height: 140px; right: 10px; bottom: 0; }
   .orb-right { width: 84px;  height: 84px; }
 
   .hero-title {

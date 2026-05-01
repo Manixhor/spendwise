@@ -2,6 +2,7 @@ import json
 import decimal
 from datetime import date, timedelta
 from decimal import Decimal
+from math import pi
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -41,6 +42,71 @@ CATEGORY_COLORS = {
     'other':         '#e2e8f0',
 }
 
+INSIGHTS_DONUT_CIRCUMFERENCE = round(2 * pi * 46, 1)
+INSIGHTS_SEGMENT_LIMIT = 5
+
+
+def _serialize_category_tiles(cat_data):
+    """Return category data sorted by highest spend for template/API usage."""
+    sorted_items = sorted(
+        cat_data.items(),
+        key=lambda item: item[1]['amount'],
+        reverse=True,
+    )
+    return [
+        {
+            'key': key,
+            'label': value['label'],
+            'amount': float(value['amount']),
+            'icon': value['icon'],
+            'color': value['color'],
+        }
+        for key, value in sorted_items
+    ]
+
+
+def _build_insight_segments(cat_tiles, total_expense):
+    """Build SVG stroke data for the dashboard insights donut."""
+    if total_expense <= 0:
+        return []
+
+    dash_offset = 0
+    segments = []
+    total_expense_float = float(total_expense)
+
+    for tile in cat_tiles[:INSIGHTS_SEGMENT_LIMIT]:
+        segment_size = round(
+            INSIGHTS_DONUT_CIRCUMFERENCE * (tile['amount'] / total_expense_float),
+            1,
+        )
+        segments.append({
+            **tile,
+            'dasharray': f'{segment_size} {round(max(INSIGHTS_DONUT_CIRCUMFERENCE - segment_size, 0), 1)}',
+            'dashoffset': round(-dash_offset, 1),
+            'share_pct': round(tile['amount'] / total_expense_float * 100, 1),
+        })
+        dash_offset += segment_size
+
+    return segments
+
+
+def _dashboard_stats_payload(stats):
+    """Serialize dashboard stats for JSON responses."""
+    return {
+        'total_income': float(stats['total_income']),
+        'total_expense': float(stats['total_expense']),
+        'total_saved': float(stats['total_saved']),
+        'total_balance': float(stats['total_balance']),
+        'spend_pct': stats['spend_pct'],
+        'savings_pct': stats['savings_pct'],
+        'ring_dash': stats['ring_dash'],
+        'ring_gap': stats['ring_gap'],
+        'cat_tiles': stats['cat_tiles'],
+        'insight_segments': stats['insight_segments'],
+        'insight_total': float(stats['insight_total']),
+        'coach': get_spending_message(stats['spend_pct']),
+    }
+
 
 def _dashboard_stats(user, profile):
     """Compute all dynamic stats for the dashboard."""
@@ -72,6 +138,8 @@ def _dashboard_stats(user, profile):
                 'icon': CATEGORY_ICONS.get(cat, '📦'),
                 'color': CATEGORY_COLORS.get(cat, '#e2e8f0'),
             }
+    cat_tiles = _serialize_category_tiles(cat_data)
+    insight_segments = _build_insight_segments(cat_tiles, total_expense)
 
     # Spend % vs salary
     spend_pct = None
@@ -118,10 +186,13 @@ def _dashboard_stats(user, profile):
         'total_saved':   total_saved,
         'total_balance': total_balance,
         'cat_data':      cat_data,
+        'cat_tiles':     cat_tiles,
         'spend_pct':     spend_pct,
         'savings_pct':   savings_pct,
         'ring_dash':     ring_dash,
         'ring_gap':      round(CIRC - ring_dash, 1),
+        'insight_segments': insight_segments,
+        'insight_total': total_expense,
         'recent_txns':   recent_txns,
         'chart_months':  chart_months,
     }
@@ -223,6 +294,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         'active_nav':   'dashboard',
         **stats,
         'chart_months': json.dumps(stats['chart_months']),
+        'insight_segments_json': json.dumps(stats['insight_segments']),
     })
 
 
@@ -433,13 +505,7 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
                 'date':     str(txn.date),
                 'icon':     CATEGORY_ICONS.get(txn.category, '📦'),
             },
-            'total_income':  float(stats['total_income']),
-            'total_expense': float(stats['total_expense']),
-            'total_saved':   float(stats['total_saved']),
-            'spend_pct':     stats['spend_pct'],
-            'savings_pct':   stats['savings_pct'],
-            'ring_dash':     stats['ring_dash'],
-            'ring_gap':      stats['ring_gap'],
+            **_dashboard_stats_payload(stats),
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -456,10 +522,7 @@ def api_delete_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
         stats = _dashboard_stats(request.user, profile)
         return JsonResponse({
             'success':       True,
-            'total_income':  float(stats['total_income']),
-            'total_expense': float(stats['total_expense']),
-            'total_saved':   float(stats['total_saved']),
-            'spend_pct':     stats['spend_pct'],
+            **_dashboard_stats_payload(stats),
         })
     except Transaction.DoesNotExist:
         return JsonResponse({'error': 'Transaction not found.'}, status=404)
@@ -483,8 +546,13 @@ def api_set_salary(request: HttpRequest) -> JsonResponse:
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         profile.salary = salary
         profile.save()
+        stats = _dashboard_stats(request.user, profile)
 
-        return JsonResponse({'success': True, 'salary': float(profile.salary)})
+        return JsonResponse({
+            'success': True,
+            'salary': float(profile.salary),
+            **_dashboard_stats_payload(stats),
+        })
     except (ValueError, TypeError):
         return JsonResponse({'error': 'Invalid salary value.'}, status=400)
     except Exception as e:
