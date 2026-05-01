@@ -25,12 +25,14 @@ SECRET_KEY = 'django-insecure-dbr@s354m68v)cd&tsl0z5u-r$35dg)t*uc5*#t9)p%a=gvj0g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver", ".ngrok-free.app", ".ngrok.io"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver", ".ngrok-free.app", ".ngrok.io", ".ngrok-free.dev", "dispersed-stump-retype.ngrok-free.dev", "0.0.0.0"]
 
 # Allow ngrok forwarded headers
 CSRF_TRUSTED_ORIGINS = [
     "https://*.ngrok-free.app",
     "https://*.ngrok.io",
+    "https://*.ngrok-free.dev",
+    "https://dispersed-stump-retype.ngrok-free.dev",
 ]
 
 
@@ -139,3 +141,6 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+MEDIA_URL  = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

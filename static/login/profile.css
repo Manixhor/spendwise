@@ -1,0 +1,121 @@
+/* ── Profile Page ────────────────────────────────────────── */
+.pf-main { gap: 18px; }
+
+.pf-success {
+  background: rgba(48,209,88,0.12);
+  border: 1px solid rgba(48,209,88,0.30);
+  color: #1a7a4a;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.pf-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Avatar card ────────────────────────────────────────── */
+.pf-avatar-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 26px;
+}
+
+.pf-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pf-avatar-img,
+.pf-avatar-initials {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pf-avatar-img {
+  object-fit: cover;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.pf-avatar-initials {
+  background: linear-gradient(135deg, #6e6cf0 0%, #a78bfa 100%);
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  box-shadow: 0 4px 16px rgba(94,92,230,0.30);
+}
+
+.pf-avatar-edit {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 0.72rem;
+  box-shadow: 0 2px 8px rgba(94,92,230,0.40);
+  transition: transform 0.15s;
+}
+.pf-avatar-edit:hover { transform: scale(1.1); }
+
+.pf-avatar-file { display: none; }
+
+.pf-avatar-info { display: flex; flex-direction: column; gap: 4px; }
+
+.pf-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.04em;
+}
+
+.pf-email-display {
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.pf-hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* ── Fields card ────────────────────────────────────────── */
+.pf-fields-card { padding: 24px 26px; }
+
+.pf-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+  margin-bottom: 18px;
+}
+
+.pf-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.pf-field { display: flex; flex-direction: column; }
+
+@media (max-width: 640px) {
+  .pf-avatar-card { flex-direction: column; align-items: flex-start; }
+  .pf-field-row   { grid-template-columns: 1fr; }
+}

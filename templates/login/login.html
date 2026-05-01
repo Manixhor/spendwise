@@ -1,77 +1,55 @@
+{% extends "login/base_auth.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SpendWise – Login</title>
-  <link rel="stylesheet" href="{% static 'login/auth.css' %}" />
-</head>
-<body>
-  <div class="desktop-layout">
 
-    <div class="left-panel">
-      <h1 class="brand-large">spendwise</h1>
-      <p class="brand-tagline">Welcome back.<br/>Your finances await.</p>
-      <div class="left-orbs" aria-hidden="true">
-        <div class="lo lo-1"></div><div class="lo lo-2"></div>
-        <div class="lo lo-3"></div><div class="lo lo-4"></div>
-        <div class="lo lo-5"></div>
-      </div>
+{% block title %}SpendWise – Login{% endblock %}
+{% block left_tagline %}Welcome back.<br/>Your finances await.{% endblock %}
+{% block card_class %}card-form card-login{% endblock %}
+
+{% block card_content %}
+  <h2 class="form-title">Login</h2>
+  <p class="form-sub">Welcome back!<br/>Please enter your details</p>
+
+  {% if errors.general %}
+    <div class="alert alert-error">{{ errors.general }}</div>
+  {% endif %}
+
+  <form method="post" action="{% url 'login' %}" class="auth-form" novalidate>
+    {% csrf_token %}
+
+    <div class="field-group {% if errors.email %}field-error{% endif %}">
+      <span class="field-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="m2 7 10 7 10-7"/>
+        </svg>
+      </span>
+      <input type="email" name="email" placeholder="Enter your email"
+             class="field-input" autocomplete="email"
+             value="{{ form.email|default:'' }}" />
     </div>
+    {% if errors.email %}<p class="field-msg">{{ errors.email }}</p>{% endif %}
 
-    <div class="right-panel">
-      <div class="card card-form card-login">
-        <span class="brand">spendwise</span>
-        <h2 class="form-title">Login</h2>
-        <p class="form-sub">Welcome back!<br/>Please enter your details</p>
-
-        {% if errors.general %}
-          <div class="alert alert-error">{{ errors.general }}</div>
-        {% endif %}
-
-        <form method="post" action="{% url 'login' %}" class="auth-form" novalidate>
-          {% csrf_token %}
-
-          <div class="field-group {% if errors.email %}field-error{% endif %}">
-            <span class="field-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                <path d="m2 7 10 7 10-7"/>
-              </svg>
-            </span>
-            <input type="email" name="email" placeholder="Enter your email"
-                   class="field-input" autocomplete="email"
-                   value="{{ form.email|default:'' }}" />
-          </div>
-          {% if errors.email %}<p class="field-msg">{{ errors.email }}</p>{% endif %}
-
-          <div class="field-group {% if errors.password %}field-error{% endif %}">
-            <span class="field-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                <rect x="3" y="11" width="18" height="11" rx="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-            </span>
-            <input type="password" name="password" placeholder="Enter your password"
-                   class="field-input" autocomplete="current-password" />
-          </div>
-          {% if errors.password %}<p class="field-msg">{{ errors.password }}</p>{% endif %}
-
-          <button type="submit" class="cta-btn">Login &rarr;</button>
-        </form>
-
-        <p class="footer-copy center">
-          <a href="#" class="link-accent">Forgot password?</a>
-        </p>
-        <p class="footer-copy center">
-          Don't have an account? <a href="{% url 'signup' %}" class="link-accent">Sign up</a>
-        </p>
-        <hr class="divider" />
-        <a href="{% url 'signup' %}" class="cta-btn cta-dark">Create account &rarr;</a>
-      </div>
+    <div class="field-group {% if errors.password %}field-error{% endif %}">
+      <span class="field-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </span>
+      <input type="password" name="password" placeholder="Enter your password"
+             class="field-input" autocomplete="current-password" />
     </div>
+    {% if errors.password %}<p class="field-msg">{{ errors.password }}</p>{% endif %}
 
-  </div>
-</body>
-</html>
+    <button type="submit" class="cta-btn">Login &rarr;</button>
+  </form>
+
+  <p class="footer-copy center">
+    <a href="#" class="link-accent">Forgot password?</a>
+  </p>
+  <p class="footer-copy center">
+    Don't have an account? <a href="{% url 'signup' %}" class="link-accent">Sign up</a>
+  </p>
+  <hr class="divider" />
+  <a href="{% url 'signup' %}" class="cta-btn cta-dark">Create account &rarr;</a>
+{% endblock %}

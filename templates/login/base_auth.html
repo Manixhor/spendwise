@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}SpendWise{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="{% static 'login/auth.css' %}" />
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <div class="desktop-layout">
+
+    <!-- Left panel with animated orbs -->
+    <div class="left-panel">
+      <h1 class="brand-large">spendwise</h1>
+      <p class="brand-tagline">{% block left_tagline %}Your money, your rules.<br/>Banking built around you.{% endblock %}</p>
+      <div class="left-orbs" aria-hidden="true">
+        <div class="lo lo-1"></div>
+        <div class="lo lo-2"></div>
+        <div class="lo lo-3"></div>
+        <div class="lo lo-4"></div>
+        <div class="lo lo-5"></div>
+      </div>
+    </div>
+
+    <!-- Right panel / card -->
+    <div class="right-panel">
+      <div class="card {% block card_class %}{% endblock %}">
+        <span class="brand">spendwise</span>
+        {% block card_content %}{% endblock %}
+      </div>
+    </div>
+
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -5,42 +5,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SpendWise – Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="{% static 'login/dashboard.css' %}" />
 </head>
 <body>
 <div class="app">
 
   <!-- ── Sidebar ─────────────────────────────────────── -->
-  <aside class="sidebar">
-    <div class="avatar-wrap">
-      <img src="https://i.pravatar.cc/48?img=47" alt="Kim" class="avatar" />
-      <span class="avatar-dot"></span>
-    </div>
-    <nav class="nav-icons">
-      <a href="{% url 'dashboard' %}" class="nav-icon active" aria-label="Dashboard">
-        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      </a>
-      <a href="#" class="nav-icon" aria-label="Cards">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-      </a>
-      <a href="{% url 'monthly' %}" class="nav-icon" aria-label="Monthly Analysis">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <rect x="3" y="4" width="18" height="18" rx="2"/>
-          <path d="M16 2v4M8 2v4M3 10h18"/>
-          <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>
-        </svg>
-      </a>
-      <a href="{% url 'savings' %}" class="nav-icon" aria-label="Savings Goals">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-          <path d="M12 6v6l4 2"/>
-        </svg>
-      </a>
-      <a href="#" class="nav-icon" aria-label="Notifications">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      </a>
-    </nav>
-  </aside>
+  {% include "login/includes/sidebar.html" %}
 
   <!-- ── Main content ────────────────────────────────── -->
   <main class="main">
@@ -248,7 +220,7 @@
             </div>
           </div>
           <div class="esc-right">
-            <p class="esc-amount">−₹{{ txn.amount|floatformat:2 }}</p>
+            <p class="esc-amount">₹{{ txn.amount|floatformat:2 }}</p>
             <button class="esc-delete" onclick="deleteTransaction({{ txn.id }})" title="Delete">×</button>
           </div>
         </div>
@@ -503,15 +475,17 @@
     <!-- Type toggle -->
     <div class="txn-type-toggle">
       <button class="type-btn active" id="typeExpense" data-type="expense">Expense</button>
-      <button class="type-btn" id="typeIncome" data-type="income">Income</button>
     </div>
 
-    <label class="modal-field-label" for="txnTitle">Title *</label>
-    <div class="modal-field-wrap">
-      <input type="text" id="txnTitle" class="modal-input" placeholder="e.g. Rent, Salary, Groceries" autocomplete="off" />
-    </div>
+    <label class="modal-field-label" for="txnCategory">Category</label>
+    <select id="txnCategory" class="modal-select" style="margin-bottom:4px;">
+      <option value="other">Category (optional)</option>
+      {% for val, label in categories %}
+      <option value="{{ val }}">{{ label }}</option>
+      {% endfor %}
+    </select>
 
-    <label class="modal-field-label" for="txnAmount">Amount *</label>
+    <label class="modal-field-label" for="txnAmount">Amount</label>
     <div class="modal-field-wrap">
       <span class="modal-currency">₹</span>
       <input type="number" id="txnAmount" class="modal-input" placeholder="0.00" min="1" step="0.01" />
@@ -519,13 +493,8 @@
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px;">
       <div>
-        <label class="modal-field-label" for="txnCategory">Category</label>
-        <select id="txnCategory" class="modal-select">
-          <option value="other">Category (optional)</option>
-          {% for val, label in categories %}
-          <option value="{{ val }}">{{ label }}</option>
-          {% endfor %}
-        </select>
+        <label class="modal-field-label" for="txnTitle">Title</label>
+        <input type="text" id="txnTitle" class="modal-select" placeholder="e.g. Rent, Salary" autocomplete="off" />
       </div>
       <div>
         <label class="modal-field-label" for="txnDate">Date</label>

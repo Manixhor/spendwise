@@ -1,4 +1,6 @@
 asgiref==3.11.1
 Django==6.0.4
+django-unfold==0.92.0
 mysqlclient==2.2.4
+Pillow==12.2.0
 sqlparse==0.5.3
