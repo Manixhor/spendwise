@@ -560,3 +560,35 @@
   .ma-donut-card { grid-column: span 1; }
   .month-selector { padding: 4px 10px; }
 }
+
+/* ── Mobile (≤640px) ────────────────────────────────────── */
+@media (max-width: 640px) {
+  .monthly-main { gap: 12px; }
+
+  .ma-top-row    { grid-template-columns: 1fr; }
+  .ma-stats-card { grid-column: span 1; }
+  .ma-stats-card { flex-direction: column; gap: 12px; align-items: flex-start; }
+  .ma-stat-divider { width: 100%; height: 1px; }
+
+  .ma-mid-row    { grid-template-columns: 1fr; }
+  .ma-bottom-row { grid-template-columns: 1fr; }
+  .ma-donut-card { grid-column: span 1; }
+
+  .ma-balance-amount { font-size: 1.6rem; }
+
+  .month-selector { padding: 4px 8px; }
+  .month-label    { font-size: 0.80rem; min-width: 90px; }
+
+  .ma-reminder-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .ma-reminder-btn  { width: 100%; text-align: center; }
+
+  .ma-chart-wrap { overflow-x: auto; }
+  .ma-bars-wrap  { min-width: 320px; }
+}
+
+/* ── Small mobile (≤390px) ──────────────────────────────── */
+@media (max-width: 390px) {
+  .ma-balance-amount { font-size: 1.35rem; }
+  .ma-cat-name       { font-size: 0.76rem; }
+  .ma-cat-amt        { font-size: 0.76rem; }
+}

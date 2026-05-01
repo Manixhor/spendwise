@@ -220,6 +220,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         'dad_joke':     dad_joke,
         'categories':   Transaction.CATEGORY_CHOICES,
         'today':        date.today().isoformat(),
+        'active_nav':   'dashboard',
         **stats,
         'chart_months': json.dumps(stats['chart_months']),
     })
@@ -260,6 +261,7 @@ def savings(request: HttpRequest) -> HttpResponse:
         'goals':         goals_data,
         'goal_count':    goals.count(),
         'monthly_saved': monthly_saved,
+        'active_nav':    'savings',
     })
 
 
@@ -347,13 +349,46 @@ def _goal_json(goal: 'SavingsGoal') -> dict:
     }
 
 
+# ── Profile ───────────────────────────────────────────────
+@login_required(login_url='/login/')
+def profile_view(request: HttpRequest) -> HttpResponse:
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    success = False
+
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name', '').strip()
+        last_name  = request.POST.get('last_name', '').strip()
+        email      = request.POST.get('email', '').strip().lower()
+
+        request.user.first_name = first_name
+        request.user.last_name  = last_name
+        if email and email != request.user.email:
+            if not User.objects.filter(email=email).exclude(pk=request.user.pk).exists():
+                request.user.email    = email
+                request.user.username = email
+        request.user.save()
+
+        if 'avatar' in request.FILES:
+            profile.avatar = request.FILES['avatar']
+        profile.save()
+        success = True
+
+    return render(request, 'login/profile.html', {
+        'user':       request.user,
+        'profile':    profile,
+        'active_nav': 'profile',
+        'success':    success,
+    })
+
+
 # ── Monthly Analysis ──────────────────────────────────────
 @login_required(login_url='/login/')
 def monthly(request: HttpRequest) -> HttpResponse:
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     return render(request, 'login/monthly.html', {
-        'user':    request.user,
-        'profile': profile,
+        'user':       request.user,
+        'profile':    profile,
+        'active_nav': 'monthly',
     })
 
 

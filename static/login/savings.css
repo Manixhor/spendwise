@@ -382,3 +382,34 @@
   color: var(--sub);
   line-height: 1.5;
 }
+
+/* ── Mobile (≤640px) ────────────────────────────────────── */
+@media (max-width: 640px) {
+  .sv-main { gap: 14px; }
+
+  .sv-monthly-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 18px 18px;
+  }
+
+  .sv-banner-right { flex-direction: row; gap: 10px; align-items: center; }
+  .sv-banner-amount { font-size: 1.6rem; }
+
+  .sv-goals-grid { grid-template-columns: 1fr; }
+
+  .sv-goal-card { padding: 16px 14px 14px; }
+  .sv-goal-body { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .sv-ring-wrap { width: 70px; height: 70px; }
+  .sv-ring      { width: 70px; height: 70px; }
+
+  .add-goal-btn { font-size: 0.80rem; padding: 0 14px; height: 34px; }
+}
+
+/* ── Small mobile (≤390px) ──────────────────────────────── */
+@media (max-width: 390px) {
+  .sv-banner-amount { font-size: 1.35rem; }
+  .sv-goal-name     { font-size: 0.88rem; }
+  .sv-amt-val       { font-size: 0.78rem; }
+}

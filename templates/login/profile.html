@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpendWise – Profile</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}" />
+  <link rel="stylesheet" href="{% static 'login/profile.css' %}" />
+</head>
+<body>
+<div class="app">
+
+  {% include "login/includes/sidebar.html" %}
+
+  <main class="main pf-main">
+
+    <header class="main-header">
+      <div>
+        <p class="sv-eyebrow">👤 Account</p>
+        <h1 class="welcome">Your Profile</h1>
+      </div>
+      <div class="header-actions">
+        <a href="{% url 'dashboard' %}" class="set-salary-btn" style="text-decoration:none;">← Dashboard</a>
+        <a href="{% url 'logout' %}" class="logout-btn" title="Logout">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    {% if success %}
+    <div class="pf-success">✅ Profile updated successfully!</div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="pf-form" novalidate>
+      {% csrf_token %}
+
+      <!-- Avatar section -->
+      <div class="card pf-avatar-card">
+        <div class="pf-avatar-wrap">
+          {% if profile.avatar %}
+            <img src="{{ profile.avatar.url }}" alt="Profile photo" class="pf-avatar-img" id="avatarPreview" />
+          {% else %}
+            <div class="pf-avatar-initials" id="avatarInitials">
+              {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}{% if not user.first_name %}{{ user.username|slice:":2"|upper }}{% endif %}
+            </div>
+          {% endif %}
+          <label class="pf-avatar-edit" for="avatarInput" title="Change photo">
+            <i class="fa-solid fa-camera"></i>
+          </label>
+          <input type="file" id="avatarInput" name="avatar" accept="image/*" class="pf-avatar-file" />
+        </div>
+        <div class="pf-avatar-info">
+          <p class="pf-name">{{ user.get_full_name|default:user.username }}</p>
+          <p class="pf-email-display">{{ user.email }}</p>
+          <p class="pf-hint">Click the camera icon to change your photo</p>
+        </div>
+      </div>
+
+      <!-- Fields -->
+      <div class="card pf-fields-card">
+        <h2 class="pf-section-title">Personal Information</h2>
+
+        <div class="pf-field-row">
+          <div class="pf-field">
+            <label class="modal-field-label" for="first_name">First Name</label>
+            <div class="modal-field-wrap">
+              <input type="text" id="first_name" name="first_name" class="modal-input"
+                     value="{{ user.first_name }}" placeholder="First name" />
+            </div>
+          </div>
+          <div class="pf-field">
+            <label class="modal-field-label" for="last_name">Last Name</label>
+            <div class="modal-field-wrap">
+              <input type="text" id="last_name" name="last_name" class="modal-input"
+                     value="{{ user.last_name }}" placeholder="Last name" />
+            </div>
+          </div>
+        </div>
+
+        <label class="modal-field-label" for="email">Email</label>
+        <div class="modal-field-wrap">
+          <span class="field-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="m2 7 10 7 10-7"/>
+            </svg>
+          </span>
+          <input type="email" id="email" name="email" class="modal-input"
+                 value="{{ user.email }}" placeholder="Email address" />
+        </div>
+
+        <button type="submit" class="modal-save-btn" style="margin-top:20px;">Save Changes</button>
+      </div>
+
+    </form>
+
+  </main>
+
+  <aside class="right-panel">
+    <section class="rp-section">
+      <h2 class="rp-title">Account Info</h2>
+      <div class="sv-stats-list">
+        <div class="sv-stat-item">
+          <span class="sv-stat-label">Username</span>
+          <span class="sv-stat-val">{{ user.username }}</span>
+        </div>
+        <div class="sv-stat-item">
+          <span class="sv-stat-label">Member since</span>
+          <span class="sv-stat-val">{{ user.date_joined|date:"M Y" }}</span>
+        </div>
+        <div class="sv-stat-item">
+          <span class="sv-stat-label">Salary set</span>
+          <span class="sv-stat-val {% if profile.salary %}positive{% else %}{% endif %}">
+            {% if profile.salary %}₹{{ profile.salary }}{% else %}Not set{% endif %}
+          </span>
+        </div>
+      </div>
+    </section>
+  </aside>
+
+</div>
+
+<script>
+  // Live avatar preview
+  document.getElementById('avatarInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const existing = document.getElementById('avatarPreview');
+      const initials = document.getElementById('avatarInitials');
+      if (existing) {
+        existing.src = ev.target.result;
+      } else if (initials) {
+        const img = document.createElement('img');
+        img.src = ev.target.result;
+        img.id  = 'avatarPreview';
+        img.className = 'pf-avatar-img';
+        img.alt = 'Profile photo';
+        initials.replaceWith(img);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+</script>
+</body>
+</html>
