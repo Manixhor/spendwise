@@ -17,14 +17,24 @@
       <span class="avatar-dot"></span>
     </div>
     <nav class="nav-icons">
-      <a href="#" class="nav-icon active" aria-label="Dashboard">
+      <a href="{% url 'dashboard' %}" class="nav-icon active" aria-label="Dashboard">
         <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
       </a>
       <a href="#" class="nav-icon" aria-label="Cards">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
       </a>
-      <a href="#" class="nav-icon" aria-label="History">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      <a href="{% url 'monthly' %}" class="nav-icon" aria-label="Monthly Analysis">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <path d="M16 2v4M8 2v4M3 10h18"/>
+          <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>
+        </svg>
+      </a>
+      <a href="{% url 'savings' %}" class="nav-icon" aria-label="Savings Goals">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+          <path d="M12 6v6l4 2"/>
+        </svg>
       </a>
       <a href="#" class="nav-icon" aria-label="Notifications">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -37,36 +47,74 @@
 
     <!-- Header -->
     <header class="main-header">
-      <h1 class="welcome">Welcome back, Kim!</h1>
+      <h1 class="welcome">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+      <div class="header-actions">
+        {% if profile.salary %}
+          <span class="salary-badge" id="salaryBadge">Salary: ₹{{ profile.salary }}</span>
+        {% endif %}
+        <button class="add-txn-btn" type="button" id="addTxnBtn">+ Add Transaction</button>
+        <button class="set-salary-btn" type="button" id="setSalaryBtn">
+          {% if profile.salary %}Edit Salary{% else %}+ Set Salary{% endif %}
+        </button>
+        <a href="{% url 'logout' %}" class="logout-btn" title="Logout">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </a>
+      </div>
     </header>
 
-    <!-- Top row: Insights + Total Balance -->
+    <!-- ── Dad Joke Banner ───────────────────────────────── -->
+    <div class="joke-banner">
+      <span class="joke-banner-label">😄 Daily Joke</span>
+      <p class="joke-banner-text">{{ dad_joke }}</p>
+    </div>
+
+    <!-- Top row: Insights + Total Balance + Savings -->
     <div class="top-row">
 
       <!-- Insights card -->
       <div class="card insights-card">
-        <div class="card-top-row">
-          <span class="card-label">Insights</span>
+        <div class="ig-top">
+          <span class="ig-title">Insights</span>
           <a href="#" class="card-link">Read all</a>
         </div>
         <div class="insights-body">
-          <!-- Donut chart (SVG) -->
+          <!-- Large donut chart -->
           <div class="donut-wrap">
-            <svg viewBox="0 0 100 100" class="donut" aria-hidden="true">
-              <circle cx="50" cy="50" r="38" fill="none" stroke="#2a2a2a" stroke-width="14"/>
-              <!-- segments: green 72%, purple 15%, yellow 13% -->
-              <circle cx="50" cy="50" r="38" fill="none" stroke="#a3e635" stroke-width="14"
-                stroke-dasharray="171.7 66.8" stroke-dashoffset="0" stroke-linecap="round"/>
-              <circle cx="50" cy="50" r="38" fill="none" stroke="#a78bfa" stroke-width="14"
-                stroke-dasharray="35.8 202.7" stroke-dashoffset="-171.7" stroke-linecap="round"/>
-              <circle cx="50" cy="50" r="38" fill="none" stroke="#fbbf24" stroke-width="14"
-                stroke-dasharray="31 207.5" stroke-dashoffset="-207.5" stroke-linecap="round"/>
+            <svg viewBox="0 0 120 120" class="donut" aria-hidden="true">
+              <!-- Track -->
+              <circle cx="60" cy="60" r="46" fill="none" stroke="#f0edf6" stroke-width="14"/>
+              <!-- Blue segment ~30% -->
+              <circle cx="60" cy="60" r="46" fill="none" stroke="#93c5fd" stroke-width="14"
+                stroke-dasharray="86.7 202.1" stroke-dashoffset="0"
+                stroke-linecap="round" transform="rotate(-90 60 60)"/>
+              <!-- Pink segment ~18% -->
+              <circle cx="60" cy="60" r="46" fill="none" stroke="#fca5a5" stroke-width="14"
+                stroke-dasharray="52.0 236.8" stroke-dashoffset="-86.7"
+                stroke-linecap="round" transform="rotate(-90 60 60)"/>
+              <!-- Orange segment ~12% -->
+              <circle cx="60" cy="60" r="46" fill="none" stroke="#fdba74" stroke-width="14"
+                stroke-dasharray="34.7 254.1" stroke-dashoffset="-138.7"
+                stroke-linecap="round" transform="rotate(-90 60 60)"/>
+              <!-- Green segment ~16% -->
+              <circle cx="60" cy="60" r="46" fill="none" stroke="#86efac" stroke-width="14"
+                stroke-dasharray="46.2 242.6" stroke-dashoffset="-173.4"
+                stroke-linecap="round" transform="rotate(-90 60 60)"/>
+              <!-- Purple segment ~24% -->
+              <circle cx="60" cy="60" r="46" fill="none" stroke="#d8b4fe" stroke-width="14"
+                stroke-dasharray="69.4 219.4" stroke-dashoffset="-219.6"
+                stroke-linecap="round" transform="rotate(-90 60 60)"/>
             </svg>
-            <span class="donut-label">$2,453</span>
+            <div class="donut-center-label">
+              <span class="donut-amount">₹2,453</span>
+            </div>
           </div>
-          <p class="insights-text">
-            Good job! You have spent <strong>72%</strong> of your monthly budget.
-          </p>
+
+          <!-- Coach message -->
+          <p class="insights-text">{{ coach.message }}</p>
         </div>
       </div>
 
@@ -75,125 +123,219 @@
         <div class="card-top-row">
           <span class="card-label">Total balance</span>
         </div>
-        <p class="balance-amount">$12,530.00</p>
+        <p class="balance-amount" id="totalBalance">₹{{ total_balance|floatformat:2 }}</p>
         <div class="balance-row">
           <div class="balance-item">
-            <span class="bal-sub">Last week</span>
-            <span class="bal-val positive">+$590.00</span>
+            <span class="bal-sub">Expenses this month</span>
+            <span class="bal-val negative" id="totalExpense">−₹{{ total_expense|floatformat:2 }}</span>
           </div>
           <div class="balance-item">
-            <span class="bal-sub">Last week</span>
-            <span class="bal-val negative">−$660.13</span>
+            <span class="bal-sub">Savings</span>
+            <span class="bal-val {% if total_saved >= 0 %}positive{% else %}negative{% endif %}" id="totalSaved">
+              {% if total_saved >= 0 %}+{% endif %}₹{{ total_saved|floatformat:2 }}
+            </span>
           </div>
         </div>
-        <!-- decorative circle -->
         <div class="balance-deco" aria-hidden="true"></div>
       </div>
 
+      <!-- Savings widget -->
+      <div class="card savings-card">
+        <div class="savings-content">
+          <span class="card-label">Savings</span>
+          <p class="savings-amount" id="savingsAmount">{% if total_saved >= 0 %}+{% endif %}₹{{ total_saved|floatformat:2 }}</p>
+          <p class="savings-sub">₹{{ total_saved|floatformat:2 }}</p>
+          <p class="savings-desc">
+            {% if profile.salary %}
+              Salary − Expenses
+            {% elif spend_pct %}{{ spend_pct }}% of your income spent
+            {% else %}Set salary to track savings{% endif %}<br/>this month
+          </p>
+        </div>
+        <!-- Ring chart -->
+        <div class="savings-ring-wrap" aria-hidden="true">
+          <svg viewBox="0 0 120 120" class="savings-ring">
+            <defs>
+              <radialGradient id="ringGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="rgba(255,255,255,0.9)"/>
+                <stop offset="100%" stop-color="rgba(180,200,240,0.3)"/>
+              </radialGradient>
+            </defs>
+            <!-- Outer glow circle -->
+            <circle cx="60" cy="60" r="52" fill="url(#ringGlow)" opacity="0.5"/>
+            <!-- Track -->
+            <circle cx="60" cy="60" r="42" fill="none"
+              stroke="rgba(180,200,240,0.4)" stroke-width="14"/>
+            <!-- Progress (75%) -->
+            <circle cx="60" cy="60" r="42" fill="none"
+              stroke="rgba(255,255,255,0.95)" stroke-width="14"
+              stroke-dasharray="197.9 65.97"
+              stroke-dashoffset="49.5"
+              stroke-linecap="round"
+              transform="rotate(-90 60 60)"/>
+          </svg>
+        </div>
+        <!-- Background blobs -->
+        <div class="savings-blob savings-blob-1" aria-hidden="true"></div>
+        <div class="savings-blob savings-blob-2" aria-hidden="true"></div>
+      </div>
+
     </div>
 
-    <!-- Category tiles -->
-    <div class="tiles-row">
-      <div class="tile tile-cyan">
-        <div class="tile-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <!-- Category tiles — dynamic -->
+    <div class="tiles-row" id="categoryTiles">
+      {% if cat_data %}
+        {% for cat_key, cat in cat_data.items %}
+        <div class="tile" style="background:{{ cat.color }}20; border:1px solid {{ cat.color }}40;">
+          <div class="tile-icon" style="background:{{ cat.color }}40;">
+            <span style="font-size:1rem;">{{ cat.icon }}</span>
+          </div>
+          <p class="tile-amount" style="color:#1a1a2e;">₹{{ cat.amount|floatformat:2 }}</p>
+          <p class="tile-name" style="color:#3a3a3c;">{{ cat.label }}</p>
         </div>
-        <p class="tile-amount">$1410.00</p>
-        <p class="tile-name">Rent</p>
-      </div>
-      <div class="tile tile-purple">
-        <div class="tile-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11v6a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-6z"/></svg>
+        {% endfor %}
+      {% else %}
+        <div class="tile tile-cyan">
+          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+          <p class="tile-amount">₹0.00</p><p class="tile-name">Rent</p>
         </div>
-        <p class="tile-amount">$410.00</p>
-        <p class="tile-name">Transport</p>
-      </div>
-      <div class="tile tile-green">
-        <div class="tile-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <div class="tile tile-purple">
+          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11v6a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-6z"/></svg></div>
+          <p class="tile-amount">₹0.00</p><p class="tile-name">Transport</p>
         </div>
-        <p class="tile-amount">$325.90</p>
-        <p class="tile-name">Health</p>
-      </div>
-      <div class="tile tile-yellow">
-        <div class="tile-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <div class="tile tile-green">
+          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+          <p class="tile-amount">₹0.00</p><p class="tile-name">Health</p>
         </div>
-        <p class="tile-amount">$290.13</p>
-        <p class="tile-name">Groceries</p>
+        <div class="tile tile-yellow">
+          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></div>
+          <p class="tile-amount">₹0.00</p><p class="tile-name">Groceries</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- ── Add Expense button + Filter row ──────────────── -->
+    <div class="expense-action-row">
+      <button class="add-expense-btn" type="button" id="addExpenseBtn">+ Add Expense</button>
+      <div class="filter-tabs" role="tablist" aria-label="Filter period">
+        <button class="filter-tab active" data-filter="month" role="tab">This Month</button>
+        <button class="filter-tab" data-filter="week" role="tab">This Week</button>
+        <button class="filter-tab" data-filter="today" role="tab">Today</button>
+        <button class="filter-tab" data-filter="year" role="tab">This Year</button>
       </div>
     </div>
 
-    <!-- Overview chart -->
+    <!-- ── Expense cards (stacked colored cards) ────────── -->
+    <div class="expense-stack" id="expenseCardsRow">
+      {% for txn in recent_txns %}
+        {% if txn.txn_type == 'expense' %}
+        <div class="expense-stack-card" data-date="{{ txn.date }}" data-id="{{ txn.id }}">
+          <div class="esc-left">
+            <span class="esc-icon">
+              {% if txn.category == 'rent' %}🏠
+              {% elif txn.category == 'transport' %}🚗
+              {% elif txn.category == 'health' %}❤️
+              {% elif txn.category == 'groceries' %}🛒
+              {% elif txn.category == 'entertainment' %}🎬
+              {% elif txn.category == 'shopping' %}🛍️
+              {% elif txn.category == 'food' %}🍽️
+              {% elif txn.category == 'utilities' %}💡
+              {% else %}📦{% endif %}
+            </span>
+            <div class="esc-info">
+              <p class="esc-title">{{ txn.title }}</p>
+              <p class="esc-meta">{{ txn.get_category_display }} · {{ txn.date }}</p>
+            </div>
+          </div>
+          <div class="esc-right">
+            <p class="esc-amount">−₹{{ txn.amount|floatformat:2 }}</p>
+            <button class="esc-delete" onclick="deleteTransaction({{ txn.id }})" title="Delete">×</button>
+          </div>
+        </div>
+        {% endif %}
+      {% empty %}
+        <div class="esc-empty">No expenses yet — add one above ↑</div>
+      {% endfor %}
+    </div>
+
+    <!-- ── Stock-style sparkline chart ──────────────────── -->
+    <div class="card sparkline-card">
+      <div class="spark-header">
+        <div class="spark-meta">
+          <span class="spark-label">Monthly Expense Trend</span>
+          <p class="spark-amount" id="sparkAmount">₹{{ total_expense|floatformat:2 }}</p>
+          <p class="spark-change {% if spend_pct %}{% if spend_pct > 50 %}spark-down{% else %}spark-up{% endif %}{% endif %}" id="sparkChange">
+            {% if spend_pct %}
+              {% if spend_pct > 50 %}↓ {{ spend_pct }}% of salary{% else %}↑ {{ spend_pct }}% of salary{% endif %}
+            {% else %}Set salary to see %{% endif %}
+          </p>
+        </div>
+        <div class="spark-meta">
+          <span class="spark-label">Total Saved</span>
+          <p class="spark-amount spark-saved" id="sparkSaved">₹{{ total_saved|floatformat:2 }}</p>
+          <p class="spark-change spark-up" id="sparkSavedChange">
+            {% if savings_pct %}↑ {{ savings_pct }}% of target{% else %}Set target to track{% endif %}
+          </p>
+        </div>
+      </div>
+
+      <!-- Dual sparkline SVG -->
+      <div class="spark-chart-wrap">
+        <svg viewBox="0 0 600 100" class="spark-svg" preserveAspectRatio="none" id="sparkSvg" aria-hidden="true">
+          <defs>
+            <linearGradient id="expSparkGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(255,100,100,0.25)"/>
+              <stop offset="100%" stop-color="rgba(255,100,100,0.00)"/>
+            </linearGradient>
+            <linearGradient id="savedSparkGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(100,200,150,0.25)"/>
+              <stop offset="100%" stop-color="rgba(100,200,150,0.00)"/>
+            </linearGradient>
+          </defs>
+          <!-- Rendered by JS -->
+        </svg>
+      </div>
+      <div class="spark-x-axis" id="sparkXAxis">
+        {% for m in chart_months %}<span>{{ m.label }}</span>{% endfor %}
+      </div>
+    </div>
+
+    <!-- Overview chart — Saved vs Expenses (dynamic) -->
     <div class="card chart-card">
       <div class="chart-header">
-        <span class="card-label">Overview</span>
+        <h2 class="chart-title">Overview</h2>
         <div class="legend">
-          <span class="leg-dot green"></span><span class="leg-txt">Income</span>
+          <span class="leg-dot green"></span><span class="leg-txt">Saved</span>
           <span class="leg-dot purple"></span><span class="leg-txt">Expenses</span>
         </div>
       </div>
-
       <div class="chart-body">
-        <!-- Y axis labels -->
-        <div class="y-axis">
-          <span>$4000</span>
-          <span>$3000</span>
-          <span>$2000</span>
-          <span>$1000</span>
-          <span>$0</span>
+        <div class="y-axis" id="chartYAxis">
+          <span>—</span><span></span><span></span><span></span><span>₹0</span>
         </div>
-
-        <!-- Chart SVG -->
         <div class="chart-svg-wrap">
-          <svg viewBox="0 0 700 200" preserveAspectRatio="none" class="chart-svg" aria-hidden="true">
+          <svg viewBox="0 0 680 230" class="chart-svg" preserveAspectRatio="xMidYMid meet" id="overviewSvg" aria-label="Overview chart">
             <defs>
-              <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#4a4a5a"/>
-                <stop offset="100%" stop-color="#2a2a3a"/>
+              <linearGradient id="savedG" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stop-color="rgba(110,231,183,0.70)"/>
+                <stop offset="100%" stop-color="rgba(110,231,183,0.12)"/>
               </linearGradient>
-              <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#34d399" stop-opacity="0.3"/>
-                <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+              <linearGradient id="expG2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stop-color="rgba(167,139,250,0.60)"/>
+                <stop offset="100%" stop-color="rgba(167,139,250,0.12)"/>
+              </linearGradient>
+              <linearGradient id="areaG2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stop-color="rgba(52,211,153,0.18)"/>
+                <stop offset="100%" stop-color="rgba(52,211,153,0.00)"/>
               </linearGradient>
             </defs>
-
-            <!-- Bars -->
-            <rect x="30"  y="30"  width="50" height="170" rx="6" fill="url(#barGrad)"/>
-            <rect x="130" y="55"  width="50" height="145" rx="6" fill="url(#barGrad)"/>
-            <rect x="230" y="70"  width="50" height="130" rx="6" fill="url(#barGrad)"/>
-            <rect x="330" y="45"  width="50" height="155" rx="6" fill="url(#barGrad)"/>
-            <rect x="430" y="60"  width="50" height="140" rx="6" fill="url(#barGrad)"/>
-            <rect x="530" y="40"  width="50" height="160" rx="6" fill="url(#barGrad)"/>
-            <rect x="630" y="50"  width="50" height="150" rx="6" fill="url(#barGrad)"/>
-
-            <!-- Income area fill -->
-            <path d="M55,28 C105,55 155,40 255,65 C305,78 355,42 455,58 C505,66 555,38 655,45 L655,200 L55,200 Z"
-                  fill="url(#lineGrad)"/>
-
-            <!-- Income line -->
-            <path d="M55,28 C105,55 155,40 255,65 C305,78 355,42 455,58 C505,66 555,38 655,45"
-                  fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round"/>
-
-            <!-- Dots on income line -->
-            <circle cx="55"  cy="28" r="5" fill="#1a1a2a" stroke="#34d399" stroke-width="2.5"/>
-            <circle cx="155" cy="40" r="5" fill="#1a1a2a" stroke="#34d399" stroke-width="2.5"/>
-            <circle cx="255" cy="65" r="5" fill="#1a1a2a" stroke="#34d399" stroke-width="2.5"/>
-            <circle cx="355" cy="42" r="7" fill="#34d399" stroke="#34d399" stroke-width="2"/>
-            <circle cx="455" cy="58" r="5" fill="#1a1a2a" stroke="#34d399" stroke-width="2.5"/>
-            <circle cx="555" cy="38" r="5" fill="#1a1a2a" stroke="#34d399" stroke-width="2.5"/>
-            <circle cx="655" cy="45" r="5" fill="#1a1a2a" stroke="#34d399" stroke-width="2.5"/>
+            <!-- Bars rendered by JS -->
           </svg>
-
-          <!-- Tooltip -->
-          <div class="chart-tooltip">+ $3325.90</div>
+          <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
         </div>
       </div>
-
-      <!-- X axis -->
-      <div class="x-axis">
-        <span>April</span><span>May</span><span>June</span>
-        <span>July</span><span>Aug</span><span>Sept</span>
+      <div class="x-axis" id="chartXAxis">
+        {% for m in chart_months %}<span>{{ m.label }}</span>{% endfor %}
       </div>
     </div>
 
@@ -202,83 +344,621 @@
   <!-- ── Right panel ─────────────────────────────────── -->
   <aside class="right-panel">
 
-    <!-- Latest transactions -->
+    <!-- Target Savings widget -->
+    <section class="rp-section">
+      <div class="rp-row">
+        <h2 class="rp-title">Target Savings</h2>
+        <button class="set-target-btn" id="setTargetBtn" type="button">
+          {% if profile.target_savings %}Edit{% else %}+ Set{% endif %}
+        </button>
+      </div>
+
+      <div class="savings-target-card">
+        <!-- Progress ring -->
+        <div class="st-ring-wrap">
+          <svg viewBox="0 0 100 100" class="st-ring" aria-hidden="true">
+            <!-- Track -->
+            <circle cx="50" cy="50" r="42" fill="none"
+              stroke="rgba(94,92,230,0.10)" stroke-width="10"/>
+            <!-- Progress -->
+            <circle cx="50" cy="50" r="42" fill="none"
+              stroke="url(#stGrad)" stroke-width="10"
+              stroke-dasharray="{{ ring_dash }} {{ ring_gap }}"
+              stroke-dashoffset="0"
+              stroke-linecap="round"
+              transform="rotate(-90 50 50)"
+              id="savingsRing"/>
+            <defs>
+              <linearGradient id="stGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%"   stop-color="#6e6cf0"/>
+                <stop offset="100%" stop-color="#a78bfa"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="st-ring-center">
+            <span class="st-pct" id="savingsPct">
+              {% if savings_pct %}{{ savings_pct }}%{% else %}—{% endif %}
+            </span>
+            <span class="st-pct-label">saved</span>
+          </div>
+        </div>
+
+        <!-- Numbers -->
+        <div class="st-info">
+          <div class="st-row">
+            <span class="st-label">Saved so far</span>
+            <span class="st-val positive">₹{{ demo_saved|floatformat:2 }}</span>
+          </div>
+          <div class="st-row">
+            <span class="st-label">Target</span>
+            <span class="st-val" id="targetDisplay">
+              {% if profile.target_savings %}₹{{ profile.target_savings }}{% else %}Not set{% endif %}
+            </span>
+          </div>
+          {% if savings_pct %}
+          <div class="st-progress-track">
+            <div class="st-progress-fill" id="targetProgressBar"
+                 style="width: {{ savings_pct }}%"></div>
+          </div>
+          {% else %}
+          <div class="st-progress-track">
+            <div class="st-progress-fill" id="targetProgressBar" style="width:0%"></div>
+          </div>
+          {% endif %}
+          <p class="st-hint">
+            {% if profile.target_savings %}
+              {% if savings_pct >= 100 %}🎉 Goal reached!
+              {% else %}₹{{ profile.target_savings }} goal · keep going!{% endif %}
+            {% else %}Set a savings goal to track progress{% endif %}
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Latest transactions — dynamic -->
     <section class="rp-section txn-section">
       <div class="rp-row">
         <span class="rp-sub-title">Latest transactions</span>
         <a href="#" class="card-link">Show more</a>
       </div>
-
-      <ul class="txn-list">
-        <li class="txn-item">
-          <div class="txn-icon figma">F</div>
-          <div class="txn-info">
-            <span class="txn-name">Figma</span>
-            <span class="txn-time">1 day ago</span>
-          </div>
-          <span class="txn-amt">$300.00</span>
-        </li>
-        <li class="txn-item">
-          <div class="txn-icon withdrawal">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-          </div>
-          <div class="txn-info">
-            <span class="txn-name">Withdrawal</span>
-            <span class="txn-time">1 day ago</span>
-          </div>
-          <span class="txn-amt">$50.00</span>
-        </li>
-        <li class="txn-item">
-          <div class="txn-icon payment">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      <ul class="txn-list" id="txnList">
+        {% for txn in recent_txns %}
+        <li class="txn-item" id="txn-{{ txn.id }}">
+          <div class="txn-icon {{ txn.category }}" style="font-size:1rem;">
+            {% if txn.category == 'rent' %}🏠
+            {% elif txn.category == 'transport' %}🚗
+            {% elif txn.category == 'health' %}❤️
+            {% elif txn.category == 'groceries' %}🛒
+            {% elif txn.category == 'entertainment' %}🎬
+            {% elif txn.category == 'shopping' %}🛍️
+            {% elif txn.category == 'food' %}🍽️
+            {% elif txn.category == 'utilities' %}💡
+            {% else %}📦{% endif %}
           </div>
           <div class="txn-info">
-            <span class="txn-name">Payment</span>
-            <span class="txn-time">1 day ago</span>
+            <span class="txn-name">{{ txn.title }}</span>
+            <span class="txn-time">{{ txn.date }}</span>
           </div>
-          <span class="txn-amt">$490.00</span>
+          <span class="txn-amt {% if txn.txn_type == 'expense' %}neg{% endif %}">
+            {% if txn.txn_type == 'income' %}+{% else %}−{% endif %}₹{{ txn.amount|floatformat:2 }}
+          </span>
+          <button class="txn-delete" onclick="deleteTransaction({{ txn.id }})" title="Delete">×</button>
         </li>
-        <li class="txn-item">
-          <div class="txn-icon webflow">W</div>
-          <div class="txn-info">
-            <span class="txn-name">Webflow</span>
-            <span class="txn-time">1 day ago</span>
-          </div>
-          <span class="txn-amt">$41.00</span>
-        </li>
-        <li class="txn-item">
-          <div class="txn-icon zalando">
-            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-          </div>
-          <div class="txn-info">
-            <span class="txn-name">Zalando</span>
-            <span class="txn-time">2 days ago</span>
-          </div>
-          <span class="txn-amt">$100.00</span>
-        </li>
-        <li class="txn-item">
-          <div class="txn-icon airbnb">A</div>
-          <div class="txn-info">
-            <span class="txn-name">Airbnb</span>
-            <span class="txn-time">4 days ago</span>
-          </div>
-          <span class="txn-amt neg">$241.65</span>
-        </li>
-        <li class="txn-item">
-          <div class="txn-icon spotify">
-            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="#1db954"/><path d="M8 14.5c2.5-1 5.5-1 8 0M7 11.5c3-1.2 7-1.2 10 0M8.5 8.5c2.5-.8 5.5-.8 8 0" stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
-          </div>
-          <div class="txn-info">
-            <span class="txn-name">Spotify</span>
-            <span class="txn-time">8 days ago</span>
-          </div>
-          <span class="txn-amt">$9.00</span>
-        </li>
+        {% empty %}
+        <li class="txn-empty" id="txnEmpty">No transactions yet. Add one!</li>
+        {% endfor %}
       </ul>
     </section>
 
   </aside>
 
 </div>
+
+<!-- ── Set Salary Modal ────────────────────────────────── -->
+<div class="modal-overlay" id="salaryModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">Set Your Salary</h2>
+      <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+    </div>
+    <p class="modal-sub">Enter your monthly salary to track your budget accurately.</p>
+    <div class="modal-field-wrap">
+      <span class="modal-currency">₹</span>
+      <input type="number" id="salaryInput" class="modal-input"
+             placeholder="e.g. 5000" min="0" step="0.01"
+             value="{{ profile.salary|default:'' }}" />
+    </div>
+    <p class="modal-error" id="salaryError"></p>
+    <button class="modal-save-btn" id="modalSave">Save Salary</button>
+  </div>
+</div>
+
+<!-- ── Target Savings Modal ───────────────────────────── -->
+<div class="modal-overlay" id="targetModal" role="dialog" aria-modal="true" aria-labelledby="targetModalTitle">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 class="modal-title" id="targetModalTitle">Set Savings Target</h2>
+      <button class="modal-close" id="targetModalClose" aria-label="Close">&times;</button>
+    </div>
+    <p class="modal-sub">How much do you want to save this month?</p>
+    <div class="modal-field-wrap">
+      <span class="modal-currency">₹</span>
+      <input type="number" id="targetInput" class="modal-input"
+             placeholder="e.g. 10000" min="1" step="0.01"
+             value="{{ profile.target_savings|default:'' }}" />
+    </div>
+    <p class="modal-error" id="targetError"></p>
+    <button class="modal-save-btn" id="targetSave">Save Target</button>
+  </div>
+</div>
+
+<!-- ── Add Transaction Modal ──────────────────────────── -->
+<div class="modal-overlay" id="txnModal" role="dialog" aria-modal="true" aria-labelledby="txnModalTitle">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 class="modal-title" id="txnModalTitle">Add Transaction</h2>
+      <button class="modal-close" id="txnModalClose" aria-label="Close">&times;</button>
+    </div>
+
+    <!-- Type toggle -->
+    <div class="txn-type-toggle">
+      <button class="type-btn active" id="typeExpense" data-type="expense">Expense</button>
+      <button class="type-btn" id="typeIncome" data-type="income">Income</button>
+    </div>
+
+    <label class="modal-field-label" for="txnTitle">Title *</label>
+    <div class="modal-field-wrap">
+      <input type="text" id="txnTitle" class="modal-input" placeholder="e.g. Rent, Salary, Groceries" autocomplete="off" />
+    </div>
+
+    <label class="modal-field-label" for="txnAmount">Amount *</label>
+    <div class="modal-field-wrap">
+      <span class="modal-currency">₹</span>
+      <input type="number" id="txnAmount" class="modal-input" placeholder="0.00" min="1" step="0.01" />
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px;">
+      <div>
+        <label class="modal-field-label" for="txnCategory">Category</label>
+        <select id="txnCategory" class="modal-select">
+          <option value="other">Category (optional)</option>
+          {% for val, label in categories %}
+          <option value="{{ val }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="modal-field-label" for="txnDate">Date</label>
+        <input type="date" id="txnDate" class="modal-select" value="{{ today }}" />
+      </div>
+    </div>
+
+    <p class="modal-error" id="txnError"></p>
+    <button class="modal-save-btn" id="txnSave">Add Transaction</button>
+  </div>
+</div>
+
+<!-- ── Chart data from Django ──────────────────────────── -->
+<script>
+  const CHART_DATA = {{ chart_months|safe }};
+</script>
+
+<script>
+  const modal      = document.getElementById('salaryModal');
+  const openBtn    = document.getElementById('setSalaryBtn');
+  const closeBtn   = document.getElementById('modalClose');
+  const saveBtn    = document.getElementById('modalSave');
+  const input      = document.getElementById('salaryInput');
+  const errorEl    = document.getElementById('salaryError');
+
+  function openModal()  { modal.classList.add('active'); input.focus(); }
+  function closeModal() { modal.classList.remove('active'); errorEl.textContent = ''; }
+
+  openBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+  });
+
+  saveBtn.addEventListener('click', async () => {
+    const val = input.value.trim();
+    if (!val || isNaN(val) || parseFloat(val) < 0) {
+      errorEl.textContent = 'Please enter a valid salary amount.';
+      return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    errorEl.textContent = '';
+
+    try {
+      const res = await fetch('/api/salary/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify({ salary: parseFloat(val) }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        // Update badge in header
+        const badge = document.querySelector('.salary-badge');
+        const formatted = '₹' + parseFloat(data.salary).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        if (badge) {
+          badge.textContent = 'Salary: ₹' + formatted.replace('₹', '');
+        } else {
+          const newBadge = document.createElement('span');
+          newBadge.className = 'salary-badge';
+          newBadge.textContent = 'Salary: ' + formatted;
+          openBtn.parentElement.insertBefore(newBadge, openBtn);
+        }
+        openBtn.textContent = 'Edit Salary';
+        closeModal();
+      } else {
+        errorEl.textContent = data.error || 'Something went wrong.';
+      }
+    } catch (err) {
+      errorEl.textContent = 'Network error. Please try again.';
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Salary';
+    }
+  });
+  // ── Add Expense button (below tiles) ─────────────────
+  const addExpenseBtn = document.getElementById('addExpenseBtn');
+  if (addExpenseBtn) {
+    addExpenseBtn.addEventListener('click', () => {
+      // Pre-select expense type
+      document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('typeExpense').classList.add('active');
+      activeType = 'expense';
+      openTxnModal();
+    });
+  }
+
+  // ── Filter tabs ────────────────────────────────────────
+  const today = new Date();
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const filter = tab.dataset.filter;
+      filterExpenseCards(filter);
+    });
+  });
+
+  function filterExpenseCards(filter) {
+    const cards = document.querySelectorAll('.expense-card');
+    const now   = new Date();
+    cards.forEach(card => {
+      const cardDate = new Date(card.dataset.date);
+      let show = true;
+      if (filter === 'today') {
+        show = cardDate.toDateString() === now.toDateString();
+      } else if (filter === 'week') {
+        const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 6);
+        show = cardDate >= weekAgo;
+      } else if (filter === 'month') {
+        show = cardDate.getMonth() === now.getMonth() && cardDate.getFullYear() === now.getFullYear();
+      } else if (filter === 'year') {
+        show = cardDate.getFullYear() === now.getFullYear();
+      }
+      card.style.display = show ? '' : 'none';
+    });
+  }
+
+  // ── Sparkline chart ────────────────────────────────────
+  function renderSparkline(data) {
+    const svg = document.getElementById('sparkSvg');
+    if (!svg) return;
+    [...svg.querySelectorAll('path,circle,line')].forEach(el => el.remove());
+
+    const W = 600, H = 100, PAD = 8;
+    const maxExp  = Math.max(...data.map(d => d.expense), 1);
+    const maxSave = Math.max(...data.map(d => d.saved), 1);
+    const maxVal  = Math.max(maxExp, maxSave);
+    const step    = W / (data.length - 1 || 1);
+
+    const expPts  = data.map((d, i) => ({ x: i * step, y: H - PAD - (d.expense / maxVal) * (H - PAD * 2) }));
+    const savePts = data.map((d, i) => ({ x: i * step, y: H - PAD - (d.saved   / maxVal) * (H - PAD * 2) }));
+
+    function makePath(pts) {
+      if (pts.length < 2) return '';
+      let d = `M${pts[0].x},${pts[0].y}`;
+      for (let i = 1; i < pts.length; i++) {
+        const cpx = (pts[i-1].x + pts[i].x) / 2;
+        d += ` C${cpx},${pts[i-1].y} ${cpx},${pts[i].y} ${pts[i].x},${pts[i].y}`;
+      }
+      return d;
+    }
+
+    const expPath  = makePath(expPts);
+    const savePath = makePath(savePts);
+
+    // Expense area + line
+    if (expPath) {
+      const area = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      area.setAttribute('d', expPath + ` L${expPts[expPts.length-1].x},${H} L0,${H} Z`);
+      area.setAttribute('fill', 'url(#expSparkGrad)');
+      svg.appendChild(area);
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      line.setAttribute('d', expPath);
+      line.setAttribute('fill', 'none');
+      line.setAttribute('stroke', '#ff6b6b');
+      line.setAttribute('stroke-width', '2');
+      line.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(line);
+    }
+
+    // Saved area + line
+    if (savePath) {
+      const area2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      area2.setAttribute('d', savePath + ` L${savePts[savePts.length-1].x},${H} L0,${H} Z`);
+      area2.setAttribute('fill', 'url(#savedSparkGrad)');
+      svg.appendChild(area2);
+
+      const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      line2.setAttribute('d', savePath);
+      line2.setAttribute('fill', 'none');
+      line2.setAttribute('stroke', '#34d399');
+      line2.setAttribute('stroke-width', '2');
+      line2.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(line2);
+    }
+
+    // Dots at last point
+    if (expPts.length) {
+      const last = expPts[expPts.length - 1];
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('cx', last.x); dot.setAttribute('cy', last.y);
+      dot.setAttribute('r', 4); dot.setAttribute('fill', '#ff6b6b');
+      svg.appendChild(dot);
+    }
+    if (savePts.length) {
+      const last = savePts[savePts.length - 1];
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('cx', last.x); dot.setAttribute('cy', last.y);
+      dot.setAttribute('r', 4); dot.setAttribute('fill', '#34d399');
+      svg.appendChild(dot);
+    }
+  }
+
+  renderSparkline(CHART_DATA);
+
+  // ── Chart rendering ───────────────────────────────────
+  function renderChart(data) {
+    const svg    = document.getElementById('overviewSvg');
+    const W = 680, H = 230, PAD = 10, BAR_W = 54, GAP_W = 40, SLOT = Math.floor(W / data.length);
+    const maxVal = Math.max(...data.map(d => Math.max(d.saved, d.expense)), 1);
+
+    // Clear existing bars/lines (keep defs)
+    [...svg.querySelectorAll('rect,line,path,circle')].forEach(el => el.remove());
+
+    // Grid lines
+    [0.25, 0.5, 0.75, 1].forEach(f => {
+      const y = H - f * (H - PAD);
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', 0); line.setAttribute('x2', W);
+      line.setAttribute('y1', y); line.setAttribute('y2', y);
+      line.setAttribute('stroke', 'rgba(0,0,0,0.04)'); line.setAttribute('stroke-width', '1');
+      svg.appendChild(line);
+    });
+
+    const savedDots = [];
+
+    data.forEach((m, i) => {
+      const cx    = i * SLOT + SLOT / 2;
+      const sH    = Math.max((m.saved   / maxVal) * (H - PAD - 10), 2);
+      const eH    = Math.max((m.expense / maxVal) * (H - PAD - 10), 2);
+      const sX    = cx - BAR_W / 2 - GAP_W / 2 - 2;
+      const eX    = cx + 2;
+
+      // Saved bar
+      const sRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      sRect.setAttribute('x', sX); sRect.setAttribute('y', H - sH);
+      sRect.setAttribute('width', BAR_W); sRect.setAttribute('height', sH);
+      sRect.setAttribute('rx', 8); sRect.setAttribute('fill', 'url(#savedG)');
+      svg.appendChild(sRect);
+
+      // Expense bar
+      const eRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      eRect.setAttribute('x', eX); eRect.setAttribute('y', H - eH);
+      eRect.setAttribute('width', GAP_W); eRect.setAttribute('height', eH);
+      eRect.setAttribute('rx', 8); eRect.setAttribute('fill', 'url(#expG2)');
+      svg.appendChild(eRect);
+
+      savedDots.push({ x: cx - GAP_W / 2, y: H - sH });
+    });
+
+    // Trend line
+    if (savedDots.length > 1) {
+      let d = `M${savedDots[0].x},${savedDots[0].y}`;
+      for (let i = 1; i < savedDots.length; i++) {
+        const cp1x = (savedDots[i-1].x + savedDots[i].x) / 2;
+        d += ` C${cp1x},${savedDots[i-1].y} ${cp1x},${savedDots[i].y} ${savedDots[i].x},${savedDots[i].y}`;
+      }
+      const area = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      area.setAttribute('d', d + ` L${savedDots[savedDots.length-1].x},${H} L${savedDots[0].x},${H} Z`);
+      area.setAttribute('fill', 'url(#areaG2)');
+      svg.appendChild(area);
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      line.setAttribute('d', d);
+      line.setAttribute('fill', 'none'); line.setAttribute('stroke', '#34d399');
+      line.setAttribute('stroke-width', '2.5'); line.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(line);
+
+      savedDots.forEach((pt, i) => {
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('cx', pt.x); c.setAttribute('cy', pt.y);
+        c.setAttribute('r', i === savedDots.length - 2 ? 7 : 4.5);
+        c.setAttribute('fill', i === savedDots.length - 2 ? '#34d399' : '#fff');
+        c.setAttribute('stroke', '#34d399'); c.setAttribute('stroke-width', '2.5');
+        svg.appendChild(c);
+      });
+    }
+
+    // Y axis labels
+    const yAxis = document.getElementById('chartYAxis');
+    if (yAxis) {
+      const fmt = v => v >= 1000 ? '₹' + (v/1000).toFixed(0) + 'k' : '₹' + v;
+      yAxis.innerHTML = `<span>${fmt(Math.round(maxVal))}</span><span>${fmt(Math.round(maxVal*0.75))}</span><span>${fmt(Math.round(maxVal*0.5))}</span><span>${fmt(Math.round(maxVal*0.25))}</span><span>₹0</span>`;
+    }
+  }
+
+  renderChart(CHART_DATA);
+
+  // ── Add Transaction Modal ──────────────────────────────
+  const txnModal    = document.getElementById('txnModal');
+  const txnOpenBtn  = document.getElementById('addTxnBtn');
+  const txnClose    = document.getElementById('txnModalClose');
+  const txnSaveBtn  = document.getElementById('txnSave');
+  const txnError    = document.getElementById('txnError');
+  let   activeType  = 'expense';
+
+  document.querySelectorAll('.type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeType = btn.dataset.type;
+    });
+  });
+
+  function openTxnModal()  { txnModal.classList.add('active'); document.getElementById('txnTitle').focus(); }
+  function closeTxnModal() { txnModal.classList.remove('active'); txnError.textContent = ''; }
+
+  txnOpenBtn.addEventListener('click', openTxnModal);
+  txnClose.addEventListener('click', closeTxnModal);
+  txnModal.addEventListener('click', e => { if (e.target === txnModal) closeTxnModal(); });
+
+  txnSaveBtn.addEventListener('click', async () => {
+    const title    = document.getElementById('txnTitle').value.trim() || 'Untitled';
+    const amount   = parseFloat(document.getElementById('txnAmount').value) || 0;
+    const category = document.getElementById('txnCategory').value || 'other';
+    const date     = document.getElementById('txnDate').value || new Date().toISOString().split('T')[0];
+
+    txnSaveBtn.disabled = true; txnSaveBtn.textContent = 'Saving…'; txnError.textContent = '';
+
+    try {
+      const res  = await fetch('/api/transactions/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({ title, amount: +amount, txn_type: activeType, category, date }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        // Update balance cards
+        document.getElementById('totalBalance').textContent  = '₹' + data.total_income.toLocaleString('en-IN', {minimumFractionDigits:2});
+        document.getElementById('totalExpense').textContent  = '−₹' + data.total_expense.toLocaleString('en-IN', {minimumFractionDigits:2});
+        document.getElementById('totalSaved').textContent    = (data.total_saved >= 0 ? '+' : '') + '₹' + Math.abs(data.total_saved).toLocaleString('en-IN', {minimumFractionDigits:2});
+
+        // Add to transaction list
+        const list  = document.getElementById('txnList');
+        const empty = document.getElementById('txnEmpty');
+        if (empty) empty.remove();
+
+        const li = document.createElement('li');
+        li.className = 'txn-item'; li.id = 'txn-' + data.txn.id;
+        li.innerHTML = `
+          <div class="txn-icon" style="font-size:1rem;">${data.txn.icon}</div>
+          <div class="txn-info">
+            <span class="txn-name">${data.txn.title}</span>
+            <span class="txn-time">${data.txn.date}</span>
+          </div>
+          <span class="txn-amt ${data.txn.txn_type === 'expense' ? 'neg' : ''}">
+            ${data.txn.txn_type === 'income' ? '+' : '−'}₹${parseFloat(data.txn.amount).toLocaleString('en-IN', {minimumFractionDigits:2})}
+          </span>
+          <button class="txn-delete" onclick="deleteTransaction(${data.txn.id})" title="Delete">×</button>`;
+        list.prepend(li);
+
+        // Reset form
+        document.getElementById('txnTitle').value = '';
+        document.getElementById('txnAmount').value = '';
+        closeTxnModal();
+        location.reload(); // reload to refresh chart + tiles
+      } else {
+        txnError.textContent = data.error || 'Something went wrong.';
+      }
+    } catch (err) {
+      txnError.textContent = 'Network error.';
+    } finally {
+      txnSaveBtn.disabled = false; txnSaveBtn.textContent = 'Add Transaction';
+    }
+  });
+
+  // ── Delete transaction ─────────────────────────────────
+  async function deleteTransaction(id) {
+    if (!confirm('Delete this transaction?')) return;
+    try {
+      const res = await fetch(`/api/transactions/${id}/delete/`, {
+        method: 'DELETE',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+      });
+      if (res.ok) {
+        document.getElementById('txn-' + id)?.remove();
+        location.reload();
+      }
+    } catch (e) { alert('Error deleting transaction.'); }
+  }
+
+  // ── Target Savings Modal ──────────────────────────────
+  const targetModal   = document.getElementById('targetModal');
+  const targetOpenBtn = document.getElementById('setTargetBtn');
+  const targetClose   = document.getElementById('targetModalClose');
+  const targetSave    = document.getElementById('targetSave');
+  const targetInput   = document.getElementById('targetInput');
+  const targetError   = document.getElementById('targetError');
+  const CIRC          = 263.9;
+
+  function openTargetModal()  { targetModal.classList.add('active'); targetInput.focus(); }
+  function closeTargetModal() { targetModal.classList.remove('active'); targetError.textContent = ''; }
+
+  targetOpenBtn.addEventListener('click', openTargetModal);
+  targetClose.addEventListener('click', closeTargetModal);
+  targetModal.addEventListener('click', (e) => { if (e.target === targetModal) closeTargetModal(); });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeTargetModal(); closeTxnModal(); closeModal(); }
+  });
+
+  targetSave.addEventListener('click', async () => {
+    const val = targetInput.value.trim();
+    if (!val || isNaN(val) || parseFloat(val) <= 0) {
+      targetError.textContent = 'Please enter a valid target amount.';
+      return;
+    }
+    targetSave.disabled = true; targetSave.textContent = 'Saving…'; targetError.textContent = '';
+    try {
+      const res  = await fetch('/api/target-savings/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({ target_savings: parseFloat(val) }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        document.getElementById('targetDisplay').textContent = '₹' + parseFloat(data.target).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        document.getElementById('savingsPct').textContent = data.savings_pct + '%';
+        document.getElementById('targetProgressBar').style.width = data.savings_pct + '%';
+        const ring = document.getElementById('savingsRing');
+        ring.setAttribute('stroke-dasharray', data.ring_dash + ' ' + data.ring_gap);
+        targetOpenBtn.textContent = 'Edit';
+        closeTargetModal();
+      } else {
+        targetError.textContent = data.error || 'Something went wrong.';
+      }
+    } catch (err) {
+      targetError.textContent = 'Network error. Please try again.';
+    } finally {
+      targetSave.disabled = false; targetSave.textContent = 'Save Target';
+    }
+  });
+</script>
 </body>
 </html>

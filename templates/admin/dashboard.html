@@ -1,0 +1,405 @@
+{% extends "admin/base_site.html" %}
+{% block title %}SpendWise Analytics{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  /* ── Layout ─────────────────────────────────────────── */
+  .sw-dashboard { padding: 24px; font-family: -apple-system, "SF Pro Display", sans-serif; }
+
+  .sw-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .sw-stat-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px 22px;
+    border: 1px solid #e8e3f2;
+    box-shadow: 0 4px 16px rgba(100,80,180,0.07);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sw-stat-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .sw-stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    color: #1c1c1e;
+  }
+
+  .sw-stat-sub {
+    font-size: 0.76rem;
+    color: #8e8e93;
+  }
+
+  .sw-stat-card.green  .sw-stat-value { color: #30d158; }
+  .sw-stat-card.purple .sw-stat-value { color: #5e5ce6; }
+  .sw-stat-card.red    .sw-stat-value { color: #ff453a; }
+  .sw-stat-card.blue   .sw-stat-value { color: #0a84ff; }
+
+  /* ── Chart grid ─────────────────────────────────────── */
+  .sw-chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .sw-chart-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px 22px;
+    border: 1px solid #e8e3f2;
+    box-shadow: 0 4px 16px rgba(100,80,180,0.07);
+  }
+
+  .sw-chart-card.full { grid-column: span 2; }
+
+  .sw-chart-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1c1c1e;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+  }
+
+  .sw-chart-wrap { position: relative; height: 220px; }
+
+  /* ── Tables ─────────────────────────────────────────── */
+  .sw-table-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .sw-table-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px 22px;
+    border: 1px solid #e8e3f2;
+    box-shadow: 0 4px 16px rgba(100,80,180,0.07);
+  }
+
+  .sw-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+  }
+
+  .sw-table th {
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0 0 10px;
+    border-bottom: 1px solid #f0edf6;
+  }
+
+  .sw-table td {
+    padding: 10px 0;
+    border-bottom: 1px solid #f8f6fc;
+    color: #1c1c1e;
+    font-weight: 500;
+  }
+
+  .sw-table tr:last-child td { border-bottom: none; }
+
+  .sw-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.70rem;
+    font-weight: 700;
+  }
+
+  .sw-badge.green  { background: #dcfce7; color: #16a34a; }
+  .sw-badge.purple { background: #ede9ff; color: #5e5ce6; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sw-dashboard">
+
+  <!-- ── Stat cards ──────────────────────────────────── -->
+  <div class="sw-stat-grid">
+    <div class="sw-stat-card blue">
+      <span class="sw-stat-label">Total Users</span>
+      <span class="sw-stat-value">{{ total_users }}</span>
+      <span class="sw-stat-sub">{{ new_this_week }} joined this week</span>
+    </div>
+    <div class="sw-stat-card green">
+      <span class="sw-stat-label">Active This Month</span>
+      <span class="sw-stat-value">{{ active_users }}</span>
+      <span class="sw-stat-sub">Users with transactions</span>
+    </div>
+    <div class="sw-stat-card purple">
+      <span class="sw-stat-label">Total Transactions</span>
+      <span class="sw-stat-value">{{ total_txns }}</span>
+      <span class="sw-stat-sub">All time</span>
+    </div>
+    <div class="sw-stat-card">
+      <span class="sw-stat-label">Salary Set</span>
+      <span class="sw-stat-value">{{ users_with_salary }}</span>
+      <span class="sw-stat-sub">Users with salary configured</span>
+    </div>
+  </div>
+
+  <!-- ── Charts row 1 ────────────────────────────────── -->
+  <div class="sw-chart-grid">
+
+    <!-- Users enrolled per day -->
+    <div class="sw-chart-card">
+      <p class="sw-chart-title">👥 Users Enrolled — Last 30 Days</p>
+      <div class="sw-chart-wrap">
+        <canvas id="enrollChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Transactions per day -->
+    <div class="sw-chart-card">
+      <p class="sw-chart-title">💳 Transactions — Last 30 Days</p>
+      <div class="sw-chart-wrap">
+        <canvas id="txnChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Income vs Expense per month -->
+    <div class="sw-chart-card full">
+      <p class="sw-chart-title">📊 Income vs Expenses — Last 6 Months</p>
+      <div class="sw-chart-wrap" style="height:260px;">
+        <canvas id="monthlyChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Category breakdown -->
+    <div class="sw-chart-card">
+      <p class="sw-chart-title">🗂️ Spending by Category</p>
+      <div class="sw-chart-wrap">
+        <canvas id="catChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Income vs Expense donut -->
+    <div class="sw-chart-card">
+      <p class="sw-chart-title">💰 Total Income vs Expenses</p>
+      <div class="sw-chart-wrap">
+        <canvas id="donutChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Tables ──────────────────────────────────────── -->
+  <div class="sw-table-grid">
+
+    <!-- Top spenders -->
+    <div class="sw-table-card">
+      <p class="sw-chart-title">🏆 Top 5 Spenders</p>
+      <table class="sw-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Total Spent</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in top_users %}
+          <tr>
+            <td>{{ u.user__username }}</td>
+            <td style="color:#8e8e93;">{{ u.user__email }}</td>
+            <td><span class="sw-badge red" style="background:#fee2e2;color:#dc2626;">₹{{ u.total|floatformat:2 }}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="color:#8e8e93;text-align:center;padding:20px;">No data yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Recent signups -->
+    <div class="sw-table-card">
+      <p class="sw-chart-title">🆕 Recent Signups</p>
+      <table class="sw-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in recent_users %}
+          <tr>
+            <td>{{ u.get_full_name|default:u.username }}</td>
+            <td style="color:#8e8e93;">{{ u.email }}</td>
+            <td><span class="sw-badge purple">{{ u.date_joined|date:"M d, Y" }}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="color:#8e8e93;text-align:center;padding:20px;">No users yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const ENROLL_LABELS  = {{ enroll_labels|safe }};
+const ENROLL_DATA    = {{ enroll_data|safe }};
+const TXN_LABELS     = {{ txn_labels|safe }};
+const TXN_DATA       = {{ txn_data|safe }};
+const MONTHLY_LABELS = {{ monthly_labels|safe }};
+const MONTHLY_INC    = {{ monthly_income|safe }};
+const MONTHLY_EXP    = {{ monthly_expense|safe }};
+const CAT_LABELS     = {{ cat_labels|safe }};
+const CAT_DATA       = {{ cat_data|safe }};
+const TOTAL_INC      = {{ total_income }};
+const TOTAL_EXP      = {{ total_expense }};
+
+const DEFAULTS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+};
+
+// ── Users enrolled line chart ──────────────────────────
+new Chart(document.getElementById('enrollChart'), {
+  type: 'line',
+  data: {
+    labels: ENROLL_LABELS,
+    datasets: [{
+      data: ENROLL_DATA,
+      borderColor: '#5e5ce6',
+      backgroundColor: 'rgba(94,92,230,0.10)',
+      fill: true,
+      tension: 0.4,
+      pointRadius: 3,
+      pointBackgroundColor: '#5e5ce6',
+      borderWidth: 2,
+    }]
+  },
+  options: {
+    ...DEFAULTS,
+    scales: {
+      x: { ticks: { maxTicksLimit: 8, font: { size: 10 } }, grid: { display: false } },
+      y: { ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' }, beginAtZero: true },
+    }
+  }
+});
+
+// ── Transactions per day bar chart ─────────────────────
+new Chart(document.getElementById('txnChart'), {
+  type: 'bar',
+  data: {
+    labels: TXN_LABELS,
+    datasets: [{
+      data: TXN_DATA,
+      backgroundColor: 'rgba(52,211,153,0.55)',
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    ...DEFAULTS,
+    scales: {
+      x: { ticks: { maxTicksLimit: 8, font: { size: 10 } }, grid: { display: false } },
+      y: { ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' }, beginAtZero: true },
+    }
+  }
+});
+
+// ── Monthly income vs expense grouped bar ──────────────
+new Chart(document.getElementById('monthlyChart'), {
+  type: 'bar',
+  data: {
+    labels: MONTHLY_LABELS,
+    datasets: [
+      {
+        label: 'Income',
+        data: MONTHLY_INC,
+        backgroundColor: 'rgba(52,211,153,0.65)',
+        borderRadius: 8,
+        borderSkipped: false,
+      },
+      {
+        label: 'Expenses',
+        data: MONTHLY_EXP,
+        backgroundColor: 'rgba(167,139,250,0.65)',
+        borderRadius: 8,
+        borderSkipped: false,
+      }
+    ]
+  },
+  options: {
+    ...DEFAULTS,
+    plugins: { legend: { display: true, position: 'top', labels: { font: { size: 11 } } } },
+    scales: {
+      x: { ticks: { font: { size: 11 } }, grid: { display: false } },
+      y: { ticks: { font: { size: 11 }, callback: v => '₹' + v.toLocaleString('en-IN') }, grid: { color: 'rgba(0,0,0,0.04)' }, beginAtZero: true },
+    }
+  }
+});
+
+// ── Category doughnut ──────────────────────────────────
+const CAT_COLORS = ['#67e8f9','#c4b5fd','#bbf7d0','#fde68a','#fca5a5','#fdba74','#a5f3fc','#d9f99d','#e2e8f0'];
+new Chart(document.getElementById('catChart'), {
+  type: 'doughnut',
+  data: {
+    labels: CAT_LABELS,
+    datasets: [{
+      data: CAT_DATA,
+      backgroundColor: CAT_COLORS,
+      borderWidth: 2,
+      borderColor: '#fff',
+    }]
+  },
+  options: {
+    ...DEFAULTS,
+    plugins: {
+      legend: { display: true, position: 'right', labels: { font: { size: 11 }, boxWidth: 12 } }
+    },
+    cutout: '60%',
+  }
+});
+
+// ── Income vs Expense donut ────────────────────────────
+new Chart(document.getElementById('donutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Income', 'Expenses'],
+    datasets: [{
+      data: [TOTAL_INC, TOTAL_EXP],
+      backgroundColor: ['rgba(52,211,153,0.75)', 'rgba(167,139,250,0.75)'],
+      borderWidth: 2,
+      borderColor: '#fff',
+    }]
+  },
+  options: {
+    ...DEFAULTS,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { font: { size: 12 }, boxWidth: 14 } }
+    },
+    cutout: '65%',
+  }
+});
+</script>
+{% endblock %}

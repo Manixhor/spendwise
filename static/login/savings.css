@@ -1,0 +1,384 @@
+/* ── Savings Goals Page ──────────────────────────────────── */
+
+.sv-main { gap: 18px; }
+
+.sv-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+/* ── Add Goal button ────────────────────────────────────── */
+.add-goal-btn {
+  height: 38px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #6e6cf0 0%, #5e5ce6 100%);
+  color: #fff;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(94,92,230,0.32), 0 1px 0 rgba(255,255,255,0.2) inset;
+  transition: opacity 0.18s, transform 0.15s;
+  white-space: nowrap;
+}
+.add-goal-btn:hover { opacity: 0.90; transform: translateY(-1px); }
+
+/* ── Summary row ────────────────────────────────────────── */
+.sv-summary-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.sv-summary-card { padding: 20px 22px; }
+
+.sv-summary-amount {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  margin: 8px 0 4px;
+}
+
+.sv-summary-sub {
+  font-size: 0.76rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.sv-monthly {
+  background:
+    radial-gradient(ellipse at 80% 10%, rgba(48,209,88,0.15) 0%, transparent 60%),
+    var(--glass);
+}
+
+.sv-goals-summary {
+  background:
+    radial-gradient(ellipse at 80% 10%, rgba(94,92,230,0.12) 0%, transparent 60%),
+    var(--glass);
+}
+
+/* ── Goals grid ─────────────────────────────────────────── */
+.sv-goals-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* ── Goal card ──────────────────────────────────────────── */
+.sv-goal-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, var(--shadow-md);
+  backdrop-filter: blur(20px) saturate(1.6);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.sv-goal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, var(--shadow-lg);
+}
+
+/* Top row */
+.sv-goal-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sv-goal-icon {
+  font-size: 1.4rem;
+  width: 42px; height: 42px;
+  background: var(--accent-lt);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.sv-goal-name-wrap { flex: 1; }
+
+.sv-goal-name {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+}
+
+.sv-complete-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: rgba(48,209,88,0.12);
+  color: #1a7a4a;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-top: 3px;
+  display: inline-block;
+}
+
+.sv-goal-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.sv-action-btn {
+  width: 30px; height: 30px;
+  border: none;
+  background: rgba(0,0,0,0.04);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s;
+}
+.sv-action-btn:hover { background: rgba(0,0,0,0.10); }
+.sv-delete-btn:hover { background: rgba(255,69,58,0.12); }
+
+/* Body: ring + amounts */
+.sv-goal-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sv-ring-wrap {
+  position: relative;
+  width: 80px; height: 80px;
+  flex-shrink: 0;
+}
+
+.sv-ring { width: 80px; height: 80px; }
+
+.sv-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sv-ring-pct {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.03em;
+}
+
+.sv-goal-amounts {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sv-amt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sv-amt-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.sv-amt-val {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.sv-progress-track {
+  height: 6px;
+  background: rgba(94,92,230,0.10);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.sv-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6e6cf0, #a78bfa);
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+.sv-fill-complete { background: linear-gradient(90deg, #30d158, #22c55e); }
+
+.sv-remaining {
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Contribute button */
+.sv-contribute-btn {
+  width: 100%;
+  height: 42px;
+  border: none;
+  border-radius: 12px;
+  background: var(--accent-lt);
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+  letter-spacing: -0.02em;
+}
+.sv-contribute-btn:hover { background: rgba(94,92,230,0.20); transform: translateY(-1px); }
+
+/* ── Empty state ────────────────────────────────────────── */
+.sv-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.sv-empty-icon { font-size: 3rem; }
+
+.sv-empty-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+}
+
+.sv-empty-sub {
+  font-size: 0.84rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+/* ── Right panel stats ──────────────────────────────────── */
+.sv-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sv-stat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.sv-stat-label {
+  font-size: 0.76rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.sv-stat-val {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 1280px) {
+  .sv-goals-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .sv-summary-row { grid-template-columns: 1fr; }
+  .sv-goals-grid  { grid-template-columns: 1fr; }
+}
+
+/* ── Monthly savings banner ─────────────────────────────── */
+.sv-monthly-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 26px;
+  background:
+    radial-gradient(ellipse at 80% 10%, rgba(48,209,88,0.14) 0%, transparent 60%),
+    var(--glass);
+}
+
+.sv-banner-left { display: flex; flex-direction: column; gap: 4px; }
+
+.sv-banner-amount {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  margin: 6px 0 4px;
+}
+
+.sv-banner-sub {
+  font-size: 0.76rem;
+  color: var(--muted);
+  max-width: 340px;
+  line-height: 1.5;
+}
+
+.sv-banner-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.sv-banner-icon { font-size: 2.2rem; }
+
+.sv-banner-count {
+  font-size: 0.80rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* ── How it works ───────────────────────────────────────── */
+.sv-howto {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.sv-howto-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.sv-howto-num {
+  width: 24px; height: 24px;
+  background: var(--accent-lt);
+  color: var(--accent);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.sv-howto-step p {
+  font-size: 0.80rem;
+  color: var(--sub);
+  line-height: 1.5;
+}

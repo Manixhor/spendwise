@@ -1,0 +1,562 @@
+/* ── Monthly Analysis Page ──────────────────────────────── */
+
+.monthly-main { gap: 16px; }
+
+.monthly-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+/* ── Month selector ─────────────────────────────────────── */
+.month-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px 14px;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-sm);
+}
+
+.month-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.month-btn:hover { color: var(--ink); }
+
+.month-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  min-width: 120px;
+  text-align: center;
+}
+
+/* ── Top row ────────────────────────────────────────────── */
+.ma-top-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
+
+/* Account card */
+.ma-account-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+}
+
+.ma-account-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ma-account-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fde68a, #f59e0b);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 3px 10px rgba(245,158,11,0.25);
+}
+
+.ma-account-icon svg {
+  width: 20px; height: 20px;
+  stroke: #fff;
+}
+
+.ma-account-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.ma-account-sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.ma-week-badge {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--glass);
+  border: 1px solid var(--border-sub);
+  border-radius: 8px;
+  padding: 5px 12px;
+}
+
+/* Balance card */
+.ma-balance-card { padding: 16px 20px; }
+
+.ma-balance-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.ma-balance-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.ma-balance-amount {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  color: var(--ink);
+}
+
+.ma-balance-change {
+  font-size: 0.80rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(48,209,88,0.12);
+}
+
+.ma-balance-date {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* Stats card */
+.ma-stats-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 16px 18px;
+  gap: 0;
+}
+
+.ma-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ma-stat-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ma-stat-val {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.ma-stat-val.accent { color: var(--accent); }
+
+.ma-stat-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--border-sub);
+}
+
+/* ── Mid row ────────────────────────────────────────────── */
+.ma-mid-row {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 14px;
+}
+
+/* Bar chart card */
+.ma-chart-card { padding: 18px 20px 12px; }
+
+.ma-chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.ma-chart-sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.ma-chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.ma-chart-wrap {
+  display: flex;
+  gap: 8px;
+}
+
+.ma-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 0.64rem;
+  color: var(--muted);
+  min-width: 30px;
+  text-align: right;
+  padding-bottom: 24px;
+}
+
+.ma-bars-wrap { flex: 1; }
+
+.ma-bar-svg {
+  width: 100%;
+  height: 220px;
+  display: block;
+}
+
+.ma-x-axis {
+  display: flex;
+  justify-content: space-around;
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 6px;
+  padding-left: 4px;
+}
+
+.ma-refresh {
+  font-size: 0.70rem;
+  color: var(--muted);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Category breakdown card */
+.ma-breakdown-card { padding: 18px 18px; }
+
+.ma-cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.ma-cat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ma-cat-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.ma-cat-icon svg { width: 16px; height: 16px; }
+
+.ma-cat-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ma-cat-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.ma-cat-bar-track {
+  height: 5px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.ma-cat-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+.ma-cat-amt {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+}
+
+/* ── Bottom row ─────────────────────────────────────────── */
+.ma-bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
+
+/* Reminder card */
+.ma-reminder-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background:
+    radial-gradient(ellipse at 80% 20%, rgba(94,92,230,0.15) 0%, transparent 60%),
+    rgba(237,233,255,0.80);
+  border: 1px solid rgba(94,92,230,0.18);
+  padding: 16px 18px;
+}
+
+.ma-reminder-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.ma-reminder-text { flex: 1; }
+
+.ma-reminder-title {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
+
+.ma-reminder-sub {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+.ma-reminder-btn {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(94,92,230,0.10);
+  border: 1px solid rgba(94,92,230,0.20);
+  transition: background 0.15s;
+}
+.ma-reminder-btn:hover { background: rgba(94,92,230,0.18); }
+
+/* Wealth card */
+.ma-wealth-card { padding: 18px 20px; }
+
+.ma-wealth-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ma-wealth-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+  flex: 1;
+}
+
+.ma-wealth-badge {
+  font-size: 0.64rem;
+  font-weight: 800;
+  background: #fde68a;
+  color: #78350f;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.06em;
+}
+
+.ma-wealth-amount {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ma-wealth-cta {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+
+.ma-wealth-bar-track {
+  height: 6px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.ma-wealth-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  border-radius: 99px;
+}
+
+.ma-wealth-sub {
+  font-size: 0.70rem;
+  color: var(--muted);
+}
+
+/* Donut card */
+.ma-donut-card { padding: 18px 18px; }
+
+.ma-donut-wrap {
+  position: relative;
+  width: 120px; height: 120px;
+  margin: 14px auto 10px;
+}
+
+.ma-donut-svg { width: 120px; height: 120px; }
+
+.ma-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ma-donut-total {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+}
+
+.ma-donut-sub {
+  font-size: 0.60rem;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.ma-donut-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 10px;
+  margin-top: 8px;
+}
+
+.ma-donut-legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  color: var(--sub);
+}
+
+.ma-donut-legend i {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ── Monthly score (right panel) ────────────────────────── */
+.ma-score-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.ma-score-ring-wrap {
+  position: relative;
+  width: 72px; height: 72px;
+  flex-shrink: 0;
+}
+
+.ma-score-ring { width: 72px; height: 72px; }
+
+.ma-score-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ma-score-num {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.ma-score-label {
+  font-size: 0.58rem;
+  color: var(--muted);
+}
+
+.ma-score-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.ma-score-desc {
+  font-size: 0.74rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 1280px) {
+  .ma-top-row    { grid-template-columns: 1fr 1fr; }
+  .ma-stats-card { grid-column: span 2; }
+  .ma-bottom-row { grid-template-columns: 1fr 1fr; }
+  .ma-donut-card { grid-column: span 2; }
+}
+
+@media (max-width: 1024px) {
+  .ma-mid-row    { grid-template-columns: 1fr; }
+  .ma-bottom-row { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 768px) {
+  .ma-top-row    { grid-template-columns: 1fr; }
+  .ma-stats-card { grid-column: span 1; }
+  .ma-bottom-row { grid-template-columns: 1fr; }
+  .ma-donut-card { grid-column: span 1; }
+  .month-selector { padding: 4px 10px; }
+}
