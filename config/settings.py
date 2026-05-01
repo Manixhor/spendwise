@@ -25,12 +25,19 @@ SECRET_KEY = 'django-insecure-dbr@s354m68v)cd&tsl0z5u-r$35dg)t*uc5*#t9)p%a=gvj0g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver", ".ngrok-free.app", ".ngrok.io"]
+
+# Allow ngrok forwarded headers
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.ngrok-free.app",
+    "https://*.ngrok.io",
+]
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    "unfold",            
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -51,6 +58,12 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'config.urls'
+
+UNFOLD = {
+    "SITE_TITLE": "My Admin",
+    "SITE_HEADER": "My Dashboard",
+    "SITE_SYMBOL": "dashboard",
+}
 
 TEMPLATES = [
     {
