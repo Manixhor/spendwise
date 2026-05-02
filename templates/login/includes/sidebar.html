@@ -36,4 +36,50 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     </a>
   </nav>
+  <div class="sidebar-theme" role="group" aria-label="Theme">
+    <button class="theme-btn" type="button" data-theme-value="light" aria-label="Light mode" title="Light mode">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.5"/>
+        <path d="M12 2.5v2.2M12 19.3v2.2M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6"/>
+      </svg>
+      <span class="sr-only">Light</span>
+    </button>
+    <button class="theme-btn" type="button" data-theme-value="dark" aria-label="Dark mode" title="Dark mode">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <path d="M20 15.2A8.5 8.5 0 1 1 8.8 4a7 7 0 0 0 11.2 11.2Z"/>
+      </svg>
+      <span class="sr-only">Dark</span>
+    </button>
+  </div>
 </aside>
+<script>
+  (() => {
+    const storageKey = 'spendwise-theme';
+    const body = document.body;
+    const buttons = document.querySelectorAll('.theme-btn');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    function updateButtons(theme) {
+      buttons.forEach((button) => {
+        const isActive = button.dataset.themeValue === theme;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+      });
+    }
+
+    function applyTheme(theme, persist = true) {
+      body.setAttribute('data-theme', theme);
+      updateButtons(theme);
+      if (persist) {
+        window.localStorage.setItem(storageKey, theme);
+      }
+    }
+
+    const savedTheme = window.localStorage.getItem(storageKey);
+    applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'), false);
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => applyTheme(button.dataset.themeValue));
+    });
+  })();
+</script>

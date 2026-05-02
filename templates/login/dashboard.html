@@ -50,43 +50,23 @@
       <!-- Insights card -->
       <div class="card insights-card">
         <div class="ig-top">
-          <span class="ig-title">Insights</span>
-          <a href="#" class="card-link">Read all</a>
+          <div class="insight-stock-meta">
+            <span class="insight-stock-symbol" id="insightStockSymbol">{{ insight_stock.symbol }}</span>
+            <span class="insight-stock-sub" id="insightStockSubtitle">{{ insight_stock.subtitle }}</span>
+          </div>
+          <span class="insight-stock-badge">Live</span>
         </div>
         <div class="insights-body">
-          <!-- Large donut chart -->
-          <div class="donut-wrap">
-            <svg viewBox="0 0 120 120" class="donut" aria-hidden="true">
-              <!-- Track -->
-              <circle cx="60" cy="60" r="46" fill="none" stroke="#f0edf6" stroke-width="14"/>
-              <!-- Blue segment ~30% -->
-              <circle cx="60" cy="60" r="46" fill="none" stroke="#93c5fd" stroke-width="14"
-                stroke-dasharray="86.7 202.1" stroke-dashoffset="0"
-                stroke-linecap="round" transform="rotate(-90 60 60)"/>
-              <!-- Pink segment ~18% -->
-              <circle cx="60" cy="60" r="46" fill="none" stroke="#fca5a5" stroke-width="14"
-                stroke-dasharray="52.0 236.8" stroke-dashoffset="-86.7"
-                stroke-linecap="round" transform="rotate(-90 60 60)"/>
-              <!-- Orange segment ~12% -->
-              <circle cx="60" cy="60" r="46" fill="none" stroke="#fdba74" stroke-width="14"
-                stroke-dasharray="34.7 254.1" stroke-dashoffset="-138.7"
-                stroke-linecap="round" transform="rotate(-90 60 60)"/>
-              <!-- Green segment ~16% -->
-              <circle cx="60" cy="60" r="46" fill="none" stroke="#86efac" stroke-width="14"
-                stroke-dasharray="46.2 242.6" stroke-dashoffset="-173.4"
-                stroke-linecap="round" transform="rotate(-90 60 60)"/>
-              <!-- Purple segment ~24% -->
-              <circle cx="60" cy="60" r="46" fill="none" stroke="#d8b4fe" stroke-width="14"
-                stroke-dasharray="69.4 219.4" stroke-dashoffset="-219.6"
-                stroke-linecap="round" transform="rotate(-90 60 60)"/>
-            </svg>
-            <div class="donut-center-label">
-              <span class="donut-amount">₹2,453</span>
-            </div>
+          <div class="insight-stock-copy">
+            <span class="ig-title" id="insightStockTitle">{{ insight_stock.title }}</span>
+            <span class="insight-stock-amount" id="insightStockAmount">₹{{ insight_stock.amount|floatformat:2 }}</span>
+            <span class="insight-stock-change {% if insight_stock.is_up %}up{% else %}down{% endif %}" id="insightStockChange">
+              {% if insight_stock.is_up %}↑{% else %}↓{% endif %} {{ insight_stock.change_pct|floatformat:1 }}%
+            </span>
           </div>
-
-          <!-- Coach message -->
-          <p class="insights-text">{{ coach.message }}</p>
+          <div class="insight-stock-chart-wrap">
+            <svg viewBox="0 0 220 92" class="insight-stock-chart" id="insightStockChart" aria-label="Expense trend chart"></svg>
+          </div>
         </div>
       </div>
 
@@ -156,8 +136,8 @@
 
     <!-- Category tiles — dynamic -->
     <div class="tiles-row" id="categoryTiles">
-      {% if cat_data %}
-        {% for cat_key, cat in cat_data.items %}
+      {% if cat_tiles %}
+        {% for cat in cat_tiles %}
         <div class="tile" style="background:{{ cat.color }}20; border:1px solid {{ cat.color }}40;">
           <div class="tile-icon" style="background:{{ cat.color }}40;">
             <span style="font-size:1rem;">{{ cat.icon }}</span>
@@ -189,12 +169,7 @@
     <!-- ── Add Expense button + Filter row ──────────────── -->
     <div class="expense-action-row">
       <button class="add-expense-btn" type="button" id="addExpenseBtn">+ Add Expense</button>
-      <div class="filter-tabs" role="tablist" aria-label="Filter period">
-        <button class="filter-tab active" data-filter="month" role="tab">This Month</button>
-        <button class="filter-tab" data-filter="week" role="tab">This Week</button>
-        <button class="filter-tab" data-filter="today" role="tab">Today</button>
-        <button class="filter-tab" data-filter="year" role="tab">This Year</button>
-      </div>
+      <div class="filter-tabs" id="filterTabs" role="tablist" aria-label="Filter by date"></div>
     </div>
 
     <!-- ── Expense cards (stacked colored cards) ────────── -->
@@ -359,7 +334,7 @@
         <div class="st-info">
           <div class="st-row">
             <span class="st-label">Saved so far</span>
-            <span class="st-val positive">₹{{ demo_saved|floatformat:2 }}</span>
+            <span class="st-val {% if total_saved >= 0 %}positive{% else %}negative{% endif %}">₹{{ total_saved|floatformat:2 }}</span>
           </div>
           <div class="st-row">
             <span class="st-label">Target</span>
@@ -509,7 +484,7 @@
 
 <!-- ── Chart data from Django ──────────────────────────── -->
 <script>
-  const CHART_DATA = {{ chart_months|safe }};
+  let dashboardChartData = {{ chart_months|safe }};
 </script>
 
 <script>
@@ -566,6 +541,17 @@
           newBadge.textContent = 'Salary: ' + formatted;
           openBtn.parentElement.insertBefore(newBadge, openBtn);
         }
+        document.getElementById('totalBalance').textContent = formatCurrency(data.total_balance);
+        document.getElementById('totalSaved').textContent = formatCurrency(data.total_saved, { showPlus: true });
+        document.getElementById('savingsAmount').textContent = formatCurrency(data.total_saved, { showPlus: true });
+        if (Array.isArray(data.chart_months)) {
+          dashboardChartData = data.chart_months;
+          renderSparkline(dashboardChartData);
+          renderInsightStockChart(dashboardChartData);
+          renderChart(dashboardChartData);
+        }
+        renderInsightStockSummary(data.insight_stock);
+        renderCategoryTiles(data.cat_tiles);
         openBtn.textContent = 'Edit Salary';
         closeModal();
       } else {
@@ -592,34 +578,127 @@
 
   // ── Filter tabs ────────────────────────────────────────
   const today = new Date();
-  document.querySelectorAll('.filter-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      const filter = tab.dataset.filter;
-      filterExpenseCards(filter);
-    });
-  });
+  const filterTabs = document.getElementById('filterTabs');
+  const expenseDateCards = [...document.querySelectorAll('.expense-stack-card[data-date]')];
+  const availableExpenseDates = [...new Set(
+    expenseDateCards
+      .map((card) => card.dataset.date)
+      .filter(Boolean)
+      .sort()
+  )];
+  let activeFilterDate = availableExpenseDates.includes(toIsoDate(today))
+    ? toIsoDate(today)
+    : (availableExpenseDates[availableExpenseDates.length - 1] || toIsoDate(today));
+  let dateTabsResizeToken = null;
+  const FILTER_TAB_MIN_WIDTH = 58;
+  const FILTER_TAB_MIN_COUNT = 4;
+  const FILTER_TAB_MAX_COUNT = 7;
+  const FILTER_TAB_GAP = 8;
+  const FILTER_TAB_SHELL_PADDING = 16;
 
-  function filterExpenseCards(filter) {
-    const cards = document.querySelectorAll('.expense-card');
-    const now   = new Date();
-    cards.forEach(card => {
-      const cardDate = new Date(card.dataset.date);
-      let show = true;
-      if (filter === 'today') {
-        show = cardDate.toDateString() === now.toDateString();
-      } else if (filter === 'week') {
-        const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 6);
-        show = cardDate >= weekAgo;
-      } else if (filter === 'month') {
-        show = cardDate.getMonth() === now.getMonth() && cardDate.getFullYear() === now.getFullYear();
-      } else if (filter === 'year') {
-        show = cardDate.getFullYear() === now.getFullYear();
+  function toIsoDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function fromIsoDate(isoDate) {
+    const [year, month, day] = isoDate.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  function getVisibleDateTabCount() {
+    if (!filterTabs) return FILTER_TAB_MIN_COUNT;
+
+    const width = filterTabs.clientWidth || filterTabs.offsetWidth || 0;
+    const availableWidth = Math.max(width - FILTER_TAB_SHELL_PADDING, FILTER_TAB_MIN_WIDTH);
+    const estimatedCount = Math.floor((availableWidth + FILTER_TAB_GAP) / (FILTER_TAB_MIN_WIDTH + FILTER_TAB_GAP));
+
+    return Math.max(
+      FILTER_TAB_MIN_COUNT,
+      Math.min(FILTER_TAB_MAX_COUNT, estimatedCount || FILTER_TAB_MIN_COUNT)
+    );
+  }
+
+  function getDateTabOffsets() {
+    const count = getVisibleDateTabCount();
+    if (count <= 1) return [0];
+
+    const pastCount = Math.ceil((count - 1) / 2);
+    const futureCount = count - 1 - pastCount;
+    const offsets = [];
+
+    for (let offset = -pastCount; offset <= futureCount; offset += 1) {
+      offsets.push(offset);
+    }
+
+    return offsets;
+  }
+
+  function setupDateTabs() {
+    if (!filterTabs) return;
+
+    const weekdayFmt = new Intl.DateTimeFormat('en-US', { weekday: 'short' });
+    const offsets = getDateTabOffsets();
+    const referenceDate = fromIsoDate(activeFilterDate);
+
+    filterTabs.style.setProperty('--filter-tab-columns', offsets.length);
+    filterTabs.innerHTML = offsets.map((offset) => {
+      const chipDate = new Date(referenceDate);
+      chipDate.setDate(referenceDate.getDate() + offset);
+      const isoDate = toIsoDate(chipDate);
+      const isActive = isoDate === activeFilterDate;
+
+      return `
+        <button
+          class="filter-tab${isActive ? ' active' : ''}"
+          type="button"
+          data-date-offset="${offset}"
+          data-filter-date="${isoDate}"
+          role="tab"
+          aria-selected="${isActive ? 'true' : 'false'}"
+          aria-label="Show expenses for ${chipDate.toDateString()}"
+        >
+          <span class="filter-tab-main">${chipDate.getDate()}</span>
+          <span class="filter-tab-sub">${weekdayFmt.format(chipDate)}</span>
+        </button>
+      `;
+    }).join('');
+
+    const activeTab = filterTabs.querySelector('.filter-tab.active');
+    if (!activeTab) {
+      activeFilterDate = toIsoDate(today);
+      const fallbackTab = filterTabs.querySelector('.filter-tab[data-filter-date="' + activeFilterDate + '"]');
+      if (fallbackTab) {
+        fallbackTab.classList.add('active');
+        fallbackTab.setAttribute('aria-selected', 'true');
       }
-      card.style.display = show ? '' : 'none';
+    }
+
+    filterTabs.querySelectorAll('.filter-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        activeFilterDate = tab.dataset.filterDate;
+        setupDateTabs();
+      });
+    });
+
+    filterExpenseCards(activeFilterDate);
+  }
+
+  function filterExpenseCards(filterDate) {
+    const cards = document.querySelectorAll('.expense-stack-card');
+    cards.forEach(card => {
+      card.style.display = card.dataset.date === filterDate ? '' : 'none';
     });
   }
+
+  setupDateTabs();
+
+  window.addEventListener('resize', () => {
+    window.clearTimeout(dateTabsResizeToken);
+    dateTabsResizeToken = window.setTimeout(setupDateTabs, 120);
+  });
 
   // ── Sparkline chart ────────────────────────────────────
   function renderSparkline(data) {
@@ -698,7 +777,85 @@
     }
   }
 
-  renderSparkline(CHART_DATA);
+  renderSparkline(dashboardChartData);
+
+  function renderInsightStockSummary(stock) {
+    if (!stock) return;
+
+    const titleEl = document.getElementById('insightStockTitle');
+    const symbolEl = document.getElementById('insightStockSymbol');
+    const subtitleEl = document.getElementById('insightStockSubtitle');
+    const amountEl = document.getElementById('insightStockAmount');
+    const changeEl = document.getElementById('insightStockChange');
+
+    if (titleEl) titleEl.textContent = stock.title || 'Expense Trend';
+    if (symbolEl) symbolEl.textContent = stock.symbol || 'SPND';
+    if (subtitleEl) subtitleEl.textContent = stock.subtitle || 'Monthly spend';
+    if (amountEl) amountEl.textContent = formatCurrency(stock.amount || 0);
+
+    if (changeEl) {
+      const isUp = Boolean(stock.is_up);
+      changeEl.classList.toggle('up', isUp);
+      changeEl.classList.toggle('down', !isUp);
+      changeEl.textContent = `${isUp ? '↑' : '↓'} ${Number(stock.change_pct || 0).toFixed(1)}%`;
+    }
+  }
+
+  function renderInsightStockChart(data) {
+    const svg = document.getElementById('insightStockChart');
+    if (!svg || !data.length) return;
+
+    [...svg.querySelectorAll('path,circle')].forEach(el => el.remove());
+
+    const W = 220;
+    const H = 92;
+    const PAD_X = 6;
+    const PAD_Y = 10;
+    const maxVal = Math.max(...data.map(d => d.expense), 1);
+    const minVal = Math.min(...data.map(d => d.expense), 0);
+    const range = Math.max(maxVal - minVal, 1);
+    const step = (W - PAD_X * 2) / Math.max(data.length - 1, 1);
+    const latestValue = data[data.length - 1]?.expense ?? 0;
+    const previousValue = data[data.length - 2]?.expense ?? latestValue;
+    const isUpTrend = latestValue >= previousValue;
+    const strokeColor = isUpTrend ? '#22c55e' : '#ef4444';
+    const fillColor = isUpTrend ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)';
+
+    const pts = data.map((d, i) => ({
+      x: PAD_X + i * step,
+      y: H - PAD_Y - ((d.expense - minVal) / range) * (H - PAD_Y * 2),
+    }));
+
+    let lineD = `M${pts[0].x},${pts[0].y}`;
+    for (let i = 1; i < pts.length; i++) {
+      const cpx = (pts[i - 1].x + pts[i].x) / 2;
+      lineD += ` C${cpx},${pts[i - 1].y} ${cpx},${pts[i].y} ${pts[i].x},${pts[i].y}`;
+    }
+
+    const area = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    area.setAttribute('d', `${lineD} L${pts[pts.length - 1].x},${H - 2} L${pts[0].x},${H - 2} Z`);
+    area.setAttribute('fill', fillColor);
+    svg.appendChild(area);
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line.setAttribute('d', lineD);
+    line.setAttribute('fill', 'none');
+    line.setAttribute('stroke', strokeColor);
+    line.setAttribute('stroke-width', '2.6');
+    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(line);
+
+    const last = pts[pts.length - 1];
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('cx', last.x);
+    dot.setAttribute('cy', last.y);
+    dot.setAttribute('r', '4.5');
+    dot.setAttribute('fill', strokeColor);
+    svg.appendChild(dot);
+  }
+
+  renderInsightStockChart(dashboardChartData);
 
   // ── Chart rendering ───────────────────────────────────
   function renderChart(data) {
@@ -781,7 +938,7 @@
     }
   }
 
-  renderChart(CHART_DATA);
+  renderChart(dashboardChartData);
 
   // ── Add Transaction Modal ──────────────────────────────
   const txnModal    = document.getElementById('txnModal');
@@ -824,9 +981,9 @@
 
       if (res.ok && data.success) {
         // Update balance cards
-        document.getElementById('totalBalance').textContent  = '₹' + data.total_income.toLocaleString('en-IN', {minimumFractionDigits:2});
+        document.getElementById('totalBalance').textContent  = formatCurrency(data.total_balance);
         document.getElementById('totalExpense').textContent  = '−₹' + data.total_expense.toLocaleString('en-IN', {minimumFractionDigits:2});
-        document.getElementById('totalSaved').textContent    = (data.total_saved >= 0 ? '+' : '') + '₹' + Math.abs(data.total_saved).toLocaleString('en-IN', {minimumFractionDigits:2});
+        document.getElementById('totalSaved').textContent    = formatCurrency(data.total_saved, { showPlus: true });
 
         // Add to transaction list
         const list  = document.getElementById('txnList');
@@ -928,6 +1085,50 @@
       targetSave.disabled = false; targetSave.textContent = 'Save Target';
     }
   });
+
+  function formatCurrency(value, { showPlus = false } = {}) {
+    const number = Number(value || 0);
+    const prefix = number < 0 ? '-' : (showPlus && number > 0 ? '+' : '');
+    return `${prefix}₹${Math.abs(number).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function renderCategoryTiles(tiles) {
+    const wrap = document.getElementById('categoryTiles');
+    if (!wrap) return;
+
+    if (!tiles.length) {
+      wrap.innerHTML = `
+        <div class="tile tile-cyan">
+          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+          <p class="tile-amount">₹0.00</p><p class="tile-name">Rent</p>
+        </div>
+        <div class="tile tile-purple">
+          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11v6a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-6z"/></svg></div>
+          <p class="tile-amount">₹0.00</p><p class="tile-name">Transport</p>
+        </div>
+        <div class="tile tile-green">
+          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+          <p class="tile-amount">₹0.00</p><p class="tile-name">Health</p>
+        </div>
+        <div class="tile tile-yellow">
+          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></div>
+          <p class="tile-amount">₹0.00</p><p class="tile-name">Groceries</p>
+        </div>
+      `;
+      return;
+    }
+
+    wrap.innerHTML = tiles.map(cat => `
+      <div class="tile" style="background:${cat.color}20; border:1px solid ${cat.color}40;">
+        <div class="tile-icon" style="background:${cat.color}40;">
+          <span style="font-size:1rem;">${cat.icon}</span>
+        </div>
+        <p class="tile-amount" style="color:#1a1a2e;">${formatCurrency(cat.amount)}</p>
+        <p class="tile-name" style="color:#3a3a3c;">${cat.label}</p>
+      </div>
+    `).join('');
+  }
+
 </script>
 </body>
 </html>

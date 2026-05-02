@@ -1,6 +1,10 @@
 /* ── Profile Page ────────────────────────────────────────── */
 .pf-main { gap: 18px; }
 
+.pf-back-btn {
+  min-width: 122px;
+}
+
 .pf-success {
   background: rgba(48,209,88,0.12);
   border: 1px solid rgba(48,209,88,0.30);
@@ -9,6 +13,13 @@
   padding: 12px 18px;
   font-size: 0.88rem;
   font-weight: 600;
+}
+
+body[data-theme="dark"] .pf-success {
+  background: linear-gradient(135deg, rgba(20,83,45,0.62) 0%, rgba(21,128,61,0.34) 100%);
+  border-color: rgba(74,222,128,0.24);
+  color: #bbf7d0;
+  box-shadow: 0 12px 22px rgba(2,6,23,0.18);
 }
 
 .pf-form {
@@ -52,6 +63,11 @@
   font-weight: 800;
   letter-spacing: -0.03em;
   box-shadow: 0 4px 16px rgba(94,92,230,0.30);
+}
+
+body[data-theme="dark"] .pf-avatar-initials {
+  background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 56%, #ec4899 100%);
+  box-shadow: 0 16px 28px rgba(76,29,149,0.24);
 }
 
 .pf-avatar-edit {
