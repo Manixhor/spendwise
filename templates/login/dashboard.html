@@ -41,7 +41,20 @@
     <!-- ── Dad Joke Banner ───────────────────────────────── -->
     <div class="joke-banner">
       <span class="joke-banner-label">😄 Daily Joke</span>
-      <p class="joke-banner-text">{{ dad_joke }}</p>
+      <p class="joke-banner-text" id="jokeBannerText">{{ dad_joke }}</p>
+    </div>
+
+    <div class="card motivation-card" id="motivationCard">
+      <div class="motivation-top">
+        <span class="motivation-label">Savings Motivation</span>
+        <span class="motivation-badge" id="motivationBadge">Start</span>
+      </div>
+      <p class="motivation-quote" id="motivationQuote">
+        Saving starts with one clear decision. Track one expense today and keep one promise to your future self.
+      </p>
+      <p class="motivation-meta" id="motivationMeta">
+        Saved: ₹{{ total_saved|floatformat:2 }} · Spent: ₹{{ total_expense|floatformat:2 }}
+      </p>
     </div>
 
     <!-- Top row: Insights + Total Balance + Savings -->
@@ -54,7 +67,6 @@
             <span class="insight-stock-symbol" id="insightStockSymbol">{{ insight_stock.symbol }}</span>
             <span class="insight-stock-sub" id="insightStockSubtitle">{{ insight_stock.subtitle }}</span>
           </div>
-          <span class="insight-stock-badge">Live</span>
         </div>
         <div class="insights-body">
           <div class="insight-stock-copy">
@@ -176,7 +188,7 @@
     <div class="expense-stack" id="expenseCardsRow">
       {% for txn in recent_txns %}
         {% if txn.txn_type == 'expense' %}
-        <div class="expense-stack-card" data-date="{{ txn.date }}" data-id="{{ txn.id }}">
+        <div class="expense-stack-card" data-date="{{ txn.date|date:'Y-m-d' }}" data-id="{{ txn.id }}">
           <div class="esc-left">
             <span class="esc-icon">
               {% if txn.category == 'rent' %}🏠
@@ -247,120 +259,122 @@
       </div>
     </div>
 
-    <!-- Overview chart — Saved vs Expenses (dynamic) -->
-    <div class="card chart-card">
-      <div class="chart-header">
-        <h2 class="chart-title">Overview</h2>
-        <div class="legend">
-          <span class="leg-dot green"></span><span class="leg-txt">Saved</span>
-          <span class="leg-dot purple"></span><span class="leg-txt">Expenses</span>
+    <div class="overview-target-grid">
+      <!-- Overview chart — Saved vs Expenses (dynamic) -->
+      <div class="card chart-card">
+        <div class="chart-header">
+          <h2 class="chart-title">Overview</h2>
+          <div class="legend">
+            <span class="leg-dot green"></span><span class="leg-txt">Saved</span>
+            <span class="leg-dot purple"></span><span class="leg-txt">Expenses</span>
+          </div>
+        </div>
+        <div class="chart-body">
+          <div class="y-axis" id="chartYAxis">
+            <span>—</span><span></span><span></span><span></span><span>₹0</span>
+          </div>
+          <div class="chart-svg-wrap">
+            <svg viewBox="0 0 680 230" class="chart-svg" preserveAspectRatio="xMidYMid meet" id="overviewSvg" aria-label="Overview chart">
+              <defs>
+                <linearGradient id="savedG" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stop-color="rgba(110,231,183,0.70)"/>
+                  <stop offset="100%" stop-color="rgba(110,231,183,0.12)"/>
+                </linearGradient>
+                <linearGradient id="expG2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stop-color="rgba(167,139,250,0.60)"/>
+                  <stop offset="100%" stop-color="rgba(167,139,250,0.12)"/>
+                </linearGradient>
+                <linearGradient id="areaG2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stop-color="rgba(52,211,153,0.18)"/>
+                  <stop offset="100%" stop-color="rgba(52,211,153,0.00)"/>
+                </linearGradient>
+              </defs>
+              <!-- Bars rendered by JS -->
+            </svg>
+            <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
+          </div>
+        </div>
+        <div class="x-axis" id="chartXAxis">
+          {% for m in chart_months %}<span>{{ m.label }}</span>{% endfor %}
         </div>
       </div>
-      <div class="chart-body">
-        <div class="y-axis" id="chartYAxis">
-          <span>—</span><span></span><span></span><span></span><span>₹0</span>
+
+      <!-- Target Savings widget -->
+      <section class="card target-savings-inline">
+        <div class="rp-row">
+          <h2 class="rp-title">Target Savings</h2>
+          <button class="set-target-btn" id="setTargetBtn" type="button">
+            {% if profile.target_savings %}Edit{% else %}+ Set{% endif %}
+          </button>
         </div>
-        <div class="chart-svg-wrap">
-          <svg viewBox="0 0 680 230" class="chart-svg" preserveAspectRatio="xMidYMid meet" id="overviewSvg" aria-label="Overview chart">
-            <defs>
-              <linearGradient id="savedG" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stop-color="rgba(110,231,183,0.70)"/>
-                <stop offset="100%" stop-color="rgba(110,231,183,0.12)"/>
-              </linearGradient>
-              <linearGradient id="expG2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stop-color="rgba(167,139,250,0.60)"/>
-                <stop offset="100%" stop-color="rgba(167,139,250,0.12)"/>
-              </linearGradient>
-              <linearGradient id="areaG2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stop-color="rgba(52,211,153,0.18)"/>
-                <stop offset="100%" stop-color="rgba(52,211,153,0.00)"/>
-              </linearGradient>
-            </defs>
-            <!-- Bars rendered by JS -->
-          </svg>
-          <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
+
+        <div class="savings-target-card">
+          <!-- Progress ring -->
+          <div class="st-ring-wrap">
+            <svg viewBox="0 0 100 100" class="st-ring" aria-hidden="true">
+              <!-- Track -->
+              <circle cx="50" cy="50" r="42" fill="none"
+                stroke="rgba(94,92,230,0.10)" stroke-width="10"/>
+              <!-- Progress -->
+              <circle cx="50" cy="50" r="42" fill="none"
+                stroke="url(#stGrad)" stroke-width="10"
+                stroke-dasharray="{{ ring_dash }} {{ ring_gap }}"
+                stroke-dashoffset="0"
+                stroke-linecap="round"
+                transform="rotate(-90 50 50)"
+                id="savingsRing"/>
+              <defs>
+                <linearGradient id="stGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%"   stop-color="#6e6cf0"/>
+                  <stop offset="100%" stop-color="#a78bfa"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="st-ring-center">
+              <span class="st-pct" id="savingsPct">
+                {% if savings_pct %}{{ savings_pct }}%{% else %}—{% endif %}
+              </span>
+              <span class="st-pct-label">saved</span>
+            </div>
+          </div>
+
+          <!-- Numbers -->
+          <div class="st-info">
+            <div class="st-row">
+              <span class="st-label">Saved so far</span>
+              <span class="st-val {% if total_saved >= 0 %}positive{% else %}negative{% endif %}">₹{{ total_saved|floatformat:2 }}</span>
+            </div>
+            <div class="st-row">
+              <span class="st-label">Target</span>
+              <span class="st-val" id="targetDisplay">
+                {% if profile.target_savings %}₹{{ profile.target_savings }}{% else %}Not set{% endif %}
+              </span>
+            </div>
+            {% if savings_pct %}
+            <div class="st-progress-track">
+              <div class="st-progress-fill" id="targetProgressBar"
+                   style="width: {{ savings_pct }}%"></div>
+            </div>
+            {% else %}
+            <div class="st-progress-track">
+              <div class="st-progress-fill" id="targetProgressBar" style="width:0%"></div>
+            </div>
+            {% endif %}
+            <p class="st-hint">
+              {% if profile.target_savings %}
+                {% if savings_pct >= 100 %}🎉 Goal reached!
+                {% else %}₹{{ profile.target_savings }} goal · keep going!{% endif %}
+              {% else %}Set a savings goal to track progress{% endif %}
+            </p>
+          </div>
         </div>
-      </div>
-      <div class="x-axis" id="chartXAxis">
-        {% for m in chart_months %}<span>{{ m.label }}</span>{% endfor %}
-      </div>
+      </section>
     </div>
 
   </main>
 
   <!-- ── Right panel ─────────────────────────────────── -->
   <aside class="right-panel">
-
-    <!-- Target Savings widget -->
-    <section class="rp-section">
-      <div class="rp-row">
-        <h2 class="rp-title">Target Savings</h2>
-        <button class="set-target-btn" id="setTargetBtn" type="button">
-          {% if profile.target_savings %}Edit{% else %}+ Set{% endif %}
-        </button>
-      </div>
-
-      <div class="savings-target-card">
-        <!-- Progress ring -->
-        <div class="st-ring-wrap">
-          <svg viewBox="0 0 100 100" class="st-ring" aria-hidden="true">
-            <!-- Track -->
-            <circle cx="50" cy="50" r="42" fill="none"
-              stroke="rgba(94,92,230,0.10)" stroke-width="10"/>
-            <!-- Progress -->
-            <circle cx="50" cy="50" r="42" fill="none"
-              stroke="url(#stGrad)" stroke-width="10"
-              stroke-dasharray="{{ ring_dash }} {{ ring_gap }}"
-              stroke-dashoffset="0"
-              stroke-linecap="round"
-              transform="rotate(-90 50 50)"
-              id="savingsRing"/>
-            <defs>
-              <linearGradient id="stGrad" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%"   stop-color="#6e6cf0"/>
-                <stop offset="100%" stop-color="#a78bfa"/>
-              </linearGradient>
-            </defs>
-          </svg>
-          <div class="st-ring-center">
-            <span class="st-pct" id="savingsPct">
-              {% if savings_pct %}{{ savings_pct }}%{% else %}—{% endif %}
-            </span>
-            <span class="st-pct-label">saved</span>
-          </div>
-        </div>
-
-        <!-- Numbers -->
-        <div class="st-info">
-          <div class="st-row">
-            <span class="st-label">Saved so far</span>
-            <span class="st-val {% if total_saved >= 0 %}positive{% else %}negative{% endif %}">₹{{ total_saved|floatformat:2 }}</span>
-          </div>
-          <div class="st-row">
-            <span class="st-label">Target</span>
-            <span class="st-val" id="targetDisplay">
-              {% if profile.target_savings %}₹{{ profile.target_savings }}{% else %}Not set{% endif %}
-            </span>
-          </div>
-          {% if savings_pct %}
-          <div class="st-progress-track">
-            <div class="st-progress-fill" id="targetProgressBar"
-                 style="width: {{ savings_pct }}%"></div>
-          </div>
-          {% else %}
-          <div class="st-progress-track">
-            <div class="st-progress-fill" id="targetProgressBar" style="width:0%"></div>
-          </div>
-          {% endif %}
-          <p class="st-hint">
-            {% if profile.target_savings %}
-              {% if savings_pct >= 100 %}🎉 Goal reached!
-              {% else %}₹{{ profile.target_savings }} goal · keep going!{% endif %}
-            {% else %}Set a savings goal to track progress{% endif %}
-          </p>
-        </div>
-      </div>
-    </section>
 
     <!-- Latest transactions — dynamic -->
     <section class="rp-section txn-section">
@@ -495,18 +509,29 @@
   const input      = document.getElementById('salaryInput');
   const errorEl    = document.getElementById('salaryError');
 
-  function openModal()  { modal.classList.add('active'); input.focus(); }
-  function closeModal() { modal.classList.remove('active'); errorEl.textContent = ''; }
+  function openModal()  {
+    if (!modal || !input) return;
+    modal.classList.add('active');
+    input.focus();
+  }
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.remove('active');
+    if (errorEl) errorEl.textContent = '';
+  }
 
-  openBtn.addEventListener('click', openModal);
-  closeBtn.addEventListener('click', closeModal);
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  if (openBtn && closeBtn && modal && saveBtn && input && errorEl) {
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  }
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
   });
 
-  saveBtn.addEventListener('click', async () => {
+  if (openBtn && closeBtn && modal && saveBtn && input && errorEl) {
+    saveBtn.addEventListener('click', async () => {
     const val = input.value.trim();
     if (!val || isNaN(val) || parseFloat(val) < 0) {
       errorEl.textContent = 'Please enter a valid salary amount.';
@@ -544,6 +569,7 @@
         document.getElementById('totalBalance').textContent = formatCurrency(data.total_balance);
         document.getElementById('totalSaved').textContent = formatCurrency(data.total_saved, { showPlus: true });
         document.getElementById('savingsAmount').textContent = formatCurrency(data.total_saved, { showPlus: true });
+        updateMotivationCard(data.total_saved, data.total_expense);
         if (Array.isArray(data.chart_months)) {
           dashboardChartData = data.chart_months;
           renderSparkline(dashboardChartData);
@@ -563,7 +589,8 @@
       saveBtn.disabled = false;
       saveBtn.textContent = 'Save Salary';
     }
-  });
+    });
+  }
   // ── Add Expense button (below tiles) ─────────────────
   const addExpenseBtn = document.getElementById('addExpenseBtn');
   if (addExpenseBtn) {
@@ -579,17 +606,19 @@
   // ── Filter tabs ────────────────────────────────────────
   const today = new Date();
   const filterTabs = document.getElementById('filterTabs');
-  const expenseDateCards = [...document.querySelectorAll('.expense-stack-card[data-date]')];
-  const availableExpenseDates = [...new Set(
-    expenseDateCards
-      .map((card) => card.dataset.date)
-      .filter(Boolean)
-      .sort()
-  )];
+  let availableExpenseDates = [];
+  function refreshAvailableExpenseDatesFromDom() {
+    availableExpenseDates = [...new Set([
+      ...document.querySelectorAll('.expense-stack-card[data-date]')
+    ].map(card => card.dataset.date).filter(Boolean).sort())];
+    return availableExpenseDates;
+  }
+  refreshAvailableExpenseDatesFromDom();
   let activeFilterDate = availableExpenseDates.includes(toIsoDate(today))
     ? toIsoDate(today)
     : (availableExpenseDates[availableExpenseDates.length - 1] || toIsoDate(today));
   let dateTabsResizeToken = null;
+  let dateTabsRequestId = 0;
   const FILTER_TAB_MIN_WIDTH = 58;
   const FILTER_TAB_MIN_COUNT = 4;
   const FILTER_TAB_MAX_COUNT = 7;
@@ -636,8 +665,93 @@
     return offsets;
   }
 
-  function setupDateTabs() {
+  async function hydrateDashboardFromApi() {
+    try {
+      const res = await fetch('/api/dashboard/summary/');
+      const data = await res.json();
+      if (!res.ok || !data.success) return;
+
+      if (Array.isArray(data.available_expense_dates)) {
+        availableExpenseDates = [...data.available_expense_dates].sort();
+      }
+      if (Array.isArray(data.chart_months)) {
+        dashboardChartData = data.chart_months;
+        renderSparkline(dashboardChartData);
+        renderInsightStockChart(dashboardChartData);
+        renderChart(dashboardChartData);
+      }
+      renderInsightStockSummary(data.insight_stock);
+      renderCategoryTiles(data.cat_tiles || []);
+
+      const jokeText = document.getElementById('jokeBannerText');
+      if (jokeText && data.dad_joke) {
+        jokeText.textContent = data.dad_joke;
+      }
+      if (typeof data.total_saved === 'number' && typeof data.total_expense === 'number') {
+        updateMotivationCard(data.total_saved, data.total_expense);
+      }
+    } catch (error) {
+      // Non-blocking; initial server render remains visible.
+    }
+  }
+
+  function renderExpenseCards(expenses = [], filterDate = '') {
+    const wrap = document.getElementById('expenseCardsRow');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+
+    expenses.forEach((txn) => {
+      const card = document.createElement('div');
+      card.className = 'expense-stack-card';
+      card.dataset.date = txn.date;
+      card.dataset.id = txn.id;
+
+      const amountText = parseFloat(txn.amount || 0).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      card.innerHTML = `
+        <div class="esc-left">
+          <span class="esc-icon">${txn.icon || '📦'}</span>
+          <div class="esc-info">
+            <p class="esc-title">${txn.title || 'Untitled'}</p>
+            <p class="esc-meta">${txn.category_label || txn.category || 'Other'} · ${txn.date}</p>
+          </div>
+        </div>
+        <div class="esc-right">
+          <p class="esc-amount">₹${amountText}</p>
+          <button class="esc-delete" onclick="deleteTransaction(${txn.id})" title="Delete">×</button>
+        </div>
+      `;
+      wrap.appendChild(card);
+    });
+
+    ensureExpenseEmptyState(expenses.length, filterDate);
+  }
+
+  async function fetchExpensesForDate(filterDate) {
+    const res = await fetch(`/api/expenses-by-date/?date=${encodeURIComponent(filterDate)}`);
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to load expenses.');
+    }
+    if (Array.isArray(data.available_expense_dates)) {
+      availableExpenseDates = [...data.available_expense_dates].sort();
+    }
+    return data;
+  }
+
+  async function setupDateTabs() {
+    const requestId = ++dateTabsRequestId;
     if (!filterTabs) return;
+    let expenses = [];
+    try {
+      const data = await fetchExpensesForDate(activeFilterDate);
+      if (requestId !== dateTabsRequestId) return;
+      expenses = Array.isArray(data.expenses) ? data.expenses : [];
+    } catch (error) {
+      refreshAvailableExpenseDatesFromDom();
+    }
 
     const weekdayFmt = new Intl.DateTimeFormat('en-US', { weekday: 'short' });
     const offsets = getDateTabOffsets();
@@ -683,17 +797,30 @@
       });
     });
 
-    filterExpenseCards(activeFilterDate);
+    renderExpenseCards(expenses, activeFilterDate);
   }
 
-  function filterExpenseCards(filterDate) {
-    const cards = document.querySelectorAll('.expense-stack-card');
-    cards.forEach(card => {
-      card.style.display = card.dataset.date === filterDate ? '' : 'none';
-    });
+  function ensureExpenseEmptyState(visibleCount = 0, filterDate = '') {
+    const wrap = document.getElementById('expenseCardsRow');
+    if (!wrap) return;
+    let emptyEl = wrap.querySelector('.esc-empty');
+    if (visibleCount > 0) {
+      if (emptyEl) emptyEl.remove();
+      return;
+    }
+    if (!emptyEl) {
+      emptyEl = document.createElement('div');
+      emptyEl.className = 'esc-empty';
+      emptyEl.textContent = filterDate
+        ? `No expenses for ${filterDate}.`
+        : 'No expenses for this date.';
+      wrap.appendChild(emptyEl);
+    }
   }
 
-  setupDateTabs();
+  hydrateDashboardFromApi().finally(() => {
+    setupDateTabs();
+  });
 
   window.addEventListener('resize', () => {
     window.clearTimeout(dateTabsResizeToken);
@@ -956,14 +1083,25 @@
     });
   });
 
-  function openTxnModal()  { txnModal.classList.add('active'); document.getElementById('txnTitle').focus(); }
-  function closeTxnModal() { txnModal.classList.remove('active'); txnError.textContent = ''; }
+  function openTxnModal()  {
+    if (!txnModal) return;
+    txnModal.classList.add('active');
+    document.getElementById('txnTitle')?.focus();
+  }
+  function closeTxnModal() {
+    if (!txnModal) return;
+    txnModal.classList.remove('active');
+    if (txnError) txnError.textContent = '';
+  }
 
-  txnOpenBtn.addEventListener('click', openTxnModal);
-  txnClose.addEventListener('click', closeTxnModal);
-  txnModal.addEventListener('click', e => { if (e.target === txnModal) closeTxnModal(); });
+  if (txnOpenBtn && txnClose && txnModal && txnSaveBtn && txnError) {
+    txnOpenBtn.addEventListener('click', openTxnModal);
+    txnClose.addEventListener('click', closeTxnModal);
+    txnModal.addEventListener('click', e => { if (e.target === txnModal) closeTxnModal(); });
+  }
 
-  txnSaveBtn.addEventListener('click', async () => {
+  if (txnOpenBtn && txnClose && txnModal && txnSaveBtn && txnError) {
+    txnSaveBtn.addEventListener('click', async () => {
     const title    = document.getElementById('txnTitle').value.trim() || 'Untitled';
     const amount   = parseFloat(document.getElementById('txnAmount').value) || 0;
     const category = document.getElementById('txnCategory').value || 'other';
@@ -981,34 +1119,32 @@
 
       if (res.ok && data.success) {
         // Update balance cards
-        document.getElementById('totalBalance').textContent  = formatCurrency(data.total_balance);
-        document.getElementById('totalExpense').textContent  = '−₹' + data.total_expense.toLocaleString('en-IN', {minimumFractionDigits:2});
-        document.getElementById('totalSaved').textContent    = formatCurrency(data.total_saved, { showPlus: true });
+        document.getElementById('totalBalance').textContent = formatCurrency(data.total_balance);
+        document.getElementById('totalExpense').textContent = '−₹' + data.total_expense.toLocaleString('en-IN', {minimumFractionDigits:2});
+        document.getElementById('totalSaved').textContent = formatCurrency(data.total_saved, { showPlus: true });
+        document.getElementById('savingsAmount').textContent = formatCurrency(data.total_saved, { showPlus: true });
+        updateMotivationCard(data.total_saved, data.total_expense);
+        if (Array.isArray(data.chart_months)) {
+          dashboardChartData = data.chart_months;
+          renderSparkline(dashboardChartData);
+          renderInsightStockChart(dashboardChartData);
+          renderChart(dashboardChartData);
+        }
+        renderInsightStockSummary(data.insight_stock);
+        renderCategoryTiles(data.cat_tiles || []);
 
-        // Add to transaction list
-        const list  = document.getElementById('txnList');
-        const empty = document.getElementById('txnEmpty');
-        if (empty) empty.remove();
-
-        const li = document.createElement('li');
-        li.className = 'txn-item'; li.id = 'txn-' + data.txn.id;
-        li.innerHTML = `
-          <div class="txn-icon" style="font-size:1rem;">${data.txn.icon}</div>
-          <div class="txn-info">
-            <span class="txn-name">${data.txn.title}</span>
-            <span class="txn-time">${data.txn.date}</span>
-          </div>
-          <span class="txn-amt ${data.txn.txn_type === 'expense' ? 'neg' : ''}">
-            ${data.txn.txn_type === 'income' ? '+' : '−'}₹${parseFloat(data.txn.amount).toLocaleString('en-IN', {minimumFractionDigits:2})}
-          </span>
-          <button class="txn-delete" onclick="deleteTransaction(${data.txn.id})" title="Delete">×</button>`;
-        list.prepend(li);
+        if (Array.isArray(data.available_expense_dates)) {
+          availableExpenseDates = [...data.available_expense_dates].sort();
+        }
+        if (data.txn && data.txn.txn_type === 'expense') {
+          activeFilterDate = data.txn.date;
+        }
+        setupDateTabs();
 
         // Reset form
         document.getElementById('txnTitle').value = '';
         document.getElementById('txnAmount').value = '';
         closeTxnModal();
-        location.reload(); // reload to refresh chart + tiles
       } else {
         txnError.textContent = data.error || 'Something went wrong.';
       }
@@ -1017,7 +1153,8 @@
     } finally {
       txnSaveBtn.disabled = false; txnSaveBtn.textContent = 'Add Transaction';
     }
-  });
+    });
+  }
 
   // ── Delete transaction ─────────────────────────────────
   async function deleteTransaction(id) {
@@ -1027,9 +1164,29 @@
         method: 'DELETE',
         headers: { 'X-CSRFToken': '{{ csrf_token }}' },
       });
-      if (res.ok) {
+      const data = await res.json();
+      if (res.ok && data.success) {
         document.getElementById('txn-' + id)?.remove();
-        location.reload();
+        const expenseCard = document.querySelector(`.expense-stack-card[data-id="${id}"]`);
+        expenseCard?.remove();
+
+        document.getElementById('totalBalance').textContent = formatCurrency(data.total_balance);
+        document.getElementById('totalExpense').textContent = '−₹' + data.total_expense.toLocaleString('en-IN', {minimumFractionDigits:2});
+        document.getElementById('totalSaved').textContent = formatCurrency(data.total_saved, { showPlus: true });
+        document.getElementById('savingsAmount').textContent = formatCurrency(data.total_saved, { showPlus: true });
+        updateMotivationCard(data.total_saved, data.total_expense);
+        if (Array.isArray(data.chart_months)) {
+          dashboardChartData = data.chart_months;
+          renderSparkline(dashboardChartData);
+          renderInsightStockChart(dashboardChartData);
+          renderChart(dashboardChartData);
+        }
+        renderInsightStockSummary(data.insight_stock);
+        renderCategoryTiles(data.cat_tiles || []);
+        if (Array.isArray(data.available_expense_dates)) {
+          availableExpenseDates = [...data.available_expense_dates].sort();
+        }
+        setupDateTabs();
       }
     } catch (e) { alert('Error deleting transaction.'); }
   }
@@ -1043,18 +1200,29 @@
   const targetError   = document.getElementById('targetError');
   const CIRC          = 263.9;
 
-  function openTargetModal()  { targetModal.classList.add('active'); targetInput.focus(); }
-  function closeTargetModal() { targetModal.classList.remove('active'); targetError.textContent = ''; }
+  function openTargetModal()  {
+    if (!targetModal || !targetInput) return;
+    targetModal.classList.add('active');
+    targetInput.focus();
+  }
+  function closeTargetModal() {
+    if (!targetModal) return;
+    targetModal.classList.remove('active');
+    if (targetError) targetError.textContent = '';
+  }
 
-  targetOpenBtn.addEventListener('click', openTargetModal);
-  targetClose.addEventListener('click', closeTargetModal);
-  targetModal.addEventListener('click', (e) => { if (e.target === targetModal) closeTargetModal(); });
+  if (targetOpenBtn && targetClose && targetModal && targetSave && targetInput && targetError) {
+    targetOpenBtn.addEventListener('click', openTargetModal);
+    targetClose.addEventListener('click', closeTargetModal);
+    targetModal.addEventListener('click', (e) => { if (e.target === targetModal) closeTargetModal(); });
+  }
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { closeTargetModal(); closeTxnModal(); closeModal(); }
   });
 
-  targetSave.addEventListener('click', async () => {
+  if (targetOpenBtn && targetClose && targetModal && targetSave && targetInput && targetError) {
+    targetSave.addEventListener('click', async () => {
     const val = targetInput.value.trim();
     if (!val || isNaN(val) || parseFloat(val) <= 0) {
       targetError.textContent = 'Please enter a valid target amount.';
@@ -1073,7 +1241,7 @@
         document.getElementById('savingsPct').textContent = data.savings_pct + '%';
         document.getElementById('targetProgressBar').style.width = data.savings_pct + '%';
         const ring = document.getElementById('savingsRing');
-        ring.setAttribute('stroke-dasharray', data.ring_dash + ' ' + data.ring_gap);
+        if (ring) ring.setAttribute('stroke-dasharray', data.ring_dash + ' ' + data.ring_gap);
         targetOpenBtn.textContent = 'Edit';
         closeTargetModal();
       } else {
@@ -1084,13 +1252,173 @@
     } finally {
       targetSave.disabled = false; targetSave.textContent = 'Save Target';
     }
-  });
+    });
+  }
 
   function formatCurrency(value, { showPlus = false } = {}) {
     const number = Number(value || 0);
     const prefix = number < 0 ? '-' : (showPlus && number > 0 ? '+' : '');
     return `${prefix}₹${Math.abs(number).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
+
+  function buildAiStyleMotivationMessage(saved, spent, ratio, tone) {
+    const daySeed = new Date().getDate() + new Date().getMonth() * 31 + new Date().getFullYear();
+    const metricSeed = Math.round((saved * 13) + (spent * 7) + (ratio * 100));
+    let seed = Math.abs(daySeed + metricSeed);
+    const pick = (arr) => {
+      if (!arr.length) return '';
+      seed = (seed * 9301 + 49297) % 233280;
+      return arr[seed % arr.length];
+    };
+
+    const intros = {
+      reset: [
+        'A reset month is still progress.',
+        'You are one decision away from momentum.',
+        'This is the perfect point to restart your savings rhythm.',
+      ],
+      build: [
+        'Nice start, your savings engine is warming up.',
+        'You are building traction with every small win.',
+        'Momentum is visible, now keep it steady.',
+      ],
+      steady: [
+        'Your money discipline is getting stronger.',
+        'This is balanced money management in action.',
+        'You are saving and spending with intention.',
+      ],
+      strong: [
+        'Powerful month so far, your consistency is working.',
+        'You are close to a standout savings month.',
+        'This is high-quality financial behavior.',
+      ],
+      elite: [
+        'Elite control, your savings are leading this month.',
+        'You are in wealth-building mode right now.',
+        'Outstanding pace, keep protecting this edge.',
+      ],
+      clean: [
+        'Clean month start, this is premium discipline.',
+        'Strong control: savings positive with zero expense.',
+        'You started this cycle like a pro saver.',
+      ],
+      start: [
+        'Every strong saver starts with one clean step.',
+        'Today can be the day your saving habit locks in.',
+        'Begin small, stay consistent, grow fast.',
+      ],
+    };
+
+    const actions = [
+      'Move one non-essential spend into savings today.',
+      'Keep one daily spend capped and redirect the rest.',
+      'Use a simple 24-hour pause before non-urgent purchases.',
+      'Set a tiny daily savings target and defend it.',
+      'Track one category tightly for the next 7 days.',
+    ];
+
+    const payoffs = [
+      'Your future self will thank you.',
+      'Small discipline now creates big freedom later.',
+      'Consistency beats intensity in personal finance.',
+      'That habit compounds faster than you think.',
+      'This is how stable wealth gets built.',
+    ];
+
+    const introPool = intros[tone] || intros.start;
+    const spentText = formatCurrency(spent);
+    const savedText = formatCurrency(saved);
+
+    return `${pick(introPool)} You saved ${savedText} while spending ${spentText}. ${pick(actions)} ${pick(payoffs)}`;
+  }
+
+  let motivationRequestId = 0;
+
+  async function fetchMotivationMessage(savedAmount, expenseAmount) {
+    const requestId = ++motivationRequestId;
+    try {
+      const res = await fetch('/api/motivation-message/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify({
+          saved_amount: savedAmount,
+          expense_amount: expenseAmount,
+        }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (requestId !== motivationRequestId) return null;
+      if (data && data.success && typeof data.quote === 'string' && data.quote.trim()) {
+        return data;
+      }
+    } catch (error) {
+      // Keep fallback quote if API is unavailable.
+    }
+    return null;
+  }
+
+  async function updateMotivationCard(savedAmount, expenseAmount) {
+    const quoteEl = document.getElementById('motivationQuote');
+    const badgeEl = document.getElementById('motivationBadge');
+    const metaEl = document.getElementById('motivationMeta');
+    const cardEl = document.getElementById('motivationCard');
+    if (!quoteEl || !badgeEl || !metaEl || !cardEl) return;
+
+    const saved = Number(savedAmount || 0);
+    const spent = Number(expenseAmount || 0);
+    const ratio = saved / Math.max(spent, 1);
+
+    let quote = 'Saving starts with one clear decision. Track one expense today and keep one promise to your future self.';
+    let badge = 'Start';
+    let tone = 'start';
+
+    if (saved <= 0 && spent > 0) {
+      badge = 'Reset';
+      tone = 'reset';
+    } else if (saved > 0 && ratio < 0.25) {
+      badge = 'Build';
+      tone = 'build';
+    } else if (ratio >= 0.25 && ratio < 0.75) {
+      badge = 'Steady';
+      tone = 'steady';
+    } else if (ratio >= 0.75 && ratio < 1.2) {
+      badge = 'Strong';
+      tone = 'strong';
+    } else if (ratio >= 1.2) {
+      badge = 'Elite';
+      tone = 'elite';
+    }
+
+    if (saved > 0 && spent === 0) {
+      badge = 'Clean';
+      tone = 'clean';
+    }
+
+    quote = buildAiStyleMotivationMessage(saved, spent, ratio, tone);
+
+    quoteEl.textContent = quote;
+    badgeEl.textContent = badge;
+    metaEl.textContent = `Saved: ${formatCurrency(saved)} · Spent: ${formatCurrency(spent)}`;
+    cardEl.dataset.tone = tone;
+
+    // Safety: enforce visibility even if any theme override conflicts.
+    quoteEl.style.opacity = '1';
+    quoteEl.style.display = 'block';
+    metaEl.style.opacity = '1';
+    metaEl.style.display = 'block';
+
+    const aiData = await fetchMotivationMessage(saved, spent);
+    if (!aiData) return;
+
+    quoteEl.textContent = aiData.quote;
+    badgeEl.textContent = aiData.badge || badge;
+    cardEl.dataset.tone = aiData.tone || tone;
+  }
+
+  updateMotivationCard({{ total_saved|default:0 }}, {{ total_expense|default:0 }});
 
   function renderCategoryTiles(tiles) {
     const wrap = document.getElementById('categoryTiles');

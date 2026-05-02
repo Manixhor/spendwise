@@ -1,16 +1,19 @@
 from django.urls import path
 
 from .views import (
-    onboarding, signup, login_view, logout_view,
+    onboarding, signup, signup_verify, login_view, logout_view,
     dashboard, monthly, savings, profile_view,
     api_add_transaction, api_delete_transaction,
     api_set_salary, api_set_target_savings,
+    api_dashboard_summary, api_expenses_by_date, api_dad_joke,
+    api_motivation_message,
     api_create_goal, api_update_goal, api_delete_goal, api_contribute_goal,
 )
 
 urlpatterns = [
     path('',                                    onboarding,             name='onboarding'),
     path('signup/',                             signup,                 name='signup'),
+    path('signup/verify/',                      signup_verify,          name='signup_verify'),
     path('login/',                              login_view,             name='login'),
     path('logout/',                             logout_view,            name='logout'),
     path('dashboard/',                          dashboard,              name='dashboard'),
@@ -23,6 +26,10 @@ urlpatterns = [
     # Salary / target
     path('api/salary/',                         api_set_salary,         name='api_set_salary'),
     path('api/target-savings/',                 api_set_target_savings, name='api_set_target_savings'),
+    path('api/dashboard/summary/',              api_dashboard_summary,  name='api_dashboard_summary'),
+    path('api/expenses-by-date/',               api_expenses_by_date,   name='api_expenses_by_date'),
+    path('api/dad-joke/',                       api_dad_joke,           name='api_dad_joke'),
+    path('api/motivation-message/',             api_motivation_message, name='api_motivation_message'),
     # Savings Goals APIs
     path('api/goals/',                          api_create_goal,        name='api_create_goal'),
     path('api/goals/<int:goal_id>/',            api_update_goal,        name='api_update_goal'),

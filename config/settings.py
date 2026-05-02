@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -144,3 +145,32 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+MAILTRAP_SMTP_HOST = os.getenv('MAILTRAP_SMTP_HOST', 'live.smtp.mailtrap.io').strip()
+MAILTRAP_SMTP_PORT = int(os.getenv('MAILTRAP_SMTP_PORT', '587'))
+MAILTRAP_SMTP_USER = os.getenv('MAILTRAP_SMTP_USER', '').strip()
+MAILTRAP_SMTP_PASSWORD = os.getenv('MAILTRAP_SMTP_PASSWORD', '').strip()
+MAILTRAP_FROM_EMAIL = os.getenv('MAILTRAP_FROM_EMAIL', '').strip()
+
+EMAIL_BACKEND = (
+    'django.core.mail.backends.smtp.EmailBackend'
+    if MAILTRAP_SMTP_USER and MAILTRAP_SMTP_PASSWORD
+    else 'django.core.mail.backends.console.EmailBackend'
+)
+EMAIL_HOST = MAILTRAP_SMTP_HOST
+EMAIL_PORT = MAILTRAP_SMTP_PORT
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = MAILTRAP_SMTP_USER
+EMAIL_HOST_PASSWORD = MAILTRAP_SMTP_PASSWORD
+EMAIL_TIMEOUT = 20
+DEFAULT_FROM_EMAIL = (
+    MAILTRAP_FROM_EMAIL
+    if MAILTRAP_FROM_EMAIL else
+    'SpendWise <no-reply@spendwise.local>'
+)
+EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES = 10
+
+# OpenAI (optional): used for dashboard savings motivation message generation.
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '').strip()
+OPENAI_MOTIVATION_MODEL = os.getenv('OPENAI_MOTIVATION_MODEL', 'gpt-4.1-mini').strip()
