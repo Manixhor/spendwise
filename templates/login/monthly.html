@@ -26,9 +26,13 @@
       </div>
       <div class="header-actions">
         <div class="month-selector">
-          <button class="month-btn" id="prevMonth">&#8249;</button>
-          <span class="month-label" id="monthLabel">November 2024</span>
-          <button class="month-btn" id="nextMonth">&#8250;</button>
+          <a class="month-btn" href="?month={{ prev_month_param }}" aria-label="Previous month">&#8249;</a>
+          <span class="month-label" id="monthLabel">{{ selected_month_label }}</span>
+          {% if is_current_month %}
+            <span class="month-btn is-disabled" aria-disabled="true">&#8250;</span>
+          {% else %}
+            <a class="month-btn" href="?month={{ next_month_param }}" aria-label="Next month">&#8250;</a>
+          {% endif %}
         </div>
         <a href="{% url 'logout' %}" class="logout-btn" title="Logout">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -51,37 +55,42 @@
           </div>
           <div>
             <p class="ma-account-name">All accounts</p>
-            <p class="ma-account-sub">3/3 selected</p>
+            <p class="ma-account-sub">{{ account_subtitle }}</p>
           </div>
         </div>
-        <span class="ma-week-badge">This month</span>
+        <span class="ma-week-badge">{{ month_badge }}</span>
       </div>
 
       <!-- Total balance card -->
       <div class="card ma-balance-card">
         <p class="ma-balance-label">TOTAL BALANCE</p>
         <div class="ma-balance-row">
-          <span class="ma-balance-amount">₹42,570</span>
-          <span class="ma-balance-change positive">▲ +3.2%</span>
+          <span class="ma-balance-amount">₹{{ total_balance|floatformat:2 }}</span>
+          <span class="ma-balance-change {% if balance_change_positive %}positive{% else %}negative{% endif %}">
+            {% if balance_change_positive %}▲{% else %}▼{% endif %}
+            {% if balance_change_positive %}+{% endif %}{{ balance_change_pct|floatformat:1 }}%
+          </span>
         </div>
-        <p class="ma-balance-date">1 – 30 Nov 2024</p>
+        <p class="ma-balance-date">{{ month_period_label }}</p>
       </div>
 
       <!-- Quick stats -->
       <div class="card ma-stats-card">
         <div class="ma-stat">
           <span class="ma-stat-label">Income</span>
-          <span class="ma-stat-val positive">+₹8,320</span>
+          <span class="ma-stat-val positive">+₹{{ total_income|floatformat:2 }}</span>
         </div>
         <div class="ma-stat-divider"></div>
         <div class="ma-stat">
           <span class="ma-stat-label">Expenses</span>
-          <span class="ma-stat-val negative">−₹2,453</span>
+          <span class="ma-stat-val negative">−₹{{ total_expense|floatformat:2 }}</span>
         </div>
         <div class="ma-stat-divider"></div>
         <div class="ma-stat">
           <span class="ma-stat-label">Saved</span>
-          <span class="ma-stat-val accent">₹5,867</span>
+          <span class="ma-stat-val {% if total_saved >= 0 %}accent{% else %}negative{% endif %}">
+            {% if total_saved >= 0 %}+{% endif %}₹{{ total_saved|floatformat:2 }}
+          </span>
         </div>
       </div>
 
@@ -95,7 +104,7 @@
         <div class="ma-chart-header">
           <div>
             <span class="card-label">Spending by Week</span>
-            <p class="ma-chart-sub">November 2024</p>
+            <p class="ma-chart-sub">{{ selected_month_label }}</p>
           </div>
           <div class="ma-chart-legend">
             <span class="leg-dot green"></span><span class="leg-txt">Income</span>
@@ -106,12 +115,9 @@
         <!-- SVG Bar Chart -->
         <div class="ma-chart-wrap">
           <div class="ma-y-axis">
-            <span>₹5k</span>
-            <span>₹4k</span>
-            <span>₹3k</span>
-            <span>₹2k</span>
-            <span>₹1k</span>
-            <span>₹0</span>
+            {% for tick in weekly_chart.y_axis_labels %}
+              <span>{{ tick }}</span>
+            {% endfor %}
           </div>
           <div class="ma-bars-wrap">
             <svg viewBox="0 0 560 220" class="ma-bar-svg" aria-label="Monthly spending bar chart">
@@ -126,43 +132,27 @@
                 </linearGradient>
               </defs>
 
-              <!-- Week 1: Mon -->
-              <rect x="20"  y="80"  width="28" height="140" rx="6" fill="url(#incomeBar)"/>
-              <rect x="52"  y="130" width="28" height="90"  rx="6" fill="url(#expenseBar)"/>
-              <!-- Week 2: Tue -->
-              <rect x="110" y="40"  width="28" height="180" rx="6" fill="url(#incomeBar)"/>
-              <rect x="142" y="100" width="28" height="120" rx="6" fill="url(#expenseBar)"/>
-              <!-- Week 3: Wed -->
-              <rect x="200" y="60"  width="28" height="160" rx="6" fill="url(#incomeBar)"/>
-              <rect x="232" y="120" width="28" height="100" rx="6" fill="url(#expenseBar)"/>
-              <!-- Week 4: Thu -->
-              <rect x="290" y="100" width="28" height="120" rx="6" fill="url(#incomeBar)"/>
-              <rect x="322" y="150" width="28" height="70"  rx="6" fill="url(#expenseBar)"/>
-              <!-- Week 5: Fri -->
-              <rect x="380" y="30"  width="28" height="190" rx="6" fill="url(#incomeBar)"/>
-              <rect x="412" y="90"  width="28" height="130" rx="6" fill="url(#expenseBar)"/>
-              <!-- Week 6: Sat -->
-              <rect x="470" y="90"  width="28" height="130" rx="6" fill="url(#incomeBar)"/>
-              <rect x="502" y="140" width="28" height="80"  rx="6" fill="url(#expenseBar)"/>
+              {% for week in weekly_chart.weeks %}
+                <rect x="{{ week.income_x }}" y="{{ week.income_y }}" width="{{ week.bar_width }}" height="{{ week.income_height }}" rx="6" fill="url(#incomeBar)"/>
+                <rect x="{{ week.expense_x }}" y="{{ week.expense_y }}" width="{{ week.bar_width }}" height="{{ week.expense_height }}" rx="6" fill="url(#expenseBar)"/>
+              {% endfor %}
 
-              <!-- Trend line -->
-              <path d="M34,80 C90,40 150,40 216,60 C280,80 306,100 394,30 C440,10 484,90 516,90"
-                    fill="none" stroke="#1c1c1e" stroke-width="2" stroke-dasharray="5,3"
-                    stroke-linecap="round" opacity="0.3"/>
+              {% if weekly_chart.trend_path %}
+                <path d="{{ weekly_chart.trend_path }}"
+                      fill="none" stroke="#1c1c1e" stroke-width="2" stroke-dasharray="5,3"
+                      stroke-linecap="round" opacity="0.3"/>
+              {% endif %}
             </svg>
 
             <!-- X axis labels -->
             <div class="ma-x-axis">
-              <span>Week 1</span>
-              <span>Week 2</span>
-              <span>Week 3</span>
-              <span>Week 4</span>
-              <span>Week 5</span>
-              <span>Week 6</span>
+              {% for week in weekly_chart.weeks %}
+                <span title="{{ week.range_label }}">{{ week.label }}</span>
+              {% endfor %}
             </div>
           </div>
         </div>
-        <p class="ma-refresh">Refreshed just now</p>
+        <p class="ma-refresh">Refreshed for {{ month_period_label }}</p>
       </div>
 
       <!-- Category breakdown -->
@@ -170,60 +160,38 @@
         <span class="card-label">Category Breakdown</span>
 
         <div class="ma-cat-list">
-          <div class="ma-cat-item">
-            <div class="ma-cat-icon" style="background:#e0f7fa; color:#0097a7;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          {% for category in categories %}
+            <div class="ma-cat-item">
+              <div class="ma-cat-icon" style="background:{{ category.icon_bg }}; color:{{ category.icon_fg }};">
+                {% if category.key == 'rent' %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                {% elif category.key == 'transport' %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11v6a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-6z"/></svg>
+                {% elif category.key == 'health' %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                {% elif category.key == 'groceries' %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                {% elif category.key == 'entertainment' %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                {% elif category.key == 'shopping' %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2l1.5 4h9L18 2"/><path d="M4 6h16l-1 13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6z"/></svg>
+                {% elif category.key == 'food' %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3v8"/><path d="M8 3v8"/><path d="M6 3v18"/><path d="M14 3c1.7 2 2 4.5 2 7v11"/><path d="M20 3v18"/></svg>
+                {% elif category.key == 'utilities' %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+                {% else %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M2 12h20"/></svg>
+                {% endif %}
+              </div>
+              <div class="ma-cat-info">
+                <span class="ma-cat-name">{{ category.label }}</span>
+                <div class="ma-cat-bar-track"><div class="ma-cat-bar-fill" style="width:{{ category.share_pct|floatformat:1 }}%; background:{{ category.color }};"></div></div>
+              </div>
+              <span class="ma-cat-amt">₹{{ category.amount|floatformat:2 }}</span>
             </div>
-            <div class="ma-cat-info">
-              <span class="ma-cat-name">Rent</span>
-              <div class="ma-cat-bar-track"><div class="ma-cat-bar-fill" style="width:57%; background:#67e8f9;"></div></div>
-            </div>
-            <span class="ma-cat-amt">₹1,410</span>
-          </div>
-
-          <div class="ma-cat-item">
-            <div class="ma-cat-icon" style="background:#ede9ff; color:#7c3aed;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11v6a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-6z"/></svg>
-            </div>
-            <div class="ma-cat-info">
-              <span class="ma-cat-name">Transport</span>
-              <div class="ma-cat-bar-track"><div class="ma-cat-bar-fill" style="width:17%; background:#a78bfa;"></div></div>
-            </div>
-            <span class="ma-cat-amt">₹410</span>
-          </div>
-
-          <div class="ma-cat-item">
-            <div class="ma-cat-icon" style="background:#dcfce7; color:#16a34a;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            </div>
-            <div class="ma-cat-info">
-              <span class="ma-cat-name">Health</span>
-              <div class="ma-cat-bar-track"><div class="ma-cat-bar-fill" style="width:13%; background:#bbf7d0;"></div></div>
-            </div>
-            <span class="ma-cat-amt">₹325</span>
-          </div>
-
-          <div class="ma-cat-item">
-            <div class="ma-cat-icon" style="background:#fef9c3; color:#a16207;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            </div>
-            <div class="ma-cat-info">
-              <span class="ma-cat-name">Groceries</span>
-              <div class="ma-cat-bar-track"><div class="ma-cat-bar-fill" style="width:12%; background:#fde68a;"></div></div>
-            </div>
-            <span class="ma-cat-amt">₹290</span>
-          </div>
-
-          <div class="ma-cat-item">
-            <div class="ma-cat-icon" style="background:#fee2e2; color:#dc2626;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-            </div>
-            <div class="ma-cat-info">
-              <span class="ma-cat-name">Entertainment</span>
-              <div class="ma-cat-bar-track"><div class="ma-cat-bar-fill" style="width:8%; background:#fca5a5;"></div></div>
-            </div>
-            <span class="ma-cat-amt">₹118</span>
-          </div>
+          {% empty %}
+            <div class="txn-empty">No expense categories recorded for this month.</div>
+          {% endfor %}
         </div>
       </div>
 
@@ -236,8 +204,8 @@
       <div class="card ma-reminder-card">
         <div class="ma-reminder-icon">💡</div>
         <div class="ma-reminder-text">
-          <p class="ma-reminder-title">It's time to review your monthly budget</p>
-          <p class="ma-reminder-sub">LET'S DO THIS NOW</p>
+          <p class="ma-reminder-title">{{ reminder_title }}</p>
+          <p class="ma-reminder-sub">{{ reminder_sub }}</p>
         </div>
         <a href="{% url 'dashboard' %}" class="ma-reminder-btn">Go to Dashboard</a>
       </div>
@@ -246,14 +214,14 @@
       <div class="card ma-wealth-card">
         <div class="ma-wealth-top">
           <span class="ma-wealth-title">Wealth</span>
-          <span class="ma-wealth-badge">GOALS</span>
-          <span class="ma-wealth-amount">₹50 / mo</span>
+          <span class="ma-wealth-badge">{{ wealth_badge }}</span>
+          <span class="ma-wealth-amount">{{ wealth_amount_label }}</span>
         </div>
-        <p class="ma-wealth-cta">START YOUR INVESTMENT JOURNEY</p>
+        <p class="ma-wealth-cta">{{ wealth_cta }}</p>
         <div class="ma-wealth-bar-track">
-          <div class="ma-wealth-bar-fill" style="width: 12%;"></div>
+          <div class="ma-wealth-bar-fill" style="width: {{ wealth_progress_pct|floatformat:1 }}%;"></div>
         </div>
-        <p class="ma-wealth-sub">12% of your savings goal reached</p>
+        <p class="ma-wealth-sub">{{ wealth_sub }}</p>
       </div>
 
       <!-- Monthly summary donut -->
@@ -262,29 +230,23 @@
         <div class="ma-donut-wrap">
           <svg viewBox="0 0 120 120" class="ma-donut-svg" aria-hidden="true">
             <circle cx="60" cy="60" r="46" fill="none" stroke="#f0edf6" stroke-width="16"/>
-            <circle cx="60" cy="60" r="46" fill="none" stroke="#67e8f9" stroke-width="16"
-              stroke-dasharray="164.5 124.7" stroke-dashoffset="0" stroke-linecap="round"
-              transform="rotate(-90 60 60)"/>
-            <circle cx="60" cy="60" r="46" fill="none" stroke="#a78bfa" stroke-width="16"
-              stroke-dasharray="39.0 250.2" stroke-dashoffset="-164.5" stroke-linecap="round"
-              transform="rotate(-90 60 60)"/>
-            <circle cx="60" cy="60" r="46" fill="none" stroke="#fde68a" stroke-width="16"
-              stroke-dasharray="35.6 253.6" stroke-dashoffset="-203.5" stroke-linecap="round"
-              transform="rotate(-90 60 60)"/>
-            <circle cx="60" cy="60" r="46" fill="none" stroke="#bbf7d0" stroke-width="16"
-              stroke-dasharray="50.3 238.9" stroke-dashoffset="-239.1" stroke-linecap="round"
-              transform="rotate(-90 60 60)"/>
+            {% for segment in donut_segments %}
+              <circle cx="60" cy="60" r="46" fill="none" stroke="{{ segment.color }}" stroke-width="16"
+                stroke-dasharray="{{ segment.dasharray }}" stroke-dashoffset="{{ segment.dashoffset }}" stroke-linecap="round"
+                transform="rotate(-90 60 60)"/>
+            {% endfor %}
           </svg>
           <div class="ma-donut-center">
-            <span class="ma-donut-total">₹2,453</span>
+            <span class="ma-donut-total">₹{{ total_expense|floatformat:2 }}</span>
             <span class="ma-donut-sub">total spent</span>
           </div>
         </div>
         <div class="ma-donut-legend">
-          <span><i style="background:#67e8f9"></i>Rent 57%</span>
-          <span><i style="background:#a78bfa"></i>Transport 17%</span>
-          <span><i style="background:#fde68a"></i>Groceries 12%</span>
-          <span><i style="background:#bbf7d0"></i>Health 13%</span>
+          {% for category in donut_legend %}
+            <span><i style="background:{{ category.color }}"></i>{{ category.label }} {{ category.share_pct|floatformat:1 }}%</span>
+          {% empty %}
+            <span>No spending split available yet.</span>
+          {% endfor %}
         </div>
       </div>
 
@@ -303,17 +265,17 @@
           <svg viewBox="0 0 100 100" class="ma-score-ring">
             <circle cx="50" cy="50" r="40" fill="none" stroke="#f0edf6" stroke-width="12"/>
             <circle cx="50" cy="50" r="40" fill="none" stroke="#5e5ce6" stroke-width="12"
-              stroke-dasharray="175.9 75.4" stroke-dashoffset="0" stroke-linecap="round"
+              stroke-dasharray="{{ monthly_score.ring_dash }} {{ monthly_score.ring_gap }}" stroke-dashoffset="0" stroke-linecap="round"
               transform="rotate(-90 50 50)"/>
           </svg>
           <div class="ma-score-center">
-            <span class="ma-score-num">70</span>
+            <span class="ma-score-num">{{ monthly_score.value }}</span>
             <span class="ma-score-label">/ 100</span>
           </div>
         </div>
         <div class="ma-score-info">
-          <p class="ma-score-title">Good standing</p>
-          <p class="ma-score-desc">You're managing your budget well. Keep it up!</p>
+          <p class="ma-score-title">{{ monthly_score.title }}</p>
+          <p class="ma-score-desc">{{ monthly_score.description }}</p>
         </div>
       </div>
     </section>
@@ -324,46 +286,18 @@
         <span class="rp-sub-title">Top Spending Days</span>
       </div>
       <ul class="txn-list">
-        <li class="txn-item">
-          <div class="txn-icon payment">15</div>
-          <div class="txn-info">
-            <span class="txn-name">Nov 15</span>
-            <span class="txn-time">Rent + Groceries</span>
-          </div>
-          <span class="txn-amt neg">₹1,520</span>
-        </li>
-        <li class="txn-item">
-          <div class="txn-icon figma">8</div>
-          <div class="txn-info">
-            <span class="txn-name">Nov 8</span>
-            <span class="txn-time">Shopping</span>
-          </div>
-          <span class="txn-amt neg">₹340</span>
-        </li>
-        <li class="txn-item">
-          <div class="txn-icon withdrawal">22</div>
-          <div class="txn-info">
-            <span class="txn-name">Nov 22</span>
-            <span class="txn-time">Health + Transport</span>
-          </div>
-          <span class="txn-amt neg">₹290</span>
-        </li>
-        <li class="txn-item">
-          <div class="txn-icon webflow">3</div>
-          <div class="txn-info">
-            <span class="txn-name">Nov 3</span>
-            <span class="txn-time">Subscriptions</span>
-          </div>
-          <span class="txn-amt neg">₹180</span>
-        </li>
-        <li class="txn-item">
-          <div class="txn-icon zalando">28</div>
-          <div class="txn-info">
-            <span class="txn-name">Nov 28</span>
-            <span class="txn-time">Entertainment</span>
-          </div>
-          <span class="txn-amt neg">₹123</span>
-        </li>
+        {% for day in top_spending_days %}
+          <li class="txn-item">
+            <div class="txn-icon {{ day.badge_class }}">{{ day.day_number }}</div>
+            <div class="txn-info">
+              <span class="txn-name">{{ day.label }}</span>
+              <span class="txn-time">{{ day.summary }}</span>
+            </div>
+            <span class="txn-amt neg">₹{{ day.amount|floatformat:2 }}</span>
+          </li>
+        {% empty %}
+          <li class="txn-empty">No high-spend days recorded for this month yet.</li>
+        {% endfor %}
       </ul>
     </section>
 

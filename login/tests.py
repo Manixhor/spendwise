@@ -91,3 +91,68 @@ class DashboardInsightsTests(TestCase):
         self.assertEqual(payload['cat_tiles'][1]['label'], 'Food')
         self.assertEqual(len(payload['insight_segments']), 2)
         self.assertIn('coach', payload)
+
+
+class MonthlyAnalysisTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='monthly@example.com',
+            email='monthly@example.com',
+            password='secret123',
+            first_name='Monthy',
+        )
+        self.profile = UserProfile.objects.create(
+            user=self.user,
+            salary=Decimal('12000.00'),
+            target_savings=Decimal('5000.00'),
+        )
+        self.client.force_login(self.user)
+
+    def test_monthly_page_uses_real_month_data(self):
+        Transaction.objects.bulk_create([
+            Transaction(
+                user=self.user,
+                title='Salary Credit',
+                amount=Decimal('3000.00'),
+                txn_type='income',
+                category='other',
+                date=date(2026, 5, 2),
+            ),
+            Transaction(
+                user=self.user,
+                title='Rent',
+                amount=Decimal('2500.00'),
+                txn_type='expense',
+                category='rent',
+                date=date(2026, 5, 3),
+            ),
+            Transaction(
+                user=self.user,
+                title='Groceries',
+                amount=Decimal('700.00'),
+                txn_type='expense',
+                category='groceries',
+                date=date(2026, 5, 10),
+            ),
+            Transaction(
+                user=self.user,
+                title='Transport',
+                amount=Decimal('300.00'),
+                txn_type='expense',
+                category='transport',
+                date=date(2026, 5, 18),
+            ),
+        ])
+
+        response = self.client.get(reverse('monthly'), {'month': '2026-05'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['selected_month_param'], '2026-05')
+        self.assertEqual(response.context['selected_month_label'], 'May 2026')
+        self.assertEqual(response.context['total_expense'], Decimal('3500.00'))
+        self.assertEqual(response.context['total_balance'], Decimal('8500.00'))
+        self.assertEqual(response.context['categories'][0]['label'], 'Rent')
+        self.assertEqual(response.context['donut_legend'][0]['label'], 'Rent')
+        self.assertGreaterEqual(len(response.context['weekly_chart']['weeks']), 4)
+        self.assertEqual(response.context['top_spending_days'][0]['label'], 'May 03')
+        self.assertGreater(response.context['monthly_score']['value'], 0)

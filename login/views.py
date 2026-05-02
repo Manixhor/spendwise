@@ -2,7 +2,7 @@ import json
 import decimal
 from datetime import date, timedelta
 from decimal import Decimal
-from math import pi
+from math import ceil, pi
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -42,8 +42,21 @@ CATEGORY_COLORS = {
     'other':         '#e2e8f0',
 }
 
+CATEGORY_ACCENTS = {
+    'rent':          {'bg': '#e0f7fa', 'fg': '#0097a7'},
+    'transport':     {'bg': '#ede9ff', 'fg': '#7c3aed'},
+    'health':        {'bg': '#dcfce7', 'fg': '#16a34a'},
+    'groceries':     {'bg': '#fef9c3', 'fg': '#a16207'},
+    'entertainment': {'bg': '#fee2e2', 'fg': '#dc2626'},
+    'shopping':      {'bg': '#ffedd5', 'fg': '#c2410c'},
+    'food':          {'bg': '#cffafe', 'fg': '#0891b2'},
+    'utilities':     {'bg': '#ecfccb', 'fg': '#4d7c0f'},
+    'other':         {'bg': '#e5e7eb', 'fg': '#475569'},
+}
+
 INSIGHTS_DONUT_CIRCUMFERENCE = round(2 * pi * 46, 1)
 INSIGHTS_SEGMENT_LIMIT = 5
+MONTHLY_SCORE_CIRCUMFERENCE = round(2 * pi * 40, 1)
 
 
 def _serialize_category_tiles(cat_data):
@@ -104,7 +117,357 @@ def _dashboard_stats_payload(stats):
         'cat_tiles': stats['cat_tiles'],
         'insight_segments': stats['insight_segments'],
         'insight_total': float(stats['insight_total']),
+        'insight_stock': stats['insight_stock'],
+        'chart_months': stats['chart_months'],
         'coach': get_spending_message(stats['spend_pct']),
+    }
+
+
+def _add_months(month_start: date, delta: int) -> date:
+    month_index = month_start.month - 1 + delta
+    year = month_start.year + month_index // 12
+    month = month_index % 12 + 1
+    return date(year, month, 1)
+
+
+def _month_bounds(month_start: date) -> tuple[date, date]:
+    next_month = _add_months(month_start, 1)
+    return month_start, next_month - timedelta(days=1)
+
+
+def _parse_month_param(month_value: str | None) -> date:
+    if month_value:
+        try:
+            year_str, month_str = month_value.split('-', 1)
+            return date(int(year_str), int(month_str), 1)
+        except (TypeError, ValueError):
+            pass
+    today = date.today()
+    return today.replace(day=1)
+
+
+def _format_axis_currency(value: float) -> str:
+    if value >= 1000:
+        display = value / 1000
+        suffix = 'k'
+        digits = 1 if display < 10 and display % 1 else 0
+        return f"₹{display:.{digits}f}{suffix}"
+    return f"₹{int(round(value))}"
+
+
+def _pct_change(current_value: Decimal, previous_value: Decimal) -> float:
+    current_float = float(current_value)
+    previous_float = float(previous_value)
+
+    if previous_float == 0:
+        if current_float > 0:
+            return 100.0
+        if current_float < 0:
+            return -100.0
+        return 0.0
+
+    return round(((current_float - previous_float) / abs(previous_float)) * 100, 1)
+
+
+def _build_monthly_weeks(user, month_start: date, month_end: date) -> list[dict]:
+    chart_width = 560
+    chart_height = 220
+    chart_inner_height = 190
+    weeks = []
+    cursor = month_start
+    week_index = 1
+
+    while cursor <= month_end:
+        week_end = min(cursor + timedelta(days=6), month_end)
+        income = Transaction.objects.filter(
+            user=user,
+            txn_type='income',
+            date__gte=cursor,
+            date__lte=week_end,
+        ).aggregate(s=Sum('amount'))['s'] or Decimal('0')
+        expense = Transaction.objects.filter(
+            user=user,
+            txn_type='expense',
+            date__gte=cursor,
+            date__lte=week_end,
+        ).aggregate(s=Sum('amount'))['s'] or Decimal('0')
+        weeks.append({
+            'label': f'Week {week_index}',
+            'range_label': f'{cursor.strftime("%b")} {cursor.day} - {week_end.strftime("%b")} {week_end.day}',
+            'income': float(income),
+            'expense': float(expense),
+        })
+        cursor = week_end + timedelta(days=1)
+        week_index += 1
+
+    if not weeks:
+        weeks.append({
+            'label': 'Week 1',
+            'range_label': f'{month_start.strftime("%b")} {month_start.day} - {month_end.strftime("%b")} {month_end.day}',
+            'income': 0.0,
+            'expense': 0.0,
+        })
+
+    max_val = max(
+        max((week['income'] for week in weeks), default=0),
+        max((week['expense'] for week in weeks), default=0),
+        1,
+    )
+    slot_width = chart_width / len(weeks)
+    bar_width = min(28, max(18, int((slot_width - 22) / 2)))
+    bar_gap = min(12, max(8, int(slot_width * 0.12)))
+    pair_width = bar_width * 2 + bar_gap
+    trend_points = []
+
+    for index, week in enumerate(weeks):
+        start_x = index * slot_width + max((slot_width - pair_width) / 2, 4)
+        income_height = 0 if week['income'] <= 0 else max(10, round((week['income'] / max_val) * chart_inner_height, 1))
+        expense_height = 0 if week['expense'] <= 0 else max(10, round((week['expense'] / max_val) * chart_inner_height, 1))
+        income_y = chart_height - income_height
+        expense_y = chart_height - expense_height
+        income_cx = start_x + bar_width / 2
+
+        week.update({
+            'income_height': income_height,
+            'expense_height': expense_height,
+            'income_y': income_y,
+            'expense_y': expense_y,
+            'income_x': round(start_x, 1),
+            'expense_x': round(start_x + bar_width + bar_gap, 1),
+            'bar_width': bar_width,
+        })
+        trend_points.append({'x': income_cx, 'y': income_y if income_height else chart_height})
+
+    trend_path = ''
+    if len(trend_points) > 1:
+        trend_path = f"M{trend_points[0]['x']:.1f},{trend_points[0]['y']:.1f}"
+        for index in range(1, len(trend_points)):
+            prev_point = trend_points[index - 1]
+            point = trend_points[index]
+            control_x = (prev_point['x'] + point['x']) / 2
+            trend_path += (
+                f" C{control_x:.1f},{prev_point['y']:.1f}"
+                f" {control_x:.1f},{point['y']:.1f}"
+                f" {point['x']:.1f},{point['y']:.1f}"
+            )
+
+    axis_step = ceil(max_val / 5) if max_val else 1
+    y_axis_labels = [
+        _format_axis_currency(axis_step * level)
+        for level in range(5, -1, -1)
+    ]
+
+    return {
+        'weeks': weeks,
+        'trend_path': trend_path,
+        'y_axis_labels': y_axis_labels,
+        'max_value': round(max_val, 2),
+    }
+
+
+def _build_monthly_categories(user, month_start: date, month_end: date, total_expense: Decimal) -> list[dict]:
+    categories = []
+    total_expense_float = float(total_expense)
+
+    for key, label in Transaction.CATEGORY_CHOICES:
+        amount = Transaction.objects.filter(
+            user=user,
+            txn_type='expense',
+            category=key,
+            date__gte=month_start,
+            date__lte=month_end,
+        ).aggregate(s=Sum('amount'))['s'] or Decimal('0')
+
+        if amount <= 0:
+            continue
+
+        accent = CATEGORY_ACCENTS.get(key, CATEGORY_ACCENTS['other'])
+        categories.append({
+            'key': key,
+            'label': label,
+            'amount': float(amount),
+            'share_pct': round((float(amount) / total_expense_float) * 100, 1) if total_expense_float else 0,
+            'color': CATEGORY_COLORS.get(key, '#e2e8f0'),
+            'icon_bg': accent['bg'],
+            'icon_fg': accent['fg'],
+        })
+
+    return sorted(categories, key=lambda category: category['amount'], reverse=True)
+
+
+def _build_monthly_score(total_income: Decimal, total_expense: Decimal, total_saved: Decimal, salary: Decimal) -> dict:
+    if salary > 0:
+        baseline = float(salary)
+    else:
+        baseline = float(total_income)
+
+    if baseline > 0:
+        spend_ratio = float(total_expense) / baseline
+        save_ratio = max(float(total_saved), 0) / baseline
+        score = round(max(0, min(100, 100 - (spend_ratio * 62) + min(save_ratio, 1) * 24)))
+    else:
+        score = 0
+
+    if score >= 80:
+        title = 'Excellent rhythm'
+        description = "You're keeping spending under control and protecting your savings."
+    elif score >= 60:
+        title = 'Good standing'
+        description = "Your month looks healthy, with room to tighten a few categories."
+    elif score >= 40:
+        title = 'Needs attention'
+        description = 'Spending is starting to crowd out savings this month.'
+    else:
+        title = 'High pressure'
+        description = 'This month is running hot. Review your biggest expense days first.'
+
+    return {
+        'value': score,
+        'ring_dash': round((score / 100) * MONTHLY_SCORE_CIRCUMFERENCE, 1),
+        'ring_gap': round(MONTHLY_SCORE_CIRCUMFERENCE - (score / 100) * MONTHLY_SCORE_CIRCUMFERENCE, 1),
+        'title': title,
+        'description': description,
+    }
+
+
+def _build_top_spending_days(user, month_start: date, month_end: date) -> list[dict]:
+    daily_spend = {}
+    badge_classes = ['payment', 'figma', 'withdrawal', 'webflow', 'zalando']
+
+    for txn in Transaction.objects.filter(
+        user=user,
+        txn_type='expense',
+        date__gte=month_start,
+        date__lte=month_end,
+    ).order_by('date', 'created_at'):
+        entry = daily_spend.setdefault(txn.date, {
+            'amount': Decimal('0'),
+            'categories': {},
+        })
+        entry['amount'] += txn.amount
+        entry['categories'][txn.category] = entry['categories'].get(txn.category, Decimal('0')) + txn.amount
+
+    ranked_days = sorted(daily_spend.items(), key=lambda item: item[1]['amount'], reverse=True)[:5]
+    results = []
+
+    for index, (day, payload) in enumerate(ranked_days):
+        top_categories = sorted(payload['categories'].items(), key=lambda item: item[1], reverse=True)[:2]
+        category_text = ' + '.join(dict(Transaction.CATEGORY_CHOICES).get(key, key.title()) for key, _ in top_categories)
+        results.append({
+            'day_number': day.day,
+            'label': day.strftime('%b %d'),
+            'summary': category_text or 'Expenses',
+            'amount': float(payload['amount']),
+            'badge_class': badge_classes[index % len(badge_classes)],
+        })
+
+    return results
+
+
+def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
+    month_start, month_end = _month_bounds(selected_month)
+    prev_month_start = _add_months(month_start, -1)
+    prev_month_end = month_start - timedelta(days=1)
+
+    month_txns = Transaction.objects.filter(user=user, date__gte=month_start, date__lte=month_end)
+    total_income = month_txns.filter(txn_type='income').aggregate(s=Sum('amount'))['s'] or Decimal('0')
+    total_expense = month_txns.filter(txn_type='expense').aggregate(s=Sum('amount'))['s'] or Decimal('0')
+    salary = Decimal(str(profile.salary)) if profile.salary else Decimal('0')
+    total_saved = (salary - total_expense) if salary > 0 else (total_income - total_expense)
+    total_balance = total_saved
+
+    prev_txns = Transaction.objects.filter(user=user, date__gte=prev_month_start, date__lte=prev_month_end)
+    prev_income = prev_txns.filter(txn_type='income').aggregate(s=Sum('amount'))['s'] or Decimal('0')
+    prev_expense = prev_txns.filter(txn_type='expense').aggregate(s=Sum('amount'))['s'] or Decimal('0')
+    prev_saved = (salary - prev_expense) if salary > 0 else (prev_income - prev_expense)
+
+    balance_change_pct = _pct_change(total_balance, prev_saved)
+    categories = _build_monthly_categories(user, month_start, month_end, total_expense)
+    donut_segments = _build_insight_segments(categories[:4], total_expense)
+    weekly_chart = _build_monthly_weeks(user, month_start, month_end)
+    monthly_score = _build_monthly_score(total_income, total_expense, total_saved, salary)
+    top_spending_days = _build_top_spending_days(user, month_start, month_end)
+
+    if salary > 0:
+        spend_ratio = min(round((float(total_expense) / float(salary)) * 100, 1), 999.9)
+    elif total_income > 0:
+        spend_ratio = min(round((float(total_expense) / float(total_income)) * 100, 1), 999.9)
+    else:
+        spend_ratio = 0.0
+
+    target = Decimal(str(profile.target_savings)) if profile.target_savings else Decimal('0')
+    wealth_progress_pct = min(round((max(float(total_saved), 0) / float(target)) * 100, 1), 100) if target > 0 else 0
+
+    if total_expense <= 0:
+        reminder_title = 'Start tracking expenses for this month'
+        reminder_sub = 'ADD A FEW TRANSACTIONS TO SEE TRENDS'
+    elif monthly_score['value'] >= 75:
+        reminder_title = 'Your monthly budget is holding up well'
+        reminder_sub = 'KEEP THIS MOMENTUM GOING'
+    else:
+        reminder_title = 'Review your biggest spending days this month'
+        reminder_sub = 'CUT BACK WHERE IT HURTS MOST'
+
+    return {
+        'selected_month': month_start,
+        'selected_month_param': month_start.strftime('%Y-%m'),
+        'selected_month_label': month_start.strftime('%B %Y'),
+        'month_period_label': f'{month_start.day} - {month_end.day} {month_end.strftime("%b %Y")}',
+        'prev_month_param': _add_months(month_start, -1).strftime('%Y-%m'),
+        'next_month_param': _add_months(month_start, 1).strftime('%Y-%m'),
+        'is_current_month': month_start == date.today().replace(day=1),
+        'account_subtitle': f'{month_txns.count()} transaction{"s" if month_txns.count() != 1 else ""} in this month',
+        'month_badge': 'This month' if month_start == date.today().replace(day=1) else month_start.strftime('%b %Y'),
+        'total_income': total_income,
+        'total_expense': total_expense,
+        'total_saved': total_saved,
+        'total_balance': total_balance,
+        'balance_change_pct': balance_change_pct,
+        'balance_change_positive': balance_change_pct >= 0,
+        'weekly_chart': weekly_chart,
+        'categories': categories[:5],
+        'donut_segments': donut_segments,
+        'donut_legend': categories[:4],
+        'monthly_score': monthly_score,
+        'top_spending_days': top_spending_days,
+        'reminder_title': reminder_title,
+        'reminder_sub': reminder_sub,
+        'wealth_amount_label': f'₹{target:,.2f} target' if target > 0 else 'No goal set',
+        'wealth_progress_pct': wealth_progress_pct,
+        'wealth_sub': (
+            f'{wealth_progress_pct:.1f}% of your savings goal reached'
+            if target > 0 else
+            'Set a savings target to track progress here'
+        ),
+        'wealth_badge': 'GOALS' if target > 0 else 'START',
+        'wealth_cta': (
+            'BUILD YOUR GOAL CONSISTENCY'
+            if target > 0 else
+            'SET A TARGET TO TRACK PROGRESS'
+        ),
+        'spend_ratio_pct': spend_ratio,
+    }
+
+
+def _build_insight_stock_card(chart_months, total_expense):
+    """Create stock-style summary data for the dashboard hero card."""
+    latest_expense = float(total_expense)
+    previous_expense = chart_months[-2]['expense'] if len(chart_months) > 1 else 0
+
+    if previous_expense > 0:
+        change_pct = round(((latest_expense - previous_expense) / previous_expense) * 100, 1)
+    elif latest_expense > 0:
+        change_pct = 100.0
+    else:
+        change_pct = 0.0
+
+    return {
+        'title': 'Expense Trend',
+        'symbol': 'SPND',
+        'subtitle': 'Monthly spend',
+        'amount': latest_expense,
+        'change_pct': change_pct,
+        'is_up': change_pct >= 0,
     }
 
 
@@ -180,6 +543,8 @@ def _dashboard_stats(user, profile):
             'saved':   float(m_saved),
         })
 
+    insight_stock = _build_insight_stock_card(chart_months, total_expense)
+
     return {
         'total_income':  total_income,
         'total_expense': total_expense,
@@ -193,6 +558,7 @@ def _dashboard_stats(user, profile):
         'ring_gap':      round(CIRC - ring_dash, 1),
         'insight_segments': insight_segments,
         'insight_total': total_expense,
+        'insight_stock': insight_stock,
         'recent_txns':   recent_txns,
         'chart_months':  chart_months,
     }
@@ -457,10 +823,16 @@ def profile_view(request: HttpRequest) -> HttpResponse:
 @login_required(login_url='/login/')
 def monthly(request: HttpRequest) -> HttpResponse:
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    monthly_analysis = _build_monthly_analysis(
+        request.user,
+        profile,
+        _parse_month_param(request.GET.get('month')),
+    )
     return render(request, 'login/monthly.html', {
         'user':       request.user,
         'profile':    profile,
         'active_nav': 'monthly',
+        **monthly_analysis,
     })
 
 
