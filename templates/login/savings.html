@@ -51,6 +51,26 @@
       </div>
     </div>
 
+    <!-- ── Motivation Card ──────────────────────────────── -->
+    <div class="card motivation-card motivation-{{ motivation.bucket }}">
+      <div class="motivation-orb motivation-orb-1"></div>
+      <div class="motivation-orb motivation-orb-2"></div>
+      <div class="motivation-inner">
+        <span class="motivation-emoji">
+          {% if motivation.bucket == 'goal_reached' %}🏆
+          {% elif motivation.bucket == 'almost_there' %}🔥
+          {% elif motivation.bucket == 'making_progress' %}💪
+          {% elif motivation.bucket == 'just_started' %}🌱
+          {% elif motivation.bucket == 'broke' %}😬
+          {% else %}🎯{% endif %}
+        </span>
+        <div class="motivation-text">
+          <p class="motivation-quote">"{{ motivation.quote }}"</p>
+          <p class="motivation-author">{{ motivation.author }}</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Goals grid -->
     <div class="sv-goals-grid" id="goalsGrid">
       {% for goal in goals %}
@@ -132,49 +152,6 @@
 
   </main>
 
-  <!-- ── Right panel ─────────────────────────────────── -->
-  <aside class="right-panel">
-    <section class="rp-section">
-      <h2 class="rp-title">How it works</h2>
-      <div class="sv-howto">
-        <div class="sv-howto-step">
-          <span class="sv-howto-num">1</span>
-          <p>Add your income and expenses on the dashboard</p>
-        </div>
-        <div class="sv-howto-step">
-          <span class="sv-howto-num">2</span>
-          <p>Create a savings goal with a name and target amount</p>
-        </div>
-        <div class="sv-howto-step">
-          <span class="sv-howto-num">3</span>
-          <p>Your monthly savings (income − expenses) automatically tracks progress toward each goal</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="rp-section">
-      <div class="rp-row">
-        <span class="rp-sub-title">All Goals</span>
-        <span class="rp-sub-title">Progress</span>
-      </div>
-      <ul class="txn-list">
-        {% for goal in goals %}
-        <li class="txn-item">
-          <div class="txn-icon" style="background:rgba(94,92,230,0.12); color:#5e5ce6; font-size:1rem;">🎯</div>
-          <div class="txn-info">
-            <span class="txn-name">{{ goal.name }}</span>
-            <span class="txn-time">₹{{ goal.target_amount|floatformat:0 }} target</span>
-          </div>
-          <span class="txn-amt {% if goal.is_complete %}positive{% endif %}">
-            {{ goal.progress_pct|floatformat:0 }}%
-          </span>
-        </li>
-        {% empty %}
-        <li class="txn-empty">No goals yet</li>
-        {% endfor %}
-      </ul>
-    </section>
-  </aside>
 
 </div>
 

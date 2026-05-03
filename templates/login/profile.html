@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="{% static 'login/dashboard.css' %}" />
   <link rel="stylesheet" href="{% static 'login/profile.css' %}" />
 </head>
-<body>
+<body class="profile-page">
 <div class="app">
 
   {% include "login/includes/sidebar.html" %}
@@ -17,7 +17,15 @@
   <main class="main pf-main">
 
     <header class="main-header">
-      <div>
+      <!-- Mobile back arrow -->
+      <a href="{% url 'dashboard' %}" class="mobile-back-btn" title="Back to Dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5"/>
+          <path d="M12 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      
+      <div class="pf-header-content">
         <p class="sv-eyebrow">👤 Account</p>
         <h1 class="welcome">Your Profile</h1>
       </div>
@@ -100,30 +108,46 @@
 
     </form>
 
+    <!-- Salary section -->
+    <div class="card pf-fields-card">
+      <h2 class="pf-section-title">Financial Settings</h2>
+      
+      <div class="pf-salary-section">
+        <div class="pf-salary-info">
+          <label class="modal-field-label">Monthly Salary</label>
+          <p class="pf-salary-display" id="salaryDisplay">
+            {% if profile.salary %}₹{{ profile.salary|floatformat:2 }}{% else %}Not set{% endif %}
+          </p>
+          <p class="pf-hint">Used to calculate your monthly savings and spending percentage</p>
+        </div>
+        <button type="button" class="set-salary-btn" id="setSalaryBtn">
+          {% if profile.salary %}Edit Salary{% else %}+ Set Salary{% endif %}
+        </button>
+      </div>
+    </div>
+
   </main>
 
-  <aside class="right-panel">
-    <section class="rp-section">
-      <h2 class="rp-title">Account Info</h2>
-      <div class="sv-stats-list">
-        <div class="sv-stat-item">
-          <span class="sv-stat-label">Username</span>
-          <span class="sv-stat-val">{{ user.username }}</span>
-        </div>
-        <div class="sv-stat-item">
-          <span class="sv-stat-label">Member since</span>
-          <span class="sv-stat-val">{{ user.date_joined|date:"M Y" }}</span>
-        </div>
-        <div class="sv-stat-item">
-          <span class="sv-stat-label">Salary set</span>
-          <span class="sv-stat-val {% if profile.salary %}positive{% else %}{% endif %}">
-            {% if profile.salary %}₹{{ profile.salary }}{% else %}Not set{% endif %}
-          </span>
-        </div>
-      </div>
-    </section>
-  </aside>
 
+</div>
+
+<!-- ── Set Salary Modal ────────────────────────────────── -->
+<div class="modal-overlay" id="salaryModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">Set Your Salary</h2>
+      <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+    </div>
+    <p class="modal-sub">Enter your monthly salary to track your budget accurately.</p>
+    <div class="modal-field-wrap">
+      <span class="modal-currency">₹</span>
+      <input type="number" id="salaryInput" class="modal-input"
+             placeholder="e.g. 5000" min="0" step="0.01"
+             value="{{ profile.salary|default:'' }}" />
+    </div>
+    <p class="modal-error" id="salaryError"></p>
+    <button class="modal-save-btn" id="modalSave">Save Salary</button>
+  </div>
 </div>
 
 <script>
@@ -148,6 +172,79 @@
     };
     reader.readAsDataURL(file);
   });
+
+  // Salary modal functionality
+  const modal      = document.getElementById('salaryModal');
+  const openBtn    = document.getElementById('setSalaryBtn');
+  const closeBtn   = document.getElementById('modalClose');
+  const saveBtn    = document.getElementById('modalSave');
+  const input      = document.getElementById('salaryInput');
+  const errorEl    = document.getElementById('salaryError');
+
+  function openModal()  {
+    if (!modal || !input) return;
+    modal.classList.add('active');
+    input.focus();
+  }
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.remove('active');
+    if (errorEl) errorEl.textContent = '';
+  }
+
+  if (openBtn && closeBtn && modal && saveBtn && input && errorEl) {
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+  });
+
+  if (saveBtn && input && errorEl) {
+    saveBtn.addEventListener('click', async () => {
+    const val = input.value.trim();
+    if (!val || isNaN(val) || parseFloat(val) < 0) {
+      errorEl.textContent = 'Please enter a valid salary amount.';
+      return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    errorEl.textContent = '';
+
+    try {
+      const res = await fetch('/api/salary/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify({ salary: parseFloat(val) }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        // Update salary display
+        const salaryDisplay = document.getElementById('salaryDisplay');
+        if (salaryDisplay) {
+          salaryDisplay.textContent = '₹' + parseFloat(data.salary).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        }
+        if (openBtn) openBtn.textContent = 'Edit Salary';
+        closeModal();
+      } else {
+        errorEl.textContent = data.error || 'Something went wrong.';
+      }
+    } catch (err) {
+      errorEl.textContent = 'Network error. Please try again.';
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Salary';
+    }
+    });
+  }
 </script>
 </body>
 </html>

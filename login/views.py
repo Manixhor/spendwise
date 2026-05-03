@@ -27,6 +27,79 @@ from .models import Transaction, UserProfile, SavingsGoal
 from .spending_coach import fetch_dad_joke, get_spending_message
 
 
+# ── Smart Savings Motivation ──────────────────────────────
+_MOTIVATION_QUOTES = {
+    'broke': [
+        ("₹0 saved? Bold strategy. Let's see if it pays off.", "— Your Future Self, Nervous"),
+        ("Your savings account called. It said it's lonely and considering therapy.", "— Bank of Feelings"),
+        ("Not saving is just borrowing stress from your future self. He's not happy.", "— Future You, Crying"),
+        ("The good news: you can only go up from here. The bad news: you're here.", "— Motivational Rock Bottom"),
+        ("Your wallet is on a juice cleanse. Involuntarily.", "— Financial Wellness Guru"),
+    ],
+    'just_started': [
+        ("You saved something! It's not much, but neither was the first step on the moon.", "— Neil Armstrong, Probably"),
+        ("A tiny saving today is a slightly less tiny saving tomorrow. Math!", "— Einstein's Finance Cousin"),
+        ("You've started! That's more than 90% of people who said 'I'll start Monday'.", "— The Monday Club"),
+        ("Your savings are like a baby — small, fragile, but full of potential. Don't drop it.", "— Parenting & Finance Weekly"),
+        ("Progress: tiny. Attitude: massive. Keep going, legend.", "— Your Hype Person"),
+    ],
+    'making_progress': [
+        ("You're not broke, you're 'pre-wealthy'. Keep going.", "— Optimism Department"),
+        ("Halfway there! Your future self just sent a thumbs up emoji.", "— Time Travel Update"),
+        ("You're saving money like it owes you something. It does. Keep at it.", "— Debt Collector (Nice Version)"),
+        ("Look at you, being financially responsible. Your parents would be shocked.", "— Family Group Chat"),
+        ("You're in the top 40% of people who actually save. The bar is low, but you cleared it!", "— Statistics That Slap"),
+    ],
+    'almost_there': [
+        ("So close! Don't you dare buy that thing you're thinking about right now.", "— Your Conscience"),
+        ("You're 80%+ there. This is not the time to 'treat yourself'.", "— The Voice of Reason"),
+        ("Almost at your goal. One more month of pretending you don't need takeout.", "— Delivery App, Sad"),
+        ("The finish line is RIGHT THERE. Don't look at the sale section.", "— Coach Willpower"),
+        ("You've come too far to spend it on something you'll return in 3 days.", "— Return Policy Dept."),
+    ],
+    'goal_reached': [
+        ("GOAL REACHED! You did it! Now set a harder one so we can do this again.", "— Masochism & Finance"),
+        ("You actually saved the money. We're as surprised as you are. Congrats!", "— SpendWise HQ"),
+        ("Achievement unlocked: 'Person Who Has Their Life Together (Financially)'.", "— Achievement System"),
+        ("Your savings goal is complete. Your future self is doing a little dance right now.", "— Future You, Thriving"),
+        ("You saved it all! Now don't spend it all in one place. Or do. We're not your mom.", "— SpendWise (Neutral)"),
+    ],
+    'no_goals': [
+        ("No savings goals? That's fine. Living on vibes is a valid strategy. (It's not.)", "— Financial Advisor, Concerned"),
+        ("A goal without a plan is just a wish. A wish without savings is just a dream. Add a goal!", "— Confucius (Finance Edition)"),
+        ("You have no savings goals. Your money is just... free range. Wild. Unstructured.", "— Chaos Economist"),
+        ("Set a goal! Even 'save enough to not panic at the grocery store' counts.", "— Grocery Store Anxiety Support"),
+        ("Goals are just dreams with deadlines and spreadsheets. Add one!", "— Spreadsheet Enthusiast"),
+    ],
+}
+
+def _get_motivation_quote(monthly_saved: float, goals_data: list, last_quote: str = None) -> dict:
+    """Pick a contextually funny quote based on the user's actual savings state."""
+    if not goals_data:
+        bucket = 'no_goals'
+    else:
+        best_pct = max(g['progress_pct'] for g in goals_data)
+        any_complete = any(g['is_complete'] for g in goals_data)
+        if any_complete:
+            bucket = 'goal_reached'
+        elif monthly_saved <= 0:
+            bucket = 'broke'
+        elif best_pct < 15:
+            bucket = 'just_started'
+        elif best_pct < 70:
+            bucket = 'making_progress'
+        else:
+            bucket = 'almost_there'
+
+    # Filter out the last quote to guarantee variety
+    available = [q for q in _MOTIVATION_QUOTES[bucket] if q[0] != last_quote]
+    if not available:  # Fallback if somehow all filtered
+        available = _MOTIVATION_QUOTES[bucket]
+    
+    quote, author = random.choice(available)
+    return {'quote': quote, 'author': author, 'bucket': bucket}
+
+
 # ── Helpers ───────────────────────────────────────────────
 CATEGORY_ICONS = {
     'rent':          '🏠',
@@ -1001,11 +1074,31 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     coach      = get_spending_message(stats['spend_pct'])
     dad_joke   = fetch_dad_joke()
 
+    # Smart motivation quote — context-aware, no repeats
+    goals = SavingsGoal.objects.filter(user=request.user)
+    monthly_saved = float(stats['total_saved'])
+    goals_data = []
+    for g in goals:
+        if float(g.target_amount) > 0:
+            pct = min(round(float(monthly_saved) / float(g.target_amount) * 100, 1), 100)
+        else:
+            pct = 0
+        pct = max(pct, 0)
+        goals_data.append({
+            'progress_pct': pct,
+            'is_complete': float(monthly_saved) >= float(g.target_amount),
+        })
+    
+    last_quote = request.session.get('last_dash_motivation_quote', None)
+    motivation = _get_motivation_quote(monthly_saved, goals_data, last_quote)
+    request.session['last_dash_motivation_quote'] = motivation['quote']
+
     return render(request, 'login/dashboard.html', {
         'user':         request.user,
         'profile':      profile,
         'coach':        coach,
         'dad_joke':     dad_joke,
+        'motivation':   motivation,
         'categories':   Transaction.CATEGORY_CHOICES,
         'today':        date.today().isoformat(),
         'active_nav':   'dashboard',
@@ -1100,12 +1193,18 @@ def savings(request: HttpRequest) -> HttpResponse:
             'remaining':     max(float(g.target_amount) - float(monthly_saved), 0),
         })
 
+    # Get motivation quote (avoid repeating the last one)
+    last_quote = request.session.get('last_motivation_quote', None)
+    motivation = _get_motivation_quote(float(monthly_saved), goals_data, last_quote)
+    request.session['last_motivation_quote'] = motivation['quote']
+
     return render(request, 'login/savings.html', {
         'user':          request.user,
         'profile':       profile,
         'goals':         goals_data,
         'goal_count':    goals.count(),
         'monthly_saved': monthly_saved,
+        'motivation':    motivation,
         'active_nav':    'savings',
     })
 
@@ -1253,7 +1352,11 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
         amount   = data.get('amount', 0)
         txn_type = data.get('txn_type', 'expense').strip()
         category = data.get('category', 'other').strip()
-        txn_date = data.get('date', str(date.today()))
+        txn_date_str = data.get('date', str(date.today()))
+        try:
+            txn_date = date.fromisoformat(txn_date_str)
+        except (ValueError, TypeError):
+            txn_date = date.today()
 
         if txn_type not in ('income', 'expense'):
             txn_type = 'expense'
@@ -1385,3 +1488,51 @@ def api_motivation_message(request: HttpRequest) -> JsonResponse:
         'badge': badge,
         'used_ai': used_ai,
     })
+
+
+# ── API: Update Transaction ───────────────────────────────
+@login_required(login_url='/login/')
+@require_http_methods(['PUT'])
+def api_update_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
+    try:
+        txn = Transaction.objects.get(id=txn_id, user=request.user)
+        data = json.loads(request.body)
+        
+        title = data.get('title', '').strip() or 'Untitled'
+        amount = data.get('amount', 0)
+        txn_type = data.get('txn_type', 'expense').strip()
+        category = data.get('category', 'other').strip()
+        txn_date_str = data.get('date', str(date.today()))
+        
+        try:
+            txn_date = date.fromisoformat(txn_date_str)
+        except (ValueError, TypeError):
+            txn_date = date.today()
+
+        if txn_type not in ('income', 'expense'):
+            txn_type = 'expense'
+        if not amount or float(amount) <= 0:
+            return JsonResponse({'error': 'Amount must be greater than 0.'}, status=400)
+
+        # Update the transaction
+        txn.title = title
+        txn.amount = Decimal(str(amount))
+        txn.txn_type = txn_type
+        txn.category = category
+        txn.date = txn_date
+        txn.note = data.get('note', '')
+        txn.save()
+
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        stats = _dashboard_stats(request.user, profile)
+
+        return JsonResponse({
+            'success': True,
+            'txn': _serialize_txn(txn),
+            'available_expense_dates': _available_expense_dates(request.user),
+            **_dashboard_stats_payload(stats),
+        })
+    except Transaction.DoesNotExist:
+        return JsonResponse({'error': 'Transaction not found.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

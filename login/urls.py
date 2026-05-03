@@ -3,7 +3,7 @@ from django.urls import path
 from .views import (
     onboarding, signup, signup_verify, login_view, logout_view,
     dashboard, monthly, savings, profile_view,
-    api_add_transaction, api_delete_transaction,
+    api_add_transaction, api_delete_transaction, api_update_transaction,
     api_set_salary, api_set_target_savings,
     api_dashboard_summary, api_expenses_by_date, api_dad_joke,
     api_motivation_message,
@@ -22,6 +22,7 @@ urlpatterns = [
     path('profile/',                            profile_view,           name='profile'),
     # Transaction APIs
     path('api/transactions/',                   api_add_transaction,    name='api_add_transaction'),
+    path('api/transactions/<int:txn_id>/update/', api_update_transaction, name='api_update_transaction'),
     path('api/transactions/<int:txn_id>/delete/', api_delete_transaction, name='api_delete_transaction'),
     # Salary / target
     path('api/salary/',                         api_set_salary,         name='api_set_salary'),

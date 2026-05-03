@@ -192,13 +192,9 @@ body[data-theme="dark"] {
 /* ── App shell ──────────────────────────────────────────── */
 .app {
   display: grid;
-  grid-template-columns: 68px 1fr 290px;
+  grid-template-columns: 68px 1fr;
   height: 100vh;
   overflow: hidden;
-}
-
-.app.app-no-right-panel {
-  grid-template-columns: 68px 1fr;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -458,25 +454,27 @@ body[data-theme="dark"] .filter-tab:hover:not(.active) {
   justify-content: center;
   height: 38px;
   padding: 0 18px;
-  border: 1px solid rgba(255,255,255,0.28);
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: 10px;
-  background: var(--btn-primary-bg);
+  background: linear-gradient(135deg, #3b0764 0%, #6b21a8 50%, #7c3aed 100%);
   color: #fff;
   font: inherit;
   font-size: 0.84rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.02em;
   cursor: pointer;
-  box-shadow: var(--btn-primary-shadow);
+  box-shadow: 0 4px 18px rgba(107, 33, 168, 0.40),
+              0 1px 0 rgba(255,255,255,0.18) inset;
   transition: opacity 0.18s, transform 0.15s, box-shadow 0.18s, filter 0.18s;
   white-space: nowrap;
   text-decoration: none;
 }
 
 .set-salary-btn:hover {
+  background: linear-gradient(135deg, #2e0657 0%, #581c87 50%, #6d28d9 100%);
   transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(110,108,240,0.34), 0 1px 0 rgba(255,255,255,0.3) inset;
-  filter: saturate(1.06);
+  box-shadow: 0 8px 28px rgba(107, 33, 168, 0.52),
+              0 1px 0 rgba(255,255,255,0.18) inset;
 }
 
 /* ── Shared glass card ──────────────────────────────────── */
@@ -1195,10 +1193,6 @@ body[data-theme="dark"] .expense-stack-card .esc-delete:hover {
 /* ── Large tablet (≤1280px) ─────────────────────────────── */
 @media (max-width: 1280px) {
   .app {
-    grid-template-columns: 68px 1fr 260px;
-  }
-
-  .app.app-no-right-panel {
     grid-template-columns: 68px 1fr;
   }
 
@@ -1496,22 +1490,24 @@ body[data-theme="dark"] .expense-stack-card .esc-delete:hover {
 
 .modal-close {
   width: 30px; height: 30px;
-  border: 1px solid rgba(143,120,255,0.14);
-  background: var(--btn-soft-bg);
+  border: 1px solid rgba(255,255,255,0.18);
+  background: linear-gradient(135deg, #3b0764 0%, #6b21a8 50%, #7c3aed 100%);
   border-radius: 50%;
   font-size: 1.1rem;
-  color: #7b5cc4;
+  color: #fff;
   cursor: pointer;
   display: grid;
   place-items: center;
-  box-shadow: var(--btn-soft-shadow);
-  transition: background 0.15s, color 0.15s, transform 0.15s;
+  box-shadow: 0 4px 18px rgba(107, 33, 168, 0.40),
+              0 1px 0 rgba(255,255,255,0.18) inset;
+  transition: background 0.15s, color 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 
 .modal-close:hover {
-  background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(240,231,255,0.98) 100%);
-  color: var(--accent);
+  background: linear-gradient(135deg, #2e0657 0%, #581c87 50%, #6d28d9 100%);
   transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(107, 33, 168, 0.52),
+              0 1px 0 rgba(255,255,255,0.18) inset;
 }
 
 .modal-sub {
@@ -1571,24 +1567,26 @@ body[data-theme="dark"] .expense-stack-card .esc-delete:hover {
 .modal-save-btn {
   width: 100%;
   height: 52px;
-  border: 1px solid rgba(255,255,255,0.28);
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: 14px;
-  background: var(--btn-primary-bg);
+  background: linear-gradient(135deg, #3b0764 0%, #6b21a8 50%, #7c3aed 100%);
   color: #fff;
   font: inherit;
   font-size: 0.96rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.02em;
   cursor: pointer;
   margin-top: 18px;
-  box-shadow: var(--btn-primary-shadow);
+  box-shadow: 0 4px 18px rgba(107, 33, 168, 0.40),
+              0 1px 0 rgba(255,255,255,0.18) inset;
   transition: opacity 0.18s, transform 0.15s, box-shadow 0.18s, filter 0.18s;
 }
 
 .modal-save-btn:hover {
+  background: linear-gradient(135deg, #2e0657 0%, #581c87 50%, #6d28d9 100%);
   transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(110,108,240,0.34), 0 1px 0 rgba(255,255,255,0.3) inset;
-  filter: saturate(1.06);
+  box-shadow: 0 8px 28px rgba(107, 33, 168, 0.52),
+              0 1px 0 rgba(255,255,255,0.18) inset;
 }
 .modal-save-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 
@@ -1842,127 +1840,114 @@ body[data-theme="dark"] .expense-stack-card .esc-delete:hover {
 }
 
 /* ── Savings motivation card ───────────────────────────── */
+/* ── Motivation Card (bucket-based) ────────────────────── */
 .motivation-card {
-  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  padding: 22px 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.85);
   min-height: 132px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 8px;
-  isolation: isolate;
-  background:
-    radial-gradient(ellipse at 86% 16%, rgba(255,220,176,0.34) 0%, transparent 58%),
-    radial-gradient(ellipse at 12% 84%, rgba(196,181,253,0.22) 0%, transparent 56%),
-    linear-gradient(145deg, rgba(255,255,255,0.94) 0%, rgba(248,246,252,0.90) 100%);
-  border: 1px solid rgba(255,255,255,0.95);
 }
 
-.motivation-top {
+.motivation-broke        { background: linear-gradient(135deg, rgba(244,63,94,0.12) 0%, rgba(251,113,133,0.08) 100%); }
+.motivation-just_started { background: linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(52,211,153,0.08) 100%); }
+.motivation-making_progress { background: linear-gradient(135deg, rgba(124,58,237,0.12) 0%, rgba(168,85,247,0.08) 100%); }
+.motivation-almost_there { background: linear-gradient(135deg, rgba(245,158,11,0.14) 0%, rgba(251,191,36,0.08) 100%); }
+.motivation-goal_reached { background: linear-gradient(135deg, rgba(16,185,129,0.18) 0%, rgba(52,211,153,0.10) 50%, rgba(124,58,237,0.08) 100%); }
+.motivation-no_goals     { background: linear-gradient(135deg, rgba(100,116,139,0.10) 0%, rgba(148,163,184,0.06) 100%); }
+
+.motivation-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(28px);
+  opacity: 0.55;
+}
+.motivation-orb-1 { width: 120px; height: 120px; top: -30px; right: -20px; }
+.motivation-orb-2 { width: 80px;  height: 80px;  bottom: -20px; left: 10%; }
+
+.motivation-broke        .motivation-orb-1 { background: rgba(244,63,94,0.35); }
+.motivation-broke        .motivation-orb-2 { background: rgba(251,113,133,0.25); }
+.motivation-just_started .motivation-orb-1 { background: rgba(16,185,129,0.35); }
+.motivation-just_started .motivation-orb-2 { background: rgba(52,211,153,0.25); }
+.motivation-making_progress .motivation-orb-1 { background: rgba(124,58,237,0.35); }
+.motivation-making_progress .motivation-orb-2 { background: rgba(168,85,247,0.25); }
+.motivation-almost_there .motivation-orb-1 { background: rgba(245,158,11,0.40); }
+.motivation-almost_there .motivation-orb-2 { background: rgba(251,191,36,0.28); }
+.motivation-goal_reached .motivation-orb-1 { background: rgba(16,185,129,0.40); }
+.motivation-goal_reached .motivation-orb-2 { background: rgba(124,58,237,0.30); }
+.motivation-no_goals     .motivation-orb-1 { background: rgba(100,116,139,0.25); }
+.motivation-no_goals     .motivation-orb-2 { background: rgba(148,163,184,0.18); }
+
+.motivation-inner {
+  position: relative;
+  z-index: 1;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 16px;
 }
 
-.motivation-label {
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
+.motivation-emoji {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
-.motivation-badge {
-  min-width: 72px;
-  height: 28px;
-  padding: 0 12px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: #7c3aed;
-  background: rgba(124,58,237,0.12);
-  border: 1px solid rgba(124,58,237,0.18);
+.motivation-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .motivation-quote {
-  margin-top: 2px;
   font-size: 0.92rem;
-  line-height: 1.55;
-  color: var(--ink);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  display: block;
-  position: relative;
-  z-index: 1;
-  text-wrap: pretty;
-}
-
-.motivation-meta {
-  margin-top: 0;
-  font-size: 0.78rem;
-  color: var(--muted);
   font-weight: 500;
-  display: block;
-  position: relative;
-  z-index: 1;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.55;
+  margin: 0;
 }
 
-.motivation-card[data-tone="reset"] .motivation-badge {
-  color: #c2410c;
-  background: rgba(251,146,60,0.14);
-  border-color: rgba(251,146,60,0.22);
+.motivation-author {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin: 0;
 }
 
-.motivation-card[data-tone="build"] .motivation-badge,
-.motivation-card[data-tone="start"] .motivation-badge {
-  color: #5b21b6;
-  background: rgba(139,92,246,0.14);
-  border-color: rgba(139,92,246,0.22);
-}
-
-.motivation-card[data-tone="steady"] .motivation-badge {
-  color: #0f766e;
-  background: rgba(20,184,166,0.14);
-  border-color: rgba(20,184,166,0.24);
-}
-
-.motivation-card[data-tone="strong"] .motivation-badge,
-.motivation-card[data-tone="clean"] .motivation-badge {
-  color: #166534;
-  background: rgba(34,197,94,0.14);
-  border-color: rgba(34,197,94,0.24);
-}
-
-.motivation-card[data-tone="elite"] .motivation-badge {
-  color: #1d4ed8;
-  background: rgba(59,130,246,0.14);
-  border-color: rgba(59,130,246,0.24);
-}
+.motivation-broke        .motivation-author { color: #f43f5e; }
+.motivation-just_started .motivation-author { color: #10b981; }
+.motivation-making_progress .motivation-author { color: #7c3aed; }
+.motivation-almost_there .motivation-author { color: #d97706; }
+.motivation-goal_reached .motivation-author { color: #059669; }
+.motivation-no_goals     .motivation-author { color: var(--muted); }
 
 /* ── Target Savings Widget ──────────────────────────────── */
 .set-target-btn {
   height: 28px;
   padding: 0 12px;
-  border: 1px solid var(--btn-soft-border);
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: 8px;
-  background: var(--btn-soft-bg);
-  color: #6b56c7;
+  background: linear-gradient(135deg, #3b0764 0%, #6b21a8 50%, #7c3aed 100%);
+  color: #fff;
   font: inherit;
   font-size: 0.76rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--btn-soft-shadow);
-  transition: background 0.15s, color 0.15s, transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 18px rgba(107, 33, 168, 0.40),
+              0 1px 0 rgba(255,255,255,0.18) inset;
+  transition: opacity 0.18s, transform 0.15s, box-shadow 0.18s, filter 0.18s;
 }
 .set-target-btn:hover {
-  background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(237,227,255,0.96) 100%);
-  color: var(--accent);
+  background: linear-gradient(135deg, #2e0657 0%, #581c87 50%, #6d28d9 100%);
   transform: translateY(-1px);
-  box-shadow: 0 12px 22px rgba(138,122,255,0.14), 0 1px 0 rgba(255,255,255,0.8) inset;
+  box-shadow: 0 8px 28px rgba(107, 33, 168, 0.52),
+              0 1px 0 rgba(255,255,255,0.18) inset;
 }
 
 .savings-target-card {
@@ -2062,23 +2047,25 @@ body[data-theme="dark"] .expense-stack-card .esc-delete:hover {
 .add-txn-btn {
   height: 38px;
   padding: 0 18px;
-  border: 1px solid rgba(255,255,255,0.26);
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: 10px;
-  background: var(--btn-success-bg);
+  background: linear-gradient(135deg, #3b0764 0%, #6b21a8 50%, #7c3aed 100%);
   color: #fff;
   font: inherit;
   font-size: 0.84rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.02em;
   cursor: pointer;
-  box-shadow: var(--btn-success-shadow);
+  box-shadow: 0 4px 18px rgba(107, 33, 168, 0.40),
+              0 1px 0 rgba(255,255,255,0.18) inset;
   transition: opacity 0.18s, transform 0.15s, box-shadow 0.18s, filter 0.18s;
   white-space: nowrap;
 }
 .add-txn-btn:hover {
+  background: linear-gradient(135deg, #2e0657 0%, #581c87 50%, #6d28d9 100%);
   transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(20,184,166,0.30), 0 1px 0 rgba(255,255,255,0.28) inset;
-  filter: saturate(1.06);
+  box-shadow: 0 8px 28px rgba(107, 33, 168, 0.52),
+              0 1px 0 rgba(255,255,255,0.18) inset;
 }
 
 /* ── Transaction type toggle ────────────────────────────── */
@@ -2148,32 +2135,39 @@ body[data-theme="dark"] .expense-stack-card .esc-delete:hover {
 .expense-action-row {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  gap: 12px;
+}
+
+.expense-action-row .expense-btn-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   gap: 14px;
 }
 
 .add-expense-btn {
   height: 38px;
   padding: 0 20px;
-  border: 1px solid rgba(255,255,255,0.26);
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: 10px;
-  background: var(--btn-warm-bg);
+  background: linear-gradient(135deg, #3b0764 0%, #6b21a8 50%, #7c3aed 100%);
   color: #fff;
   font: inherit;
   font-size: 0.84rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   cursor: pointer;
-  box-shadow: var(--btn-warm-shadow);
+  box-shadow: 0 4px 18px rgba(107, 33, 168, 0.40),
+              0 1px 0 rgba(255,255,255,0.18) inset;
   transition: opacity 0.18s, transform 0.15s, box-shadow 0.18s, filter 0.18s;
   white-space: nowrap;
   flex-shrink: 0;
-  align-self: flex-start;
 }
 .add-expense-btn:hover {
+  background: linear-gradient(135deg, #2e0657 0%, #581c87 50%, #6d28d9 100%);
   transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(249,115,22,0.30), 0 1px 0 rgba(255,255,255,0.28) inset;
-  filter: saturate(1.04);
+  box-shadow: 0 8px 28px rgba(107, 33, 168, 0.52),
+              0 1px 0 rgba(255,255,255,0.18) inset;
 }
 
 .filter-tabs {
@@ -2518,6 +2512,7 @@ body[data-theme="dark"] .expense-stack-card .esc-delete:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   padding: 16px 20px;
   color: #fff;
   cursor: pointer;
@@ -2528,6 +2523,37 @@ body[data-theme="dark"] .expense-stack-card .esc-delete:hover {
     0 1px 0 rgba(255,255,255,0.70) inset,
     0 4px 14px rgba(0,0,0,0.08);
   transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s;
+}
+
+/* iOS-style red minus delete button */
+.esc-minus {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ff3b30;
+  border: none;
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0 1px 0;
+  box-shadow: 0 2px 8px rgba(255,59,48,0.50);
+  transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.15s;
+  z-index: 1;
+}
+
+.esc-minus:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 14px rgba(255,59,48,0.65);
+}
+
+.esc-minus:active {
+  transform: scale(0.92);
 }
 
 /* Frosted highlight overlay — Apple glass effect */
@@ -2598,24 +2624,41 @@ body[data-theme="dark"] .expense-stack-card .esc-delete:hover {
   white-space: nowrap;
 }
 
+.esc-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Old delete button hidden — replaced by esc-minus on the left */
 .esc-delete {
+  display: none;
+}
+
+.esc-edit {
   width: 28px; height: 28px;
   border: none;
   background: rgba(255,255,255,0.18);
   border-radius: 50%;
-  font-size: 1rem;
+  font-size: 0.8rem;
   color: #fff;
   cursor: pointer;
   display: grid;
   place-items: center;
   opacity: 0;
-  transition: opacity 0.15s, background 0.15s;
+  transition: opacity 0.15s, background 0.15s, transform 0.15s;
   line-height: 1;
   padding: 0;
 }
 
-.expense-stack-card:hover .esc-delete { opacity: 1; }
-.esc-delete:hover { background: rgba(255,255,255,0.30); }
+.expense-stack-card:hover .esc-edit {
+  opacity: 1;
+}
+
+.esc-edit:hover {
+  background: rgba(255,255,255,0.30);
+  transform: translateY(-1px);
+}
 
 .esc-empty {
   font-size: 0.84rem;
