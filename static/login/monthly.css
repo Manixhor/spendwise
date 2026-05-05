@@ -377,7 +377,9 @@ body[data-theme="dark"] .download-option:hover {
   color: var(--muted);
   min-width: 30px;
   text-align: right;
-  padding-bottom: 24px;
+  padding-top: 30px;
+  padding-bottom: 0px;
+  height: 220px;
 }
 
 .ma-bars-wrap { flex: 1; }

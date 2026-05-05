@@ -1,4 +1,5 @@
 {% load static %}
+{% load currency_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,8 +33,8 @@
     <div class="card savings-card">
       <div class="savings-content">
         <span class="card-label">Savings</span>
-        <p class="savings-amount" id="savingsAmount">{% if total_saved >= 0 %}+{% endif %}₹{{ total_saved|floatformat:2 }}</p>
-        <p class="savings-sub">₹{{ total_saved|floatformat:2 }}</p>
+        <p class="savings-amount" id="savingsAmount">{{ total_saved|indian_currency:True }}</p>
+        <p class="savings-sub">{{ total_saved|indian_currency }}</p>
         <p class="savings-desc">
           {% if profile.salary %}
             Salary − Expenses
@@ -75,7 +76,7 @@
         <div class="insights-body">
           <div class="insight-stock-copy">
             <span class="ig-title" id="insightStockTitle">{{ insight_stock.title }}</span>
-            <span class="insight-stock-amount" id="insightStockAmount">₹{{ insight_stock.amount|floatformat:2 }}</span>
+            <span class="insight-stock-amount" id="insightStockAmount">{{ insight_stock.amount|indian_currency }}</span>
             <span class="insight-stock-change {% if insight_stock.is_up %}up{% else %}down{% endif %}" id="insightStockChange">
               {% if insight_stock.is_up %}↑{% else %}↓{% endif %} {{ insight_stock.change_pct|floatformat:1 }}%
             </span>
@@ -139,7 +140,7 @@
             <span class="txn-time" data-date="{{ txn.date|date:'Y-m-d' }}">{{ txn.date }} · {{ txn.get_category_display }}</span>
           </div>
           <span class="txn-amt {% if txn.txn_type == 'expense' %}neg{% endif %}">
-            {% if txn.txn_type == 'income' %}+{% else %}−{% endif %}₹{{ txn.amount|floatformat:2 }}
+            {% if txn.txn_type == 'income' %}+{% else %}−{% endif %}{{ txn.amount|indian_currency }}
           </span>
           <div class="txn-actions">
             <button class="txn-edit"

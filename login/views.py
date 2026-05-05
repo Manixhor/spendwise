@@ -544,6 +544,7 @@ def _build_monthly_weeks(user, month_start: date, month_end: date) -> list[dict]
     chart_width = 560
     chart_height = 220
     chart_inner_height = 190
+    pad_top = chart_height - chart_inner_height  # 30px padding at top
     weeks = []
     cursor = month_start
     week_index = 1
@@ -600,7 +601,7 @@ def _build_monthly_weeks(user, month_start: date, month_end: date) -> list[dict]
             if week["expense"] <= 0
             else max(10, round((week["expense"] / max_val) * chart_inner_height, 1))
         )
-        expense_y = chart_height - expense_height
+        expense_y = pad_top + (chart_inner_height - expense_height)
 
         week.update(
             {
