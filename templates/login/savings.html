@@ -21,19 +21,18 @@
     <!-- Header -->
     <header class="main-header">
       <div>
-        <p class="sv-eyebrow">💰 Savings</p>
+        <p class="monthly-eyebrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" style="vertical-align:-1px;margin-right:4px;">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+          Savings
+        </p>
         <h1 class="welcome">Your Savings Goals</h1>
       </div>
-      <div class="header-actions">
-        <button class="add-goal-btn" id="addGoalBtn" type="button">+ New Goal</button>
-        <a href="{% url 'logout' %}" class="logout-btn" title="Logout">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-        </a>
-      </div>
+       <div class="header-actions">
+         <button class="add-goal-btn" id="addGoalBtn" type="button">+ New Goal</button>
+       </div>
     </header>
 
     <!-- Monthly savings banner -->
@@ -51,43 +50,80 @@
       </div>
     </div>
 
-    <!-- ── Motivation Card ──────────────────────────────── -->
-    <div class="card motivation-card motivation-{{ motivation.bucket }}">
-      <div class="motivation-orb motivation-orb-1"></div>
-      <div class="motivation-orb motivation-orb-2"></div>
-      <div class="motivation-inner">
-        <span class="motivation-emoji">
-          {% if motivation.bucket == 'goal_reached' %}🏆
-          {% elif motivation.bucket == 'almost_there' %}🔥
-          {% elif motivation.bucket == 'making_progress' %}💪
-          {% elif motivation.bucket == 'just_started' %}🌱
-          {% elif motivation.bucket == 'broke' %}😬
-          {% else %}🎯{% endif %}
-        </span>
-        <div class="motivation-text">
-          <p class="motivation-quote">"{{ motivation.quote }}"</p>
-          <p class="motivation-author">{{ motivation.author }}</p>
+    <!-- Allocation Breakdown -->
+    <div class="card allocation-card" id="allocationCard">
+      <div class="allocation-header">
+        <span class="card-label">💰 This Month's Allocation</span>
+        <button class="refresh-allocation-btn" id="refreshAllocation" title="Refresh allocation" aria-label="Refresh allocation">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+            <path d="M23 4v6h-6"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+        </button>
+      </div>
+      <div class="allocation-summary" id="allocationSummary">
+        <div class="allocation-row">
+          <span>Salary</span>
+          <span class="alloc-value">₹{{ profile.salary|default:0|floatformat:2 }}</span>
         </div>
+        <div class="allocation-row">
+          <span>Expenses</span>
+          <span class="alloc-value expense">₹{{ monthly_expenses|floatformat:2 }}</span>
+        </div>
+        <div class="allocation-row total">
+          <span>Available</span>
+          <span class="alloc-value available">₹{{ available_for_goals|floatformat:2 }}</span>
+        </div>
+      </div>
+      <div class="allocation-breakdown" id="allocationBreakdown">
+        {% for alloc in allocation_breakdown %}
+        <div class="alloc-goal-row">
+          <div class="alloc-goal-info">
+            <span class="alloc-goal-name">{{ alloc.name }}</span>
+            <span class="alloc-goal-meta">{{ alloc.priority|title }} · {{ alloc.allocation_percentage }}%</span>
+          </div>
+          <span class="alloc-goal-amount">₹{{ alloc.allocated|floatformat:2 }}</span>
+        </div>
+        {% empty %}
+        <p class="alloc-empty">No active goals to allocate to</p>
+        {% endfor %}
       </div>
     </div>
 
     <!-- Goals grid -->
     <div class="sv-goals-grid" id="goalsGrid">
       {% for goal in goals %}
-      <div class="sv-goal-card" id="goal-{{ goal.id }}">
+      <div class="sv-goal-card {% if not goal.is_active %}completed-goal{% endif %}" id="goal-{{ goal.id }}" data-priority="{{ goal.priority|default:'medium' }}" data-allocation="{{ goal.allocation_percentage }}">
 
         <!-- Top row -->
         <div class="sv-goal-top">
-          <div class="sv-goal-icon">🎯</div>
+          <div class="sv-goal-icon">{% if goal.is_complete %}✅{% else %}🎯{% endif %}</div>
           <div class="sv-goal-name-wrap">
-            <p class="sv-goal-name">{{ goal.name }}</p>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <p class="sv-goal-name">{{ goal.name }}</p>
+              <span class="goal-priority-badge {{ goal.priority|default:'medium' }}">
+                {{ goal.priority|title }}
+              </span>
+            </div>
             {% if goal.is_complete %}
               <span class="sv-complete-badge">🎉 Goal reached!</span>
             {% endif %}
           </div>
           <div class="sv-goal-actions">
-            <button class="sv-action-btn" onclick="openEditGoal({{ goal.id }}, '{{ goal.name|escapejs }}', {{ goal.target_amount }})" title="Edit">✏️</button>
-            <button class="sv-action-btn sv-delete-btn" onclick="deleteGoal({{ goal.id }})" title="Delete">🗑️</button>
+            <button class="sv-action-btn sv-edit-btn" onclick="openEditGoal({{ goal.id }}, '{{ goal.name|escapejs }}', {{ goal.target_amount }}, '{{ goal.priority|default:'medium' }}', {{ goal.allocation_percentage|default:50 }})" title="Edit" aria-label="Edit goal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+            <button class="sv-action-btn sv-delete-btn" onclick="deleteGoal({{ goal.id }})" title="Delete" aria-label="Delete goal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -108,7 +144,7 @@
                 stroke-width="10"
                 stroke-linecap="round"
                 transform="rotate(-90 50 50)"
-                style="stroke-dasharray: {{ goal.ring_dash }}px 263.9px;"/>
+                stroke-dasharray="{{ goal.ring_dash }} 263.9"/>
             </svg>
             <div class="sv-ring-center">
               <span class="sv-ring-pct">{{ goal.progress_pct|floatformat:0 }}%</span>
@@ -118,8 +154,8 @@
           <!-- Amounts -->
           <div class="sv-goal-amounts">
             <div class="sv-amt-row">
-              <span class="sv-amt-label">Monthly saved</span>
-              <span class="sv-amt-val positive">₹{{ monthly_saved|floatformat:2 }}</span>
+              <span class="sv-amt-label">Saved so far</span>
+              <span class="sv-amt-val positive">₹{{ goal.saved_amount|floatformat:2 }}</span>
             </div>
             <div class="sv-amt-row">
               <span class="sv-amt-label">Target</span>
@@ -175,6 +211,25 @@
       <input type="number" id="goalTarget" class="modal-input" placeholder="e.g. 50000" min="1" step="0.01" />
     </div>
 
+    <label class="modal-field-label" for="goalPriority">Priority</label>
+    <div class="priority-selector" id="goalPrioritySelector">
+      <button type="button" class="priority-btn" data-priority="high">
+        <span class="priority-dot high"></span> High
+      </button>
+      <button type="button" class="priority-btn active" data-priority="medium">
+        <span class="priority-dot medium"></span> Medium
+      </button>
+      <button type="button" class="priority-btn" data-priority="low">
+        <span class="priority-dot low"></span> Low
+      </button>
+    </div>
+
+    <label class="modal-field-label" for="goalAllocation">Allocation % (optional)</label>
+    <div class="modal-field-wrap allocation-input-wrap">
+      <input type="number" id="goalAllocation" class="modal-input" placeholder="50" min="1" max="100" value="50" />
+      <span class="allocation-hint">% of available savings</span>
+    </div>
+
     <p class="modal-error" id="goalError"></p>
     <button class="modal-save-btn" id="goalSave">Create Goal</button>
     <input type="hidden" id="goalEditId" value="" />
@@ -189,23 +244,59 @@ const addGoalBtn = document.getElementById('addGoalBtn');
 const goalClose  = document.getElementById('goalModalClose');
 const goalSave   = document.getElementById('goalSave');
 const goalError  = document.getElementById('goalError');
+const goalPriorityBtns = document.querySelectorAll('#goalPrioritySelector .priority-btn');
+
+let selectedGoalPriority = 'medium';
+
+const PRIORITY_DEFAULTS = { high: 70, medium: 50, low: 30 };
+
+// Goal priority selector — auto-updates allocation %
+goalPriorityBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    goalPriorityBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedGoalPriority = btn.dataset.priority;
+    // Auto-fill allocation with priority default
+    const allocInput = document.getElementById('goalAllocation');
+    if (allocInput) allocInput.value = PRIORITY_DEFAULTS[selectedGoalPriority] || 50;
+  });
+});
 
 function openAddGoal() {
   document.getElementById('goalModalTitle').textContent = 'New Savings Goal';
   document.getElementById('goalName').value   = '';
   document.getElementById('goalTarget').value = '';
   document.getElementById('goalEditId').value = '';
+  document.getElementById('goalAllocation').value = '50';
   goalSave.textContent = 'Create Goal';
+
+  // Reset to medium priority + 50% default
+  goalPriorityBtns.forEach(b => b.classList.remove('active'));
+  goalPriorityBtns.forEach(b => {
+    if (b.dataset.priority === 'medium') b.classList.add('active');
+  });
+  selectedGoalPriority = 'medium';
+  document.getElementById('goalAllocation').value = PRIORITY_DEFAULTS['medium'];
+
   goalModal.classList.add('active');
   document.getElementById('goalName').focus();
 }
 
-function openEditGoal(id, name, target) {
+function openEditGoal(id, name, target, priority = 'medium', allocation = 50) {
   document.getElementById('goalModalTitle').textContent = 'Edit Goal';
   document.getElementById('goalName').value   = name;
   document.getElementById('goalTarget').value = target;
   document.getElementById('goalEditId').value = id;
+  // Use stored allocation, fallback to priority default
+  document.getElementById('goalAllocation').value = allocation || PRIORITY_DEFAULTS[priority] || 50;
   goalSave.textContent = 'Save Changes';
+
+  goalPriorityBtns.forEach(b => b.classList.remove('active'));
+  goalPriorityBtns.forEach(b => {
+    if (b.dataset.priority === priority) b.classList.add('active');
+  });
+  selectedGoalPriority = priority;
+
   goalModal.classList.add('active');
 }
 
@@ -220,6 +311,8 @@ goalSave.addEventListener('click', async () => {
   const name   = document.getElementById('goalName').value.trim() || 'My Goal';
   const target = parseFloat(document.getElementById('goalTarget').value) || 0;
   const editId = document.getElementById('goalEditId').value;
+  const priority = selectedGoalPriority;
+  const allocation = parseInt(document.getElementById('goalAllocation').value) || 50;
 
   if (target <= 0) { goalError.textContent = 'Target must be greater than zero.'; return; }
 
@@ -231,7 +324,7 @@ goalSave.addEventListener('click', async () => {
     const res    = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
-      body: JSON.stringify({ name, target_amount: target }),
+      body: JSON.stringify({ name, target_amount: target, priority: priority, allocation_percentage: allocation }),
     });
     const data = await res.json();
     if (res.ok && data.success) { closeGoalModal(); location.reload(); }
@@ -252,6 +345,79 @@ async function deleteGoal(id) {
     });
     if (res.ok) location.reload();
   } catch (e) { alert('Error deleting goal.'); }
+}
+
+// Refresh allocation breakdown
+const refreshBtn = document.getElementById('refreshAllocation');
+if (refreshBtn) {
+  refreshBtn.addEventListener('click', async () => {
+    try {
+      const res = await fetch('/api/goals/allocations/', {
+        headers: { 'X-CSRFToken': CSRF }
+      });
+      const data = await res.json();
+      if (data.success) {
+        updateAllocationDisplay(data);
+      }
+    } catch (e) { console.error('Error fetching allocations:', e); }
+  });
+}
+
+function updateAllocationDisplay(data) {
+  const summary = document.getElementById('allocationSummary');
+  if (summary) {
+    summary.innerHTML = `
+      <div class="allocation-row">
+        <span>Salary</span>
+        <span class="alloc-value">₹${data.salary.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+      </div>
+      <div class="allocation-row">
+        <span>Expenses</span>
+        <span class="alloc-value expense">₹${data.monthly_expenses.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+      </div>
+      <div class="allocation-row total">
+        <span>Available</span>
+        <span class="alloc-value available">₹${data.available.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+      </div>
+    `;
+  }
+  
+  const breakdown = document.getElementById('allocationBreakdown');
+  if (breakdown && data.allocations) {
+    if (data.allocations.length === 0) {
+      breakdown.innerHTML = '<p class="alloc-empty">No active goals to allocate to</p>';
+    } else {
+      breakdown.innerHTML = data.allocations.map(alloc => `
+        <div class="alloc-goal-row">
+          <div class="alloc-goal-info">
+            <span class="alloc-goal-name">${alloc.name}</span>
+            <span class="alloc-goal-meta">${alloc.priority.charAt(0).toUpperCase() + alloc.priority.slice(1)} · ${alloc.allocation_percentage}%</span>
+          </div>
+          <span class="alloc-goal-amount">₹${alloc.allocated_this_month.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+        </div>
+      `).join('');
+    }
+  }
+}
+
+// Refresh motivation quote
+const refreshMotivationBtn = document.getElementById('refreshMotivation');
+if (refreshMotivationBtn) {
+  refreshMotivationBtn.addEventListener('click', async () => {
+    try {
+      const res = await fetch('/api/motivation-quote/', {
+        headers: { 'X-CSRFToken': CSRF }
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('motivationQuote').textContent = `"${data.text}"`;
+        document.getElementById('motivationAuthor').textContent = `— ${data.author}`;
+        // Random emoji
+        const emojis = ['💡', '🔥', '✨', '🌟', '💪', '🎯', '🌱', '🏆'];
+        document.getElementById('motivationEmoji').textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      }
+    } catch (e) { console.error('Error fetching quote:', e); }
+  });
 }
 </script>
 </body>

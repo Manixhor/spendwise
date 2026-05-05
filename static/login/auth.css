@@ -60,7 +60,6 @@ textarea {
 }
 
 .cta-btn,
-.social-btn,
 .footer-copy,
 .link-accent,
 .field-label {
@@ -285,38 +284,6 @@ textarea {
   font-weight: 400;
 }
 
-/* ── Social buttons ─────────────────────────────────────── */
-.social-row {
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  margin-bottom: 18px;
-}
-
-.social-btn {
-  width: 64px; height: 64px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--btn-soft-border);
-  border-radius: var(--radius-sm);
-  background: var(--btn-soft-bg);
-  box-shadow: 0 10px 22px rgba(138,122,255,0.10), 0 1px 0 rgba(255,255,255,0.76) inset;
-  text-decoration: none;
-  transition: box-shadow 0.2s, transform 0.15s, background 0.2s;
-  backdrop-filter: blur(8px);
-}
-
-.social-btn:hover {
-  background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(239,231,255,0.97) 100%);
-  box-shadow: 0 16px 30px rgba(138,122,255,0.14), 0 1px 0 rgba(255,255,255,0.8) inset;
-  transform: translateY(-2px);
-}
-
-.social-btn svg {
-  width: 24px; height: 24px;
-  fill: var(--ink);
-}
-
 /* ── CTA button ─────────────────────────────────────────── */
 .cta-btn {
   display: flex;
@@ -384,13 +351,6 @@ textarea {
     var(--glass);
 }
 
-.card-verify {
-  background:
-    radial-gradient(ellipse at 80% 0%, rgba(168,237,204,0.16) 0%, transparent 48%),
-    radial-gradient(ellipse at 18% 100%, rgba(197,202,255,0.18) 0%, transparent 48%),
-    var(--glass);
-}
-
 .form-title {
   font-size: 1.9rem;
   font-weight: 700;
@@ -411,72 +371,6 @@ textarea {
 .form-sub strong {
   color: var(--ink);
   font-weight: 600;
-}
-
-.auth-note,
-.verify-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 14px 13px;
-  border-radius: 18px;
-  border: 1px solid rgba(141,119,255,0.16);
-  background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(243,236,255,0.78) 100%);
-  box-shadow: 0 10px 24px rgba(138,122,255,0.08), 0 1px 0 rgba(255,255,255,0.76) inset;
-  margin-bottom: 18px;
-}
-
-.auth-note-icon,
-.verify-icon {
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(94,92,230,0.16) 0%, rgba(124,58,237,0.12) 100%);
-  color: var(--accent);
-}
-
-.auth-note-icon svg,
-.verify-icon svg {
-  width: 18px;
-  height: 18px;
-}
-
-.auth-note-title,
-.verify-card-title {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--ink);
-  letter-spacing: -0.02em;
-}
-
-.auth-note-copy,
-.verify-card-copy {
-  font-size: 0.74rem;
-  color: var(--muted);
-  line-height: 1.5;
-  margin-top: 3px;
-}
-
-.verify-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: fit-content;
-  min-width: 88px;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(236,228,255,0.92) 100%);
-  border: 1px solid rgba(141,119,255,0.16);
-  color: var(--accent);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  margin-top: 12px;
-  margin-bottom: 12px;
 }
 
 /* ── Form fields ────────────────────────────────────────── */
@@ -526,26 +420,6 @@ textarea {
   letter-spacing: -0.01em;
 }
 .field-input::placeholder { color: var(--muted); }
-
-.verify-form {
-  gap: 14px;
-}
-
-.verify-field {
-  height: 64px;
-}
-
-.verify-code-input {
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: 0.42em;
-  text-indent: 0.42em;
-}
-
-.verify-actions {
-  margin-top: 12px;
-}
 
 /* ── Terms ──────────────────────────────────────────────── */
 .terms-copy {
@@ -629,10 +503,6 @@ textarea {
     margin-bottom: 20px;
   }
 
-  .social-btn {
-    width: 56px; height: 56px;
-  }
-
   .cta-btn {
     height: 50px;
     font-size: 0.95rem;
@@ -644,12 +514,6 @@ textarea {
 
   .field-group {
     height: 48px;
-  }
-
-  .verify-code-input {
-    font-size: 1.25rem;
-    letter-spacing: 0.3em;
-    text-indent: 0.3em;
   }
 }
 

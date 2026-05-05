@@ -3,14 +3,24 @@
   gap: 18px;
 }
 
-/* Mobile back arrow */
+/* Gap between profile header and dashboard/actions */
+.pf-main .main-header {
+  gap: 16px;
+}
+
+.pf-main .header-actions {
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* Mobile back arrow — always visible on profile page */
 .mobile-back-btn {
-  display: none; /* Hidden on desktop */
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   background: rgba(255,255,255,0.85);
   border: 1px solid rgba(255,255,255,0.95);
   color: var(--ink);
@@ -19,6 +29,7 @@
   transition: all 0.2s ease;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  flex-shrink: 0;
 }
 
 .mobile-back-btn svg {
@@ -32,7 +43,6 @@
   box-shadow: 0 6px 20px rgba(0,0,0,0.12);
 }
 
-/* Dark theme mobile back arrow */
 body[data-theme="dark"] .mobile-back-btn {
   background: rgba(30,30,35,0.85);
   border: 1px solid rgba(60,60,70,0.95);
@@ -43,6 +53,15 @@ body[data-theme="dark"] .mobile-back-btn:hover {
   background: rgba(40,40,45,0.95);
 }
 
+/* Profile header row — arrow + text always side by side */
+.pf-header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: nowrap;
+}
+
 /* Header content wrapper */
 .pf-header-content {
   flex: 1;
@@ -51,19 +70,7 @@ body[data-theme="dark"] .mobile-back-btn:hover {
   align-items: flex-start;
 }
 
-/* Ensure profile page can scroll properly on desktop */
-.profile-page .app {
-  height: auto;
-  min-height: 100vh;
-}
-
-.profile-page {
-  overflow: auto;
-}
-
-.pf-back-btn {
-  min-width: 122px;
-}
+.pf-back-btn { display: none; }
 
 .pf-success {
   background: rgba(48,209,88,0.12);
@@ -192,43 +199,38 @@ body[data-theme="dark"] .pf-avatar-initials {
 .pf-field { display: flex; flex-direction: column; }
 
 @media (max-width: 640px) {
-  .pf-avatar-card { flex-direction: column; align-items: flex-start; }
-  .pf-field-row   { grid-template-columns: 1fr; }
-}
-
-/* Mobile responsive - show mobile back arrow, hide desktop back button */
-@media (max-width: 768px) {
-  .mobile-back-btn {
-    display: flex; /* Show on mobile */
-  }
-  
-  .pf-back-btn {
-    display: none; /* Hide desktop back button on mobile */
-  }
-  
-  .main-header {
+  .pf-avatar-card {
+    flex-direction: column;
     align-items: center;
-    gap: 16px;
-  }
-  
-  .pf-header-content {
     text-align: center;
+  }
+  .pf-avatar-info {
     align-items: center;
   }
-  
-  .header-actions {
-    gap: 12px;
+  .pf-field-row { grid-template-columns: 1fr; }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .pf-header-row {
+    gap: 10px;
+  }
+
+  /* Edit Salary button — fixed size, never stretches */
+  .pf-salary-section .set-salary-btn {
+    width: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 }
 
-/* Very small screens */
 @media (max-width: 480px) {
   .mobile-back-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
   }
-  
+
   .mobile-back-btn svg {
     width: 18px;
     height: 18px;
@@ -256,8 +258,14 @@ body[data-theme="dark"] .pf-avatar-initials {
 
 @media (max-width: 640px) {
   .pf-salary-section {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .pf-salary-section .set-salary-btn {
+    width: auto;
+    flex-shrink: 0;
   }
 }

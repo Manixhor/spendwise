@@ -4,7 +4,6 @@ from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.test import TestCase
-from django.test.utils import override_settings
 from django.urls import reverse
 
 from .models import Transaction, UserProfile
@@ -157,63 +156,3 @@ class MonthlyAnalysisTests(TestCase):
         self.assertGreaterEqual(len(response.context['weekly_chart']['weeks']), 4)
         self.assertEqual(response.context['top_spending_days'][0]['label'], 'May 03')
         self.assertGreater(response.context['monthly_score']['value'], 0)
-
-
-@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
-class SignupVerificationTests(TestCase):
-    def test_signup_creates_inactive_user_and_sends_verification_code(self):
-        response = self.client.post(reverse('signup'), {
-            'name': 'Otp User',
-            'email': 'otp@example.com',
-            'password': 'Strongpass123!',
-            'confirm_password': 'Strongpass123!',
-        })
-
-        self.assertRedirects(response, reverse('signup_verify'))
-        user = User.objects.get(email='otp@example.com')
-        self.assertFalse(user.is_active)
-        self.assertEqual(user.profile.email_is_verified, False)
-        self.assertEqual(len(user.profile.email_verification_code), 6)
-
-    def test_correct_verification_code_activates_account(self):
-        self.client.post(reverse('signup'), {
-            'name': 'Verify User',
-            'email': 'verify@example.com',
-            'password': 'Strongpass123!',
-            'confirm_password': 'Strongpass123!',
-        })
-        user = User.objects.get(email='verify@example.com')
-        code = user.profile.email_verification_code
-
-        response = self.client.post(reverse('signup_verify'), {'code': code})
-
-        self.assertRedirects(response, reverse('dashboard'))
-        user.refresh_from_db()
-        user.profile.refresh_from_db()
-        self.assertTrue(user.is_active)
-        self.assertTrue(user.profile.email_is_verified)
-        self.assertEqual(user.profile.email_verification_code, '')
-
-    def test_repeat_signup_for_unverified_email_resends_otp(self):
-        self.client.post(reverse('signup'), {
-            'name': 'Retry User',
-            'email': 'retry@example.com',
-            'password': 'Strongpass123!',
-            'confirm_password': 'Strongpass123!',
-        })
-        user = User.objects.get(email='retry@example.com')
-        first_code = user.profile.email_verification_code
-
-        response = self.client.post(reverse('signup'), {
-            'name': 'Retry User Updated',
-            'email': 'retry@example.com',
-            'password': 'Strongpass123!',
-            'confirm_password': 'Strongpass123!',
-        })
-
-        self.assertRedirects(response, reverse('signup_verify'))
-        user.refresh_from_db()
-        user.profile.refresh_from_db()
-        self.assertFalse(user.is_active)
-        self.assertNotEqual(user.profile.email_verification_code, first_code)
-        self.assertEqual(user.first_name, 'Retry')
