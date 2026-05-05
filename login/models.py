@@ -2,6 +2,22 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+class ExcessIncome(models.Model):
+    """Track additional income beyond regular salary for specific months"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="excess_incomes")
+    month = models.CharField(max_length=7, help_text="YYYY-MM format, e.g. '2025-05'")
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    note = models.CharField(max_length=200, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ["user", "month"]
+        ordering = ["-month"]
+
+    def __str__(self):
+        return f"{self.user.username} – {self.month} – ₹{self.amount}"
+
+
 class UserProfile(models.Model):
     PRIORITY_CHOICES = [
         ("high", "High"),

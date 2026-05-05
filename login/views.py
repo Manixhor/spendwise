@@ -763,6 +763,7 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
     month_start, month_end = _month_bounds(selected_month)
     prev_month_start = _add_months(month_start, -1)
     prev_month_end = month_start - timedelta(days=1)
+    current_month_str = month_start.strftime("%Y-%m")
 
     month_txns = Transaction.objects.filter(
         user=user, date__gte=month_start, date__lte=month_end
@@ -773,10 +774,19 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
     total_expense = month_txns.filter(txn_type="expense").aggregate(s=Sum("amount"))[
         "s"
     ] or Decimal("0")
+    
+    # Check for excess income for this month
+    from .models import ExcessIncome
+    excess_income_obj = ExcessIncome.objects.filter(user=user, month=current_month_str).first()
+    excess_income = Decimal(str(excess_income_obj.amount)) if excess_income_obj else Decimal("0")
+    
     salary = Decimal(str(profile.salary)) if profile.salary else Decimal("0")
-    total_saved = (
-        (salary - total_expense) if salary > 0 else (total_income - total_expense)
-    )
+    # Include excess income in savings calculation
+    if salary > 0:
+        total_income_with_excess = salary + excess_income
+        total_saved = total_income_with_excess - total_expense
+    else:
+        total_saved = total_income - total_expense
     total_balance = total_saved
 
     prev_txns = Transaction.objects.filter(
@@ -788,7 +798,17 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
     prev_expense = prev_txns.filter(txn_type="expense").aggregate(s=Sum("amount"))[
         "s"
     ] or Decimal("0")
-    prev_saved = (salary - prev_expense) if salary > 0 else (prev_income - prev_expense)
+    
+    # Check for excess income for previous month
+    prev_month_str = prev_month_start.strftime("%Y-%m")
+    prev_excess_income_obj = ExcessIncome.objects.filter(user=user, month=prev_month_str).first()
+    prev_excess_income = Decimal(str(prev_excess_income_obj.amount)) if prev_excess_income_obj else Decimal("0")
+    
+    if salary > 0:
+        prev_total_income_with_excess = salary + prev_excess_income
+        prev_saved = prev_total_income_with_excess - prev_expense
+    else:
+        prev_saved = prev_income - prev_expense
 
     balance_change_pct = _pct_change(total_balance, prev_saved)
     categories = _build_monthly_categories(user, month_start, month_end, total_expense)
@@ -799,8 +819,10 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
     )
     top_spending_days = _build_top_spending_days(user, month_start, month_end)
 
+    # Calculate spend ratio including excess income
     if salary > 0:
-        spend_ratio = min(round((float(total_expense) / float(salary)) * 100, 1), 999.9)
+        total_income_for_calc = float(salary + excess_income)
+        spend_ratio = min(round((float(total_expense) / total_income_for_calc) * 100, 1), 999.9) if total_income_for_calc > 0 else 0.0
     elif total_income > 0:
         spend_ratio = min(
             round((float(total_expense) / float(total_income)) * 100, 1), 999.9
@@ -808,14 +830,51 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
     else:
         spend_ratio = 0.0
 
-    target = (
-        Decimal(str(profile.target_savings)) if profile.target_savings else Decimal("0")
-    )
-    wealth_progress_pct = (
-        min(round((max(float(total_saved), 0) / float(target)) * 100, 1), 100)
-        if target > 0
-        else 0
-    )
+    # Get highest priority goal (if multiple high priority, pick the one with lowest progress)
+    from .models import SavingsGoal
+    
+    high_priority_goals = SavingsGoal.objects.filter(
+        user=user, 
+        priority='high',
+        is_active=True
+    ).order_by('saved_amount')  # Lowest saved amount first (needs most attention)
+    
+    if high_priority_goals.exists():
+        priority_goal = high_priority_goals.first()
+        goal_progress_pct = (
+            min(round((float(priority_goal.saved_amount) / float(priority_goal.target_amount)) * 100, 1), 100)
+            if priority_goal.target_amount > 0
+            else 0
+        )
+        wealth_title = priority_goal.name
+        wealth_amount_label = f"₹{priority_goal.target_amount:,.2f} target"
+        wealth_progress_pct = goal_progress_pct
+        wealth_sub = f"{goal_progress_pct:.1f}% of your goal reached" if priority_goal.target_amount > 0 else "Set a target"
+        wealth_badge = "HIGH PRIORITY"
+        wealth_cta = "KEEP PUSHING TOWARD YOUR GOAL" if goal_progress_pct < 100 else "GOAL ACHIEVED!"
+    else:
+        # Fallback to old wealth/target savings behavior
+        target = (
+            Decimal(str(profile.target_savings)) if profile.target_savings else Decimal("0")
+        )
+        wealth_progress_pct = (
+            min(round((max(float(total_saved), 0) / float(target)) * 100, 1), 100)
+            if target > 0
+            else 0
+        )
+        wealth_title = "Wealth"
+        wealth_amount_label = f"₹{target:,.2f} target" if target > 0 else "No goal set"
+        wealth_sub = (
+            f"{wealth_progress_pct:.1f}% of your savings goal reached"
+            if target > 0
+            else "Set a savings target to track progress here"
+        )
+        wealth_badge = "GOALS" if target > 0 else "START"
+        wealth_cta = (
+            "BUILD YOUR GOAL CONSISTENCY"
+            if target > 0
+            else "SET A TARGET TO TRACK PROGRESS"
+        )
 
     if total_expense <= 0:
         reminder_title = "Start tracking expenses for this month"
@@ -843,6 +902,8 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
         "total_expense": total_expense,
         "total_saved": total_saved,
         "total_balance": total_balance,
+        "excess_income": excess_income,
+        "has_excess_income": excess_income > 0,
         "balance_change_pct": balance_change_pct,
         "balance_change_positive": balance_change_pct >= 0,
         "weekly_chart": weekly_chart,
@@ -853,21 +914,12 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
         "top_spending_days": top_spending_days,
         "reminder_title": reminder_title,
         "reminder_sub": reminder_sub,
-        "wealth_amount_label": f"₹{target:,.2f} target"
-        if target > 0
-        else "No goal set",
+        "wealth_title": wealth_title,
+        "wealth_amount_label": wealth_amount_label,
         "wealth_progress_pct": wealth_progress_pct,
-        "wealth_sub": (
-            f"{wealth_progress_pct:.1f}% of your savings goal reached"
-            if target > 0
-            else "Set a savings target to track progress here"
-        ),
-        "wealth_badge": "GOALS" if target > 0 else "START",
-        "wealth_cta": (
-            "BUILD YOUR GOAL CONSISTENCY"
-            if target > 0
-            else "SET A TARGET TO TRACK PROGRESS"
-        ),
+        "wealth_sub": wealth_sub,
+        "wealth_badge": wealth_badge,
+        "wealth_cta": wealth_cta,
         "spend_ratio_pct": spend_ratio,
     }
 
@@ -903,6 +955,7 @@ def _dashboard_stats(user, profile):
     """Compute all dynamic stats for the dashboard."""
     today = date.today()
     month_start = today.replace(day=1)
+    current_month_str = month_start.strftime("%Y-%m")
 
     txns = Transaction.objects.filter(user=user, date__gte=month_start, date__lte=today)
 
@@ -913,11 +966,17 @@ def _dashboard_stats(user, profile):
         "s"
     ] or Decimal("0")
 
-    # Savings = salary - expenses (if salary set), else income - expenses
+    # Check for excess income this month
+    from .models import ExcessIncome
+    excess_income_obj = ExcessIncome.objects.filter(user=user, month=current_month_str).first()
+    excess_income = Decimal(str(excess_income_obj.amount)) if excess_income_obj else Decimal("0")
+
+    # Savings = (salary + excess_income) - expenses (if salary set), else income - expenses
     salary = Decimal(str(profile.salary)) if profile.salary else Decimal("0")
     if salary > 0:
-        total_saved = salary - total_expense
-        total_balance = salary - total_expense
+        total_income_with_excess = salary + excess_income
+        total_saved = total_income_with_excess - total_expense
+        total_balance = total_income_with_excess - total_expense
     else:
         total_saved = total_income - total_expense
         total_balance = total_income - total_expense
@@ -938,12 +997,13 @@ def _dashboard_stats(user, profile):
     cat_tiles = _serialize_category_tiles(cat_data)
     insight_segments = _build_insight_segments(cat_tiles, total_expense)
 
-    # Spend % vs salary
+    # Spend % vs salary (including excess income)
     spend_pct = None
-    if profile.salary and float(profile.salary) > 0:
+    if salary > 0:
+        total_income_for_calc = float(salary + excess_income)
         spend_pct = min(
-            round(float(total_expense) / float(profile.salary) * 100, 1), 100
-        )
+            round(float(total_expense) / total_income_for_calc * 100, 1), 100
+        ) if total_income_for_calc > 0 else 0
 
     # Savings % vs target
     savings_pct = None
@@ -985,6 +1045,23 @@ def _dashboard_stats(user, profile):
             }
         )
 
+    # Daily spending for current month
+    daily_spending = []
+    current_day = month_start
+    while current_day <= today:
+        day_expense = Transaction.objects.filter(
+            user=user,
+            txn_type="expense",
+            date=current_day
+        ).aggregate(s=Sum("amount"))["s"] or Decimal("0")
+        
+        daily_spending.append({
+            "day": current_day.day,
+            "date": current_day.isoformat(),
+            "amount": float(day_expense),
+        })
+        current_day += timedelta(days=1)
+
     insight_stock = _build_insight_stock_card(chart_months, total_expense)
 
     return {
@@ -992,6 +1069,8 @@ def _dashboard_stats(user, profile):
         "total_expense": total_expense,
         "total_saved": total_saved,
         "total_balance": total_balance,
+        "excess_income": excess_income,
+        "has_excess_income": excess_income > 0,
         "cat_data": cat_data,
         "cat_tiles": cat_tiles,
         "spend_pct": spend_pct,
@@ -1003,6 +1082,7 @@ def _dashboard_stats(user, profile):
         "insight_stock": insight_stock,
         "recent_txns": recent_txns,
         "chart_months": chart_months,
+        "daily_spending": daily_spending,
     }
 
 
@@ -1294,10 +1374,15 @@ def savings(request: HttpRequest) -> HttpResponse:
     )
     monthly_expenses = float(monthly_expenses)
 
-    # Calculate available for goals
+    # Calculate available for goals (including excess income)
+    from .models import ExcessIncome
+    current_month_str = first_of_month.strftime("%Y-%m")
+    excess_income_obj = ExcessIncome.objects.filter(user=request.user, month=current_month_str).first()
+    excess_income = float(excess_income_obj.amount) if excess_income_obj else 0
+    
     salary = float(profile.salary) if profile.salary else 0
     if salary > 0:
-        available_for_goals = max(salary - monthly_expenses, 0)
+        available_for_goals = max((salary + excess_income) - monthly_expenses, 0)
     else:
         # Fall back to actual income transactions this month
         monthly_income = (
@@ -1313,7 +1398,6 @@ def savings(request: HttpRequest) -> HttpResponse:
     allocation_dict = _calculate_goal_allocations(available_for_goals, goals_list)
 
     # Apply allocations — update saved_amount on each goal, once per month
-    current_month_str = first_of_month.strftime("%Y-%m")
     for g in goals_list:
         allocated = allocation_dict.get(g.id, 0)
         # Only allocate if not already done this month
@@ -1523,17 +1607,24 @@ def api_goal_allocations(request: HttpRequest) -> JsonResponse:
         from datetime import date
         from django.db.models import Sum
         from decimal import Decimal
+        from .models import ExcessIncome
 
         first_of_month = date.today().replace(day=1)
+        current_month_str = first_of_month.strftime("%Y-%m")
+        
         monthly_expenses = float(
             Transaction.objects.filter(
                 user=request.user, txn_type="expense", date__gte=first_of_month
             ).aggregate(total=Sum("amount"))["total"] or 0
         )
 
-        # Same fallback logic as the savings view
+        # Check for excess income
+        excess_income_obj = ExcessIncome.objects.filter(user=request.user, month=current_month_str).first()
+        excess_income = float(excess_income_obj.amount) if excess_income_obj else 0
+
+        # Same fallback logic as the savings view (including excess income)
         if salary > 0:
-            available = max(salary - monthly_expenses, 0)
+            available = max((salary + excess_income) - monthly_expenses, 0)
         else:
             monthly_income = float(
                 Transaction.objects.filter(
@@ -1546,7 +1637,6 @@ def api_goal_allocations(request: HttpRequest) -> JsonResponse:
         allocations = _calculate_goal_allocations(available, goals)
 
         # Apply allocations — once per month per goal
-        current_month_str = first_of_month.strftime("%Y-%m")
         for g in goals:
             allocated = allocations.get(g.id, 0)
             if allocated > 0 and g.last_allocated_month != current_month_str:
@@ -1579,6 +1669,7 @@ def api_goal_allocations(request: HttpRequest) -> JsonResponse:
             {
                 "success": True,
                 "salary": salary,
+                "excess_income": excess_income,
                 "monthly_expenses": monthly_expenses,
                 "available": available,
                 "total_goals": len([g for g in goals if g.is_active_goal]),
@@ -1980,6 +2071,67 @@ def api_set_salary(request: HttpRequest) -> JsonResponse:
         )
     except (ValueError, TypeError):
         return JsonResponse({"error": "Invalid salary value."}, status=400)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+# ── API: Set/Update Excess Income ─────────────────────────
+@login_required(login_url="/login/")
+@require_http_methods(["POST", "PUT", "DELETE"])
+def api_excess_income(request: HttpRequest) -> JsonResponse:
+    try:
+        from .models import ExcessIncome
+        today = date.today()
+        current_month_str = today.replace(day=1).strftime("%Y-%m")
+        
+        if request.method == "DELETE":
+            # Delete excess income for current month
+            ExcessIncome.objects.filter(user=request.user, month=current_month_str).delete()
+            profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            stats = _dashboard_stats(request.user, profile)
+            return JsonResponse(
+                {
+                    "success": True,
+                    "excess_income": 0,
+                    "has_excess_income": False,
+                    **_dashboard_stats_payload(stats),
+                }
+            )
+        
+        # POST or PUT - create or update
+        data = json.loads(request.body)
+        amount = data.get("amount")
+        note = data.get("note", "").strip()
+        
+        if amount is None or amount == "":
+            return JsonResponse({"error": "Amount is required."}, status=400)
+        amount = float(amount)
+        if amount <= 0:
+            return JsonResponse(
+                {"error": "Amount must be greater than zero."}, status=400
+            )
+
+        # Create or update excess income for current month
+        excess_income, created = ExcessIncome.objects.update_or_create(
+            user=request.user,
+            month=current_month_str,
+            defaults={"amount": Decimal(str(amount)), "note": note}
+        )
+        
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        stats = _dashboard_stats(request.user, profile)
+
+        return JsonResponse(
+            {
+                "success": True,
+                "excess_income": float(excess_income.amount),
+                "has_excess_income": True,
+                "note": excess_income.note,
+                **_dashboard_stats_payload(stats),
+            }
+        )
+    except (ValueError, TypeError):
+        return JsonResponse({"error": "Invalid amount value."}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
