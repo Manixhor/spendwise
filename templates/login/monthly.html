@@ -1,4 +1,5 @@
 {% load static %}
+{% load currency_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -64,7 +65,7 @@
       <div class="card ma-balance-card">
         <p class="ma-balance-label">TOTAL BALANCE</p>
         <div class="ma-balance-row">
-          <span class="ma-balance-amount">₹{{ total_balance|floatformat:2 }}</span>
+          <span class="ma-balance-amount">{{ total_balance|indian_currency }}</span>
           <span class="ma-balance-change {% if balance_change_positive %}positive{% else %}negative{% endif %}">
             {% if balance_change_positive %}▲{% else %}▼{% endif %}
             {% if balance_change_positive %}+{% endif %}{{ balance_change_pct|floatformat:1 }}%
@@ -77,18 +78,18 @@
       <div class="card ma-stats-card">
         <div class="ma-stat">
           <span class="ma-stat-label">Salary</span>
-          <span class="ma-stat-val">{% if profile.salary %}₹{{ profile.salary|floatformat:2 }}{% else %}—{% endif %}</span>
+          <span class="ma-stat-val">{% if profile.salary %}{{ profile.salary|indian_currency }}{% else %}—{% endif %}</span>
         </div>
         <div class="ma-stat-divider"></div>
         <div class="ma-stat">
           <span class="ma-stat-label">Expenses</span>
-          <span class="ma-stat-val negative">−₹{{ total_expense|floatformat:2 }}</span>
+          <span class="ma-stat-val negative">−{{ total_expense|indian_currency }}</span>
         </div>
         <div class="ma-stat-divider"></div>
         <div class="ma-stat">
           <span class="ma-stat-label">Saved</span>
           <span class="ma-stat-val {% if total_saved >= 0 %}accent{% else %}negative{% endif %}">
-            {% if total_saved >= 0 %}+{% endif %}₹{{ total_saved|floatformat:2 }}
+            {{ total_saved|indian_currency:True }}
           </span>
         </div>
       </div>
@@ -254,7 +255,7 @@
       <!-- Wealth / investment card -->
       <div class="card ma-wealth-card">
         <div class="ma-wealth-top">
-          <span class="ma-wealth-title">Wealth</span>
+          <span class="ma-wealth-title">{{ wealth_title }}</span>
           <span class="ma-wealth-badge">{{ wealth_badge }}</span>
           <span class="ma-wealth-amount">{{ wealth_amount_label }}</span>
         </div>

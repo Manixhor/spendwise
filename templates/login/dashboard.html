@@ -1,4 +1,5 @@
 {% load static %}
+{% load currency_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,7 +25,7 @@
 
     <!-- ── Dad Joke Banner ───────────────────────────────── -->
     <div class="joke-banner">
-      <span class="joke-banner-label">😄 Daily Joke</span>
+      <span class="joke-banner-label">😄 SPND Joke</span>
       <p class="joke-banner-text" id="jokeBannerText">{{ dad_joke }}</p>
     </div>
 
@@ -32,11 +33,15 @@
     <div class="card savings-card">
       <div class="savings-content">
         <span class="card-label">Savings</span>
-        <p class="savings-amount" id="savingsAmount">{% if total_saved >= 0 %}+{% endif %}₹{{ total_saved|floatformat:2 }}</p>
-        <p class="savings-sub">₹{{ total_saved|floatformat:2 }}</p>
+        <p class="savings-amount" id="savingsAmount">{{ total_saved|indian_currency:True }}</p>
+        <p class="savings-sub">{{ total_saved|indian_currency }}</p>
         <p class="savings-desc">
           {% if profile.salary %}
-            Salary − Expenses
+            {% if has_excess_income %}
+              Salary (₹{{ profile.salary|floatformat:0 }}) + Excess Income (₹{{ excess_income|floatformat:0 }}) − Expenses
+            {% else %}
+              Salary − Expenses
+            {% endif %}
           {% elif spend_pct %}{{ spend_pct }}% of your income spent
           {% else %}Set salary to track savings{% endif %}<br/>this month
         </p>
@@ -75,7 +80,7 @@
         <div class="insights-body">
           <div class="insight-stock-copy">
             <span class="ig-title" id="insightStockTitle">{{ insight_stock.title }}</span>
-            <span class="insight-stock-amount" id="insightStockAmount">₹{{ insight_stock.amount|floatformat:2 }}</span>
+            <span class="insight-stock-amount" id="insightStockAmount">{{ insight_stock.amount|indian_currency }}</span>
             <span class="insight-stock-change {% if insight_stock.is_up %}up{% else %}down{% endif %}" id="insightStockChange">
               {% if insight_stock.is_up %}↑{% else %}↓{% endif %} {{ insight_stock.change_pct|floatformat:1 }}%
             </span>
@@ -112,6 +117,11 @@
     <section class="card txn-section">
       <div class="txn-header-row">
         <button class="add-expense-btn" type="button" id="addExpenseBtn">+ Add Expense</button>
+        {% if profile.salary %}
+        <button class="add-expense-btn" type="button" id="addExcessIncomeBtn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+          {% if has_excess_income %}✓ Excess Income{% else %}+ Excess Income{% endif %}
+        </button>
+        {% endif %}
       </div>
 
       <!-- Date filter strip -->
@@ -139,7 +149,7 @@
             <span class="txn-time" data-date="{{ txn.date|date:'Y-m-d' }}">{{ txn.date }} · {{ txn.get_category_display }}</span>
           </div>
           <span class="txn-amt {% if txn.txn_type == 'expense' %}neg{% endif %}">
-            {% if txn.txn_type == 'income' %}+{% else %}−{% endif %}₹{{ txn.amount|floatformat:2 }}
+            {% if txn.txn_type == 'income' %}+{% else %}−{% endif %}{{ txn.amount|indian_currency }}
           </span>
           <div class="txn-actions">
             <button class="txn-edit"
@@ -231,9 +241,36 @@
   </div>
 </div>
 
+<!-- ── Excess Income Modal ──────────────────────────────── -->
+<div class="modal-overlay" id="excessIncomeModal" role="dialog" aria-modal="true" aria-labelledby="excessIncomeTitle">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 class="modal-title" id="excessIncomeTitle">Excess Income</h2>
+      <button class="modal-close" id="excessIncomeClose" aria-label="Close">&times;</button>
+    </div>
+    <p class="form-sub" style="margin-bottom: 20px;">Add extra income for this month beyond your regular salary.</p>
+
+    <label class="modal-field-label" for="excessIncomeAmount">Amount</label>
+    <div class="modal-field-wrap">
+      <span class="modal-currency">₹</span>
+      <input type="number" id="excessIncomeAmount" class="modal-input" placeholder="0.00" min="1" step="0.01" value="{{ excess_income|default:'' }}" />
+    </div>
+
+    <label class="modal-field-label" for="excessIncomeNote" style="margin-top: 10px;">Note (optional)</label>
+    <input type="text" id="excessIncomeNote" class="modal-select modal-select--transparent" placeholder="e.g. Freelance project, bonus" autocomplete="off" />
+
+    <p class="modal-error" id="excessIncomeError"></p>
+    <button class="modal-save-btn" id="excessIncomeSave">Save Excess Income</button>
+    {% if has_excess_income %}
+    <button class="modal-skip-btn" id="excessIncomeDelete" style="background: #ef4444; color: white;">Remove Excess Income</button>
+    {% endif %}
+  </div>
+</div>
+
 <!-- ── Chart data from Django ──────────────────────────── -->
 <script>
   let dashboardChartData = {{ chart_months|safe }};
+  let dailySpendingData = {{ daily_spending|safe }};
   // Hoisted so onclick="editTransaction(...)" can access these globals
   let _txnSaveBtn = null;
   let _txnModal   = null;
@@ -380,6 +417,115 @@ try {
     });
   }
 
+  // ── Excess Income Modal ────────────────────────────────
+  const excessIncomeModal = document.getElementById('excessIncomeModal');
+  const excessIncomeBtn = document.getElementById('addExcessIncomeBtn');
+  const excessIncomeClose = document.getElementById('excessIncomeClose');
+  const excessIncomeSave = document.getElementById('excessIncomeSave');
+  const excessIncomeDelete = document.getElementById('excessIncomeDelete');
+  const excessIncomeAmount = document.getElementById('excessIncomeAmount');
+  const excessIncomeNote = document.getElementById('excessIncomeNote');
+  const excessIncomeError = document.getElementById('excessIncomeError');
+
+  if (excessIncomeBtn && excessIncomeModal) {
+    excessIncomeBtn.addEventListener('click', () => {
+      excessIncomeModal.classList.add('active');
+      if (excessIncomeAmount) excessIncomeAmount.focus();
+    });
+  }
+
+  if (excessIncomeClose && excessIncomeModal) {
+    excessIncomeClose.addEventListener('click', () => {
+      excessIncomeModal.classList.remove('active');
+      if (excessIncomeError) excessIncomeError.textContent = '';
+    });
+  }
+
+  if (excessIncomeModal) {
+    excessIncomeModal.addEventListener('click', (e) => {
+      if (e.target === excessIncomeModal) {
+        excessIncomeModal.classList.remove('active');
+        if (excessIncomeError) excessIncomeError.textContent = '';
+      }
+    });
+  }
+
+  if (excessIncomeSave && excessIncomeAmount && excessIncomeError) {
+    excessIncomeSave.addEventListener('click', async () => {
+      const amount = parseFloat(excessIncomeAmount.value) || 0;
+      const note = excessIncomeNote ? excessIncomeNote.value.trim() : '';
+      
+      if (!amount || amount <= 0) {
+        excessIncomeError.textContent = 'Please enter a valid amount greater than 0.';
+        return;
+      }
+
+      excessIncomeSave.disabled = true;
+      excessIncomeSave.textContent = 'Saving…';
+      excessIncomeError.textContent = '';
+
+      try {
+        const res = await fetch('/api/excess-income/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({ amount: amount, note: note })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+          excessIncomeModal.classList.remove('active');
+          location.reload();
+        } else {
+          excessIncomeError.textContent = data.error || 'Failed to save excess income.';
+          excessIncomeSave.disabled = false;
+          excessIncomeSave.textContent = 'Save Excess Income';
+        }
+      } catch (err) {
+        excessIncomeError.textContent = 'Network error. Please try again.';
+        excessIncomeSave.disabled = false;
+        excessIncomeSave.textContent = 'Save Excess Income';
+      }
+    });
+  }
+
+  if (excessIncomeDelete && excessIncomeError) {
+    excessIncomeDelete.addEventListener('click', async () => {
+      if (!confirm('Remove excess income for this month?')) return;
+
+      excessIncomeDelete.disabled = true;
+      excessIncomeDelete.textContent = 'Removing…';
+      excessIncomeError.textContent = '';
+
+      try {
+        const res = await fetch('/api/excess-income/', {
+          method: 'DELETE',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+          }
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+          excessIncomeModal.classList.remove('active');
+          location.reload();
+        } else {
+          excessIncomeError.textContent = data.error || 'Failed to remove excess income.';
+          excessIncomeDelete.disabled = false;
+          excessIncomeDelete.textContent = 'Remove Excess Income';
+        }
+      } catch (err) {
+        excessIncomeError.textContent = 'Network error. Please try again.';
+        excessIncomeDelete.disabled = false;
+        excessIncomeDelete.textContent = 'Remove Excess Income';
+      }
+    });
+  }
+
   // ── Sparkline chart ────────────────────────────────────
   function renderSparkline(data) {
     const svg = document.getElementById('sparkSvg');
@@ -467,42 +613,65 @@ try {
     const amountEl = document.getElementById('insightStockAmount');
     const changeEl = document.getElementById('insightStockChange');
 
-    if (titleEl) titleEl.textContent = stock.title || 'Expense Trend';
-    if (symbolEl) symbolEl.textContent = stock.symbol || 'SPND';
-    if (subtitleEl) subtitleEl.textContent = stock.subtitle || 'Monthly spend';
-    if (amountEl) amountEl.textContent = formatCurrency(stock.amount || 0);
+    // Update to show daily spending info
+    if (titleEl) titleEl.textContent = 'SPND Spending';
+    if (symbolEl) symbolEl.textContent = 'SPND';
+    if (subtitleEl) subtitleEl.textContent = 'This month';
+    
+    // Show today's spending
+    if (dailySpendingData && dailySpendingData.length > 0) {
+      const todaySpending = dailySpendingData[dailySpendingData.length - 1].amount;
+      const yesterdaySpending = dailySpendingData.length > 1 ? dailySpendingData[dailySpendingData.length - 2].amount : todaySpending;
+      
+      if (amountEl) amountEl.textContent = formatCurrency(todaySpending);
 
-    if (changeEl) {
-      const isUp = Boolean(stock.is_up);
-      changeEl.classList.toggle('up', isUp);
-      changeEl.classList.toggle('down', !isUp);
-      changeEl.textContent = `${isUp ? '↑' : '↓'} ${Number(stock.change_pct || 0).toFixed(1)}%`;
+      if (changeEl) {
+        const isUp = todaySpending > yesterdaySpending;
+        const changePct = yesterdaySpending > 0 ? Math.abs(((todaySpending - yesterdaySpending) / yesterdaySpending) * 100) : 0;
+        changeEl.classList.toggle('up', !isUp); // Down is good for spending
+        changeEl.classList.toggle('down', isUp); // Up is bad for spending
+        changeEl.textContent = `${isUp ? '↑' : '↓'} ${changePct.toFixed(1)}%`;
+      }
+    } else {
+      if (amountEl) amountEl.textContent = formatCurrency(stock.amount || 0);
+      if (changeEl) {
+        const isUp = Boolean(stock.is_up);
+        changeEl.classList.toggle('up', isUp);
+        changeEl.classList.toggle('down', !isUp);
+        changeEl.textContent = `${isUp ? '↑' : '↓'} ${Number(stock.change_pct || 0).toFixed(1)}%`;
+      }
     }
   }
 
   function renderInsightStockChart(data) {
     const svg = document.getElementById('insightStockChart');
-    if (!svg || !data.length) return;
+    if (!svg || !dailySpendingData || !dailySpendingData.length) return;
 
-    [...svg.querySelectorAll('path,circle')].forEach(el => el.remove());
+    [...svg.querySelectorAll('path,circle,rect')].forEach(el => el.remove());
 
     const W = 220;
     const H = 92;
     const PAD_X = 6;
     const PAD_Y = 10;
-    const maxVal = Math.max(...data.map(d => d.expense), 1);
-    const minVal = Math.min(...data.map(d => d.expense), 0);
+    
+    // Use daily spending data
+    const dailyData = dailySpendingData;
+    const maxVal = Math.max(...dailyData.map(d => d.amount), 1);
+    const minVal = 0; // Always start from 0 for spending
     const range = Math.max(maxVal - minVal, 1);
-    const step = (W - PAD_X * 2) / Math.max(data.length - 1, 1);
-    const latestValue = data[data.length - 1]?.expense ?? 0;
-    const previousValue = data[data.length - 2]?.expense ?? latestValue;
+    const step = (W - PAD_X * 2) / Math.max(dailyData.length - 1, 1);
+    
+    const latestValue = dailyData[dailyData.length - 1]?.amount ?? 0;
+    const previousValue = dailyData[dailyData.length - 2]?.amount ?? latestValue;
     const isUpTrend = latestValue >= previousValue;
-    const strokeColor = isUpTrend ? '#22c55e' : '#ef4444';
-    const fillColor = isUpTrend ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)';
+    const strokeColor = isUpTrend ? '#ef4444' : '#22c55e'; // Red for up (bad), green for down (good)
+    const fillColor = isUpTrend ? 'rgba(239, 68, 68, 0.12)' : 'rgba(34, 197, 94, 0.12)';
 
-    const pts = data.map((d, i) => ({
+    const pts = dailyData.map((d, i) => ({
       x: PAD_X + i * step,
-      y: H - PAD_Y - ((d.expense - minVal) / range) * (H - PAD_Y * 2),
+      y: H - PAD_Y - ((d.amount - minVal) / range) * (H - PAD_Y * 2),
+      day: d.day,
+      amount: d.amount,
     }));
 
     let lineD = `M${pts[0].x},${pts[0].y}`;
@@ -525,6 +694,127 @@ try {
     line.setAttribute('stroke-linejoin', 'round');
     svg.appendChild(line);
 
+    // Add invisible hover areas for each point
+    pts.forEach((pt, i) => {
+      const hoverArea = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      const areaWidth = step > 0 ? step : 10;
+      hoverArea.setAttribute('x', pt.x - areaWidth / 2);
+      hoverArea.setAttribute('y', 0);
+      hoverArea.setAttribute('width', areaWidth);
+      hoverArea.setAttribute('height', H);
+      hoverArea.setAttribute('fill', 'transparent');
+      hoverArea.style.cursor = 'pointer';
+      
+      // Create tooltip element if it doesn't exist
+      let tooltip = document.getElementById('dailySpendingTooltip');
+      if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'dailySpendingTooltip';
+        tooltip.style.cssText = `
+          display: none;
+          position: fixed;
+          background: rgba(255,255,255,0.96);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(200,200,210,0.5);
+          border-radius: 10px;
+          padding: 6px 12px;
+          font-size: 0.80rem;
+          font-weight: 700;
+          color: #1c1c1e;
+          white-space: nowrap;
+          pointer-events: none;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+          z-index: 1000;
+        `;
+        document.body.appendChild(tooltip);
+      }
+      
+      hoverArea.addEventListener('mouseenter', () => {
+        // Show dot at this point
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', pt.x);
+        dot.setAttribute('cy', pt.y);
+        dot.setAttribute('r', '5');
+        dot.setAttribute('fill', strokeColor);
+        dot.setAttribute('stroke', '#fff');
+        dot.setAttribute('stroke-width', '2');
+        dot.id = 'hoverDot';
+        svg.appendChild(dot);
+        
+        // Show tooltip with dark mode support
+        const isDark = document.body.dataset.theme === 'dark';
+        if (isDark) {
+          tooltip.style.background = 'rgba(15,23,42,0.96)';
+          tooltip.style.borderColor = 'rgba(148,163,184,0.16)';
+          tooltip.style.color = '#f8fafc';
+        } else {
+          tooltip.style.background = 'rgba(255,255,255,0.96)';
+          tooltip.style.borderColor = 'rgba(200,200,210,0.5)';
+          tooltip.style.color = '#1c1c1e';
+        }
+        
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const dateObj = new Date(dailyData[i].date + 'T00:00:00');
+        const label = `${months[dateObj.getMonth()]} ${dateObj.getDate()}`;
+        tooltip.textContent = `${label}: ${formatCurrency(pt.amount)}`;
+        tooltip.style.display = 'block';
+      });
+      
+      hoverArea.addEventListener('mousemove', (e) => {
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const mobile = viewportWidth <= 640;
+        const offsetX = mobile ? 0 : 12;
+        const offsetY = mobile ? 14 : -42;
+
+        let left = mobile
+          ? e.clientX - (tooltipRect.width / 2)
+          : e.clientX + offsetX;
+        let top = e.clientY + offsetY;
+
+        left = Math.max(8, Math.min(left, viewportWidth - tooltipRect.width - 8));
+        top = Math.max(8, Math.min(top, viewportHeight - tooltipRect.height - 8));
+
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+      });
+
+      hoverArea.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        if (!touch) return;
+
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let left = touch.clientX - (tooltipRect.width / 2);
+        let top = touch.clientY - tooltipRect.height - 14;
+
+        left = Math.max(8, Math.min(left, viewportWidth - tooltipRect.width - 8));
+        top = Math.max(8, Math.min(top, viewportHeight - tooltipRect.height - 8));
+
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+        tooltip.style.display = 'block';
+      }, { passive: true });
+      
+      hoverArea.addEventListener('mouseleave', () => {
+        const hoverDot = document.getElementById('hoverDot');
+        if (hoverDot) hoverDot.remove();
+        tooltip.style.display = 'none';
+      });
+
+      hoverArea.addEventListener('touchend', () => {
+        const hoverDot = document.getElementById('hoverDot');
+        if (hoverDot) hoverDot.remove();
+        tooltip.style.display = 'none';
+      }, { passive: true });
+      
+      svg.appendChild(hoverArea);
+    });
+
+    // Add the last point dot (always visible)
     const last = pts[pts.length - 1];
     const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     dot.setAttribute('cx', last.x);

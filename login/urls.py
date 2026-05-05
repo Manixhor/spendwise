@@ -13,6 +13,7 @@ from .views import (
     api_delete_transaction,
     api_update_transaction,
     api_set_salary,
+    api_excess_income,
     api_set_target_savings,
     api_dashboard_summary,
     api_expenses_by_date,
@@ -49,6 +50,7 @@ urlpatterns = [
     ),
     # Salary / target
     path("api/salary/", api_set_salary, name="api_set_salary"),
+    path("api/excess-income/", api_excess_income, name="api_excess_income"),
     path("api/target-savings/", api_set_target_savings, name="api_set_target_savings"),
     path("api/dashboard/summary/", api_dashboard_summary, name="api_dashboard_summary"),
     path("api/expenses-by-date/", api_expenses_by_date, name="api_expenses_by_date"),

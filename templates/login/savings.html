@@ -1,4 +1,5 @@
 {% load static %}
+{% load currency_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,7 +41,7 @@
       <div class="sv-banner-left">
         <span class="card-label">This Month's Savings</span>
         <p class="sv-banner-amount {% if monthly_saved >= 0 %}positive{% else %}negative{% endif %}">
-          {% if monthly_saved >= 0 %}+{% endif %}₹{{ monthly_saved|floatformat:2 }}
+          {{ monthly_saved|indian_currency:True }}
         </p>
         <p class="sv-banner-sub">Your income minus expenses — this is what's being tracked against your goals</p>
       </div>
@@ -64,15 +65,15 @@
       <div class="allocation-summary" id="allocationSummary">
         <div class="allocation-row">
           <span>Salary</span>
-          <span class="alloc-value">₹{{ profile.salary|default:0|floatformat:2 }}</span>
+          <span class="alloc-value">{{ profile.salary|default:0|indian_currency }}</span>
         </div>
         <div class="allocation-row">
           <span>Expenses</span>
-          <span class="alloc-value expense">₹{{ monthly_expenses|floatformat:2 }}</span>
+          <span class="alloc-value expense">{{ monthly_expenses|indian_currency }}</span>
         </div>
         <div class="allocation-row total">
           <span>Available</span>
-          <span class="alloc-value available">₹{{ available_for_goals|floatformat:2 }}</span>
+          <span class="alloc-value available">{{ available_for_goals|indian_currency }}</span>
         </div>
       </div>
       <div class="allocation-breakdown" id="allocationBreakdown">
@@ -82,7 +83,7 @@
             <span class="alloc-goal-name">{{ alloc.name }}</span>
             <span class="alloc-goal-meta">{{ alloc.priority|title }} · {{ alloc.allocation_percentage }}%</span>
           </div>
-          <span class="alloc-goal-amount">₹{{ alloc.allocated|floatformat:2 }}</span>
+          <span class="alloc-goal-amount">{{ alloc.allocated|indian_currency }}</span>
         </div>
         {% empty %}
         <p class="alloc-empty">No active goals to allocate to</p>
@@ -155,11 +156,11 @@
           <div class="sv-goal-amounts">
             <div class="sv-amt-row">
               <span class="sv-amt-label">Saved so far</span>
-              <span class="sv-amt-val positive">₹{{ goal.saved_amount|floatformat:2 }}</span>
+              <span class="sv-amt-val positive">{{ goal.saved_amount|indian_currency }}</span>
             </div>
             <div class="sv-amt-row">
               <span class="sv-amt-label">Target</span>
-              <span class="sv-amt-val">₹{{ goal.target_amount|floatformat:2 }}</span>
+              <span class="sv-amt-val">{{ goal.target_amount|indian_currency }}</span>
             </div>
             <div class="sv-progress-track">
               <div class="sv-progress-fill {% if goal.is_complete %}sv-fill-complete{% endif %}"
@@ -169,7 +170,7 @@
               {% if goal.is_complete %}
                 🎉 Goal complete!
               {% else %}
-                ₹{{ goal.remaining|floatformat:2 }} more to reach target
+                {{ goal.remaining|indian_currency }} more to reach target
               {% endif %}
             </p>
           </div>

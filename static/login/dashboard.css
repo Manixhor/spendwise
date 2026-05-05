@@ -1210,9 +1210,13 @@ body[data-theme="dark"] .txn-filter-btn.active {
   gap: 6px;
   overflow-x: auto;
   scrollbar-width: none;
-  padding: 2px 0 4px;
+  padding: 10px 12px;
   flex-wrap: nowrap;
   margin-top: 10px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(245,240,255,0.90) 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(200,200,210,0.25);
+  box-shadow: 0 2px 8px rgba(107,33,168,0.08), 0 1px 0 rgba(255,255,255,0.90) inset;
 }
 .txn-date-strip::-webkit-scrollbar { display: none; }
 
@@ -1226,11 +1230,11 @@ body[data-theme="dark"] .txn-filter-btn.active {
   width: 48px;
   height: 58px;
   border: 1px solid rgba(200,200,210,0.35);
-  border-radius: 16px;
-  background: rgba(255,255,255,0.70);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.75);
   cursor: pointer;
   transition: background 0.15s, color 0.15s, box-shadow 0.15s, transform 0.12s;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05), 0 1px 0 rgba(255,255,255,0.80) inset;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04), 0 1px 0 rgba(255,255,255,0.80) inset;
 }
 
 .txn-date-btn:hover {
@@ -1240,15 +1244,20 @@ body[data-theme="dark"] .txn-filter-btn.active {
 }
 
 .txn-date-btn.today {
-  border-color: rgba(107,33,168,0.25);
-  background: rgba(238,231,255,0.70);
+  border-color: rgba(139,92,246,0.35);
+  background: linear-gradient(135deg, rgba(221,214,254,0.85) 0%, rgba(196,181,253,0.80) 100%);
+  box-shadow: 0 2px 8px rgba(139,92,246,0.15), 0 1px 0 rgba(255,255,255,0.80) inset;
+}
+
+.txn-date-btn.today .tdb-num {
+  color: #7c3aed;
 }
 
 .txn-date-btn.active {
-  background: linear-gradient(135deg, #3b0764 0%, #6b21a8 50%, #7c3aed 100%);
-  border-color: rgba(255,255,255,0.18);
-  box-shadow: 0 6px 18px rgba(107,33,168,0.40), 0 1px 0 rgba(255,255,255,0.18) inset;
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);
+  border-color: rgba(255,255,255,0.25);
+  box-shadow: 0 6px 20px rgba(139,92,246,0.45), 0 1px 0 rgba(255,255,255,0.20) inset;
+  transform: translateY(-2px);
 }
 
 .tdb-num {
@@ -1273,32 +1282,75 @@ body[data-theme="dark"] .txn-filter-btn.active {
 }
 
 .txn-date-btn.today:not(.active) .tdb-num {
-  color: var(--accent);
+  color: #8b5cf6;
+}
+
+.txn-date-btn.today:not(.active) .tdb-day {
+  color: #7c3aed;
+}
+
+/* Make buttons look more premium with gradient backgrounds */
+.txn-date-btn:nth-child(odd):not(.active):not(.today) {
+  background: linear-gradient(160deg, rgba(255,255,255,0.85) 0%, rgba(250,245,255,0.80) 100%);
+}
+
+.txn-date-btn:nth-child(even):not(.active):not(.today) {
+  background: linear-gradient(160deg, rgba(252,250,255,0.80) 0%, rgba(248,245,252,0.85) 100%);
+}
+
+/* Add subtle hover glow */
+.txn-date-btn:hover:not(.active) {
+  box-shadow: 0 4px 14px rgba(139,92,246,0.20), 0 1px 0 rgba(255,255,255,0.80) inset;
+  border-color: rgba(139,92,246,0.30);
+}
+
+body[data-theme="dark"] .txn-date-strip {
+  background: linear-gradient(135deg, rgba(20,30,50,0.90) 0%, rgba(25,35,55,0.85) 100%);
+  border-color: rgba(139,92,246,0.20);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.05) inset;
 }
 
 body[data-theme="dark"] .txn-date-btn {
-  background: rgba(20,30,50,0.80);
-  border-color: rgba(148,163,184,0.16);
+  background: rgba(30,40,60,0.75);
+  border-color: rgba(100,120,160,0.20);
 }
 
 body[data-theme="dark"] .txn-date-btn:hover {
-  background: rgba(35,48,79,0.90);
+  background: rgba(45,60,90,0.85);
+  box-shadow: 0 4px 14px rgba(139,92,246,0.25);
 }
 
 body[data-theme="dark"] .txn-date-btn.today {
-  background: rgba(99,102,241,0.16);
-  border-color: rgba(167,139,250,0.28);
+  background: linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(139,92,246,0.20) 100%);
+  border-color: rgba(167,139,250,0.35);
+}
+
+body[data-theme="dark"] .txn-date-btn.today .tdb-num {
+  color: #a78bfa;
+}
+
+body[data-theme="dark"] .txn-date-btn.today .tdb-day {
+  color: #c4b5fd;
 }
 
 body[data-theme="dark"] .txn-date-btn.active {
-  background: linear-gradient(135deg, rgba(99,102,241,0.85) 0%, rgba(139,92,246,0.80) 100%);
-  box-shadow: 0 6px 18px rgba(76,29,149,0.35);
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);
+  box-shadow: 0 6px 20px rgba(139,92,246,0.45), 0 1px 0 rgba(255,255,255,0.15) inset;
+}
+
+body[data-theme="dark"] .txn-date-btn:nth-child(odd):not(.active):not(.today) {
+  background: linear-gradient(160deg, rgba(30,42,60,0.80) 0%, rgba(35,50,70,0.75) 100%);
+}
+
+body[data-theme="dark"] .txn-date-btn:nth-child(even):not(.active):not(.today) {
+  background: linear-gradient(160deg, rgba(35,50,70,0.75) 0%, rgba(30,42,60,0.80) 100%);
 }
 
 .txn-header-row {
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  gap: 10px;
   margin-bottom: 4px;
 }
 
@@ -1689,10 +1741,74 @@ body[data-theme="dark"] .txn-amt.neg {
   /* ── Insights card ── */
   .insights-card {
     padding: 16px 16px 14px;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .ig-top {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .insight-stock-meta {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+
+  .insights-body {
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .insight-stock-copy {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+    flex-shrink: 0;
   }
 
   .insight-stock-amount {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .ig-title {
+    font-size: 0.7rem;
+  }
+
+  .insight-stock-chart-wrap {
+    width: 100%;
+    min-width: 0;
+    height: 72px;
+    overflow: hidden;
+  }
+
+  .insight-stock-chart {
+    width: 100%;
+    height: 72px;
+    min-height: 72px;
+    max-width: 100%;
+  }
+
+  .insight-stock-symbol {
+    font-size: 0.9rem;
+  }
+
+  .insight-stock-sub {
+    font-size: 0.67rem;
+  }
+
+  .insight-stock-change {
+    font-size: 0.78rem;
   }
 
   /* ── Joke banner ── */
