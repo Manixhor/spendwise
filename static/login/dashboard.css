@@ -1741,10 +1741,74 @@ body[data-theme="dark"] .txn-amt.neg {
   /* ── Insights card ── */
   .insights-card {
     padding: 16px 16px 14px;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .ig-top {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .insight-stock-meta {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+
+  .insights-body {
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .insight-stock-copy {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+    flex-shrink: 0;
   }
 
   .insight-stock-amount {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .ig-title {
+    font-size: 0.7rem;
+  }
+
+  .insight-stock-chart-wrap {
+    width: 100%;
+    min-width: 0;
+    height: 72px;
+    overflow: hidden;
+  }
+
+  .insight-stock-chart {
+    width: 100%;
+    height: 72px;
+    min-height: 72px;
+    max-width: 100%;
+  }
+
+  .insight-stock-symbol {
+    font-size: 0.9rem;
+  }
+
+  .insight-stock-sub {
+    font-size: 0.67rem;
+  }
+
+  .insight-stock-change {
+    font-size: 0.78rem;
   }
 
   /* ── Joke banner ── */

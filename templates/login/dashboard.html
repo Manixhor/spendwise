@@ -25,7 +25,7 @@
 
     <!-- ── Dad Joke Banner ───────────────────────────────── -->
     <div class="joke-banner">
-      <span class="joke-banner-label">😄 Daily Joke</span>
+      <span class="joke-banner-label">😄 SPND Joke</span>
       <p class="joke-banner-text" id="jokeBannerText">{{ dad_joke }}</p>
     </div>
 
@@ -614,8 +614,8 @@ try {
     const changeEl = document.getElementById('insightStockChange');
 
     // Update to show daily spending info
-    if (titleEl) titleEl.textContent = 'Daily Spending';
-    if (symbolEl) symbolEl.textContent = 'DAILY';
+    if (titleEl) titleEl.textContent = 'SPND Spending';
+    if (symbolEl) symbolEl.textContent = 'SPND';
     if (subtitleEl) subtitleEl.textContent = 'This month';
     
     // Show today's spending
@@ -712,7 +712,7 @@ try {
         tooltip.id = 'dailySpendingTooltip';
         tooltip.style.cssText = `
           display: none;
-          position: absolute;
+          position: fixed;
           background: rgba(255,255,255,0.96);
           backdrop-filter: blur(8px);
           border: 1px solid rgba(200,200,210,0.5);
@@ -761,16 +761,55 @@ try {
       });
       
       hoverArea.addEventListener('mousemove', (e) => {
-        const rect = svg.getBoundingClientRect();
-        tooltip.style.left = (e.clientX + 10) + 'px';
-        tooltip.style.top = (e.clientY - 40) + 'px';
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const mobile = viewportWidth <= 640;
+        const offsetX = mobile ? 0 : 12;
+        const offsetY = mobile ? 14 : -42;
+
+        let left = mobile
+          ? e.clientX - (tooltipRect.width / 2)
+          : e.clientX + offsetX;
+        let top = e.clientY + offsetY;
+
+        left = Math.max(8, Math.min(left, viewportWidth - tooltipRect.width - 8));
+        top = Math.max(8, Math.min(top, viewportHeight - tooltipRect.height - 8));
+
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
       });
+
+      hoverArea.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        if (!touch) return;
+
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let left = touch.clientX - (tooltipRect.width / 2);
+        let top = touch.clientY - tooltipRect.height - 14;
+
+        left = Math.max(8, Math.min(left, viewportWidth - tooltipRect.width - 8));
+        top = Math.max(8, Math.min(top, viewportHeight - tooltipRect.height - 8));
+
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+        tooltip.style.display = 'block';
+      }, { passive: true });
       
       hoverArea.addEventListener('mouseleave', () => {
         const hoverDot = document.getElementById('hoverDot');
         if (hoverDot) hoverDot.remove();
         tooltip.style.display = 'none';
       });
+
+      hoverArea.addEventListener('touchend', () => {
+        const hoverDot = document.getElementById('hoverDot');
+        if (hoverDot) hoverDot.remove();
+        tooltip.style.display = 'none';
+      }, { passive: true });
       
       svg.appendChild(hoverArea);
     });
