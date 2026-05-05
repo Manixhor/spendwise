@@ -1,6 +1,6 @@
 /* ── Savings Goals Page ──────────────────────────────────── */
 
-.sv-main { gap: 18px; }
+.sv-main { gap: 20px; }
 
 .sv-eyebrow {
   font-size: 0.72rem;
@@ -9,10 +9,188 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-/* ── Add Goal button ────────────────────────────────────── */
-.add-goal-btn {
+/* ── Header Actions ──────────────────────────────────────── */
+.sv-main .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ── Allocation Card ─────────────────────────────────────── */
+.allocation-card {
+  background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(139,92,246,0.05) 100%);
+  border: 1px solid rgba(99,102,241,0.15);
+  border-radius: 24px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.10);
+}
+
+.allocation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.allocation-header .card-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
+.refresh-allocation-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(99,102,241,0.10);
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: grid;
+  place-items: center;
+}
+
+.refresh-allocation-btn:hover {
+  background: rgba(99,102,241,0.20);
+  transform: rotate(180deg);
+}
+
+.allocation-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(99,102,241,0.10);
+}
+
+.allocation-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.84rem;
+  color: var(--sub);
+}
+
+.allocation-row.total {
+  font-weight: 700;
+  color: var(--ink);
+  padding-top: 8px;
+  border-top: 1px dashed rgba(99,102,241,0.15);
+}
+
+.alloc-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.alloc-value.expense {
+  color: var(--negative);
+}
+
+.alloc-value.available {
+  color: var(--positive);
+  font-size: 1rem;
+}
+
+.allocation-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alloc-goal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.50);
+  border-radius: 12px;
+  border: 1px solid rgba(99,102,241,0.10);
+}
+
+.alloc-goal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.alloc-goal-name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.alloc-goal-meta {
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.alloc-goal-amount {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.alloc-empty {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.80rem;
+  padding: 16px;
+}
+
+/* ── Completed Goal Style ───────────────────────────────── */
+.completed-goal {
+  opacity: 0.7;
+  background: linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(52,211,153,0.05) 100%);
+}
+
+.completed-goal:hover {
+  opacity: 0.85;
+}
+
+/* ── Modal Allocation Input ─────────────────────────────── */
+.allocation-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.allocation-hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+body[data-theme="dark"] .allocation-card {
+  background: linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.90) 100%);
+  border-color: rgba(99,102,241,0.25);
+}
+
+body[data-theme="dark"] .alloc-goal-row {
+  background: rgba(30,41,59,0.60);
+  border-color: rgba(99,102,241,0.15);
+}
+
+body[data-theme="dark"] .allocation-row {
+  color: #94a3b8;
+}
+
+body[data-theme="dark"] .allocation-row.total {
+  color: #e2e8f0;
+}
+
+/* ── Add Goal Button — matches Add Expense style ─────────── */
+.add-goal-btn,
+.filter-btn {
   height: 38px;
   padding: 0 20px;
   border: 1px solid rgba(255,255,255,0.18);
@@ -26,14 +204,104 @@
   cursor: pointer;
   box-shadow: 0 4px 18px rgba(107, 33, 168, 0.40),
               0 1px 0 rgba(255,255,255,0.18) inset;
-  transition: opacity 0.18s, transform 0.15s, box-shadow 0.18s;
+  transition: opacity 0.18s, transform 0.15s, box-shadow 0.18s, filter 0.18s;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
-.add-goal-btn:hover {
+.add-goal-btn:hover,
+.filter-btn:hover {
   background: linear-gradient(135deg, #2e0657 0%, #581c87 50%, #6d28d9 100%);
   transform: translateY(-1px);
   box-shadow: 0 8px 28px rgba(107, 33, 168, 0.52),
               0 1px 0 rgba(255,255,255,0.18) inset;
+}
+
+/* ── Aesthetic Goal Priority Badge ──────────────────────── */
+.goal-priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 50px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.goal-priority-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.goal-priority-badge.high {
+  background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(252,165,165,0.08) 100%);
+  color: #dc2626;
+  border: 1px solid rgba(239,68,68,0.25);
+  box-shadow: 0 2px 8px rgba(239,68,68,0.15);
+}
+.goal-priority-badge.high::before {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239,68,68,0.6);
+}
+
+.goal-priority-badge.medium {
+  background: linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(251,191,36,0.08) 100%);
+  color: #d97706;
+  border: 1px solid rgba(245,158,11,0.25);
+  box-shadow: 0 2px 8px rgba(245,158,11,0.15);
+}
+.goal-priority-badge.medium::before {
+  background: #f59e0b;
+  box-shadow: 0 0 8px rgba(245,158,11,0.6);
+}
+
+.goal-priority-badge.low {
+  background: linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(134,239,172,0.08) 100%);
+  color: #16a34a;
+  border: 1px solid rgba(34,197,94,0.25);
+  box-shadow: 0 2px 8px rgba(34,197,94,0.15);
+}
+.goal-priority-badge.low::before {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34,197,94,0.6);
+}
+
+body[data-theme="dark"] .goal-priority-badge.high {
+  background: linear-gradient(135deg, rgba(239,68,68,0.20) 0%, rgba(252,165,165,0.10) 100%);
+  color: #fca5a5;
+  border-color: rgba(239,68,68,0.30);
+}
+
+body[data-theme="dark"] .goal-priority-badge.high::before {
+  background: #ef4444;
+  box-shadow: 0 0 10px rgba(239,68,68,0.7);
+}
+
+body[data-theme="dark"] .goal-priority-badge.medium {
+  background: linear-gradient(135deg, rgba(245,158,11,0.20) 0%, rgba(251,191,36,0.10) 100%);
+  color: #fcd34d;
+  border-color: rgba(245,158,11,0.30);
+}
+
+body[data-theme="dark"] .goal-priority-badge.medium::before {
+  background: #f59e0b;
+  box-shadow: 0 0 10px rgba(245,158,11,0.7);
+}
+
+body[data-theme="dark"] .goal-priority-badge.low {
+  background: linear-gradient(135deg, rgba(34,197,94,0.20) 0%, rgba(134,239,172,0.10) 100%);
+  color: #86efac;
+  border-color: rgba(34,197,94,0.30);
+}
+
+body[data-theme="dark"] .goal-priority-badge.low::before {
+  background: #22c55e;
+  box-shadow: 0 0 10px rgba(34,197,94,0.7);
 }
 
 /* ── Summary row ────────────────────────────────────────── */
@@ -77,60 +345,87 @@
   gap: 16px;
 }
 
-/* ── Goal card ──────────────────────────────────────────── */
+/* ── Aesthetic Goal card ───────────────────────────────── */
 .sv-goal-card {
-  background: var(--glass);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 20px 18px 16px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(248,247,252,0.92) 100%);
+  border: 1px solid rgba(255,255,255,0.90);
+  border-radius: 24px;
+  padding: 24px 22px 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, var(--shadow-md);
+  gap: 16px;
+  box-shadow: 
+    0 4px 20px rgba(0,0,0,0.06),
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    inset 0 -1px 0 rgba(255,255,255,0.5);
   backdrop-filter: blur(20px) saturate(1.6);
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sv-goal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .sv-goal-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, var(--shadow-lg);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 
+    0 12px 40px rgba(99,102,241,0.18),
+    0 4px 12px rgba(99,102,241,0.10),
+    0 1px 0 rgba(255,255,255,0.9) inset;
+}
+
+.sv-goal-card:hover::before {
+  opacity: 1;
 }
 
 /* Top row */
 .sv-goal-top {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
 .sv-goal-icon {
-  font-size: 1.4rem;
-  width: 42px; height: 42px;
-  background: var(--accent-lt);
-  border-radius: 12px;
+  font-size: 1.6rem;
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(139,92,246,0.10) 100%);
+  border-radius: 16px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(99,102,241,0.15);
 }
 
 .sv-goal-name-wrap { flex: 1; }
 
 .sv-goal-name {
-  font-size: 0.96rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--ink);
   letter-spacing: -0.03em;
+  line-height: 1.3;
 }
 
 .sv-complete-badge {
-  font-size: 0.68rem;
+  font-size: 0.70rem;
   font-weight: 700;
-  background: rgba(48,209,88,0.12);
-  color: #1a7a4a;
-  padding: 2px 8px;
-  border-radius: 6px;
-  margin-top: 3px;
+  background: linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(52,211,153,0.10) 100%);
+  color: #16a34a;
+  padding: 4px 12px;
+  border-radius: 50px;
+  margin-top: 6px;
   display: inline-block;
+  box-shadow: 0 2px 8px rgba(34,197,94,0.15);
 }
 
 .sv-goal-actions {
@@ -138,28 +433,61 @@
   gap: 4px;
 }
 
+/* ── Goal action buttons — same Apple style as txn-edit/delete ── */
+.sv-goal-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .sv-action-btn {
   width: 30px; height: 30px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: linear-gradient(135deg, #3b0764 0%, #6b21a8 50%, #7c3aed 100%);
-  border-radius: 8px;
-  font-size: 0.82rem;
-  color: #fff;
+  border-radius: 9px;
+  border: 1px solid transparent;
   cursor: pointer;
   display: grid;
   place-items: center;
-  box-shadow: 0 4px 18px rgba(107, 33, 168, 0.40),
-              0 1px 0 rgba(255,255,255,0.18) inset;
-  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  padding: 0;
+  flex-shrink: 0;
 }
-.sv-action-btn:hover {
-  background: linear-gradient(135deg, #2e0657 0%, #581c87 50%, #6d28d9 100%);
+
+.sv-action-btn svg {
+  width: 14px; height: 14px;
+  pointer-events: none;
+}
+
+/* Edit — soft purple */
+.sv-edit-btn {
+  background: linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(238,231,255,0.92) 100%);
+  border-color: rgba(143,120,255,0.18);
+  color: var(--accent);
+  box-shadow: 0 2px 8px rgba(138,122,255,0.10), 0 1px 0 rgba(255,255,255,0.78) inset;
+}
+
+.sv-edit-btn:hover {
+  background: linear-gradient(135deg, #6e6cf0 0%, #a78bfa 100%);
+  border-color: rgba(110,108,240,0.30);
+  color: #fff;
   transform: translateY(-1px);
-  box-shadow: 0 8px 28px rgba(107, 33, 168, 0.52),
-              0 1px 0 rgba(255,255,255,0.18) inset;
+  box-shadow: 0 6px 16px rgba(110,108,240,0.28), 0 1px 0 rgba(255,255,255,0.20) inset;
 }
+
+/* Delete — soft red */
+.sv-delete-btn {
+  background: linear-gradient(135deg, rgba(255,244,244,0.96) 0%, rgba(255,232,240,0.95) 100%);
+  border-color: rgba(255,105,135,0.16);
+  color: var(--negative);
+  box-shadow: 0 2px 8px rgba(255,105,135,0.08), 0 1px 0 rgba(255,255,255,0.78) inset;
+}
+
 .sv-delete-btn:hover {
-  background: linear-gradient(135deg, rgba(255,244,244,0.98) 0%, rgba(255,230,236,0.96) 100%);
+  background: linear-gradient(135deg, #ff453a 0%, #ff6b6b 100%);
+  border-color: rgba(255,69,58,0.30);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(255,69,58,0.28), 0 1px 0 rgba(255,255,255,0.20) inset;
 }
 
 /* Body: ring + amounts */
@@ -268,20 +596,96 @@ body[data-theme="dark"] .add-goal-btn:hover {
   box-shadow: 0 18px 34px rgba(76,29,149,0.28), 0 1px 0 rgba(255,255,255,0.12) inset;
 }
 
-body[data-theme="dark"] .sv-action-btn {
-  color: #d8ccff;
+body[data-theme="dark"] .sv-edit-btn {
+  background: linear-gradient(135deg, rgba(35,48,79,0.96) 0%, rgba(58,41,104,0.92) 100%);
+  border-color: rgba(167,139,250,0.22);
+  color: #c4b5fd;
+  box-shadow: 0 2px 8px rgba(76,29,149,0.18);
 }
 
-body[data-theme="dark"] .sv-action-btn:hover {
-  background: linear-gradient(135deg, rgba(35,48,79,0.96) 0%, rgba(58,41,104,0.92) 100%);
-  color: #f5f3ff;
-  box-shadow: 0 14px 24px rgba(76,29,149,0.20), 0 1px 0 rgba(255,255,255,0.06) inset;
+body[data-theme="dark"] .sv-edit-btn:hover {
+  background: linear-gradient(135deg, rgba(99,102,241,0.80) 0%, rgba(139,92,246,0.80) 100%);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(76,29,149,0.28);
+}
+
+body[data-theme="dark"] .sv-delete-btn {
+  background: linear-gradient(135deg, rgba(78,28,44,0.90) 0%, rgba(58,20,32,0.88) 100%);
+  border-color: rgba(255,105,135,0.20);
+  color: #fb7185;
+  box-shadow: 0 2px 8px rgba(255,69,58,0.12);
 }
 
 body[data-theme="dark"] .sv-delete-btn:hover {
-  background: linear-gradient(135deg, rgba(88,24,45,0.94) 0%, rgba(127,29,29,0.9) 100%);
-  color: #ffe4ea;
+  background: linear-gradient(135deg, rgba(220,38,38,0.80) 0%, rgba(239,68,68,0.75) 100%);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(255,69,58,0.28);
 }
+
+/* ── Dark mode: Goals grid cards ────────────────────────── */
+body[data-theme="dark"] .sv-goal-card {
+  background: linear-gradient(145deg, rgba(20,30,48,0.92) 0%, rgba(14,21,37,0.88) 100%);
+  border-color: rgba(148,163,184,0.14);
+  box-shadow:
+    0 4px 20px rgba(2,6,23,0.28),
+    0 1px 0 rgba(255,255,255,0.04) inset;
+}
+
+body[data-theme="dark"] .sv-goal-card::before {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa);
+}
+
+body[data-theme="dark"] .sv-goal-card:hover {
+  box-shadow:
+    0 12px 40px rgba(99,102,241,0.22),
+    0 4px 12px rgba(2,6,23,0.28),
+    0 1px 0 rgba(255,255,255,0.05) inset;
+}
+
+body[data-theme="dark"] .sv-goal-name { color: #f1f5f9; }
+
+body[data-theme="dark"] .sv-goal-icon {
+  background: linear-gradient(135deg, rgba(99,102,241,0.22) 0%, rgba(139,92,246,0.16) 100%);
+  box-shadow: 0 4px 12px rgba(76,29,149,0.20);
+}
+
+body[data-theme="dark"] .sv-amt-label { color: #8fa2c7; }
+body[data-theme="dark"] .sv-amt-val   { color: #e2e8f0; }
+
+body[data-theme="dark"] .sv-progress-track {
+  background: rgba(99,102,241,0.14);
+}
+
+body[data-theme="dark"] .sv-remaining { color: #8fa2c7; }
+
+body[data-theme="dark"] .sv-complete-badge {
+  background: linear-gradient(135deg, rgba(34,197,94,0.22) 0%, rgba(52,211,153,0.14) 100%);
+  color: #86efac;
+  box-shadow: 0 2px 8px rgba(34,197,94,0.18);
+}
+
+body[data-theme="dark"] .completed-goal {
+  background: linear-gradient(135deg, rgba(34,197,94,0.10) 0%, rgba(52,211,153,0.06) 100%);
+  border-color: rgba(34,197,94,0.16);
+}
+
+body[data-theme="dark"] .sv-monthly-banner {
+  background:
+    linear-gradient(135deg, rgba(99,102,241,0.14) 0%, rgba(139,92,246,0.08) 100%),
+    linear-gradient(180deg, rgba(15,23,42,0.96) 0%, rgba(10,16,28,0.94) 100%);
+  border-color: rgba(99,102,241,0.22);
+  box-shadow: 0 8px 32px rgba(2,6,23,0.28);
+}
+
+body[data-theme="dark"] .sv-banner-amount {
+  background: linear-gradient(135deg, #818cf8 0%, #c4b5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+body[data-theme="dark"] .sv-banner-sub { color: #94a3b8; }
+body[data-theme="dark"] .sv-banner-count { color: #8fa2c7; }
 
 body[data-theme="dark"] .sv-contribute-btn {
   color: #d8ccff;
@@ -359,44 +763,81 @@ body[data-theme="dark"] .sv-contribute-btn:hover {
   .sv-goals-grid  { grid-template-columns: 1fr; }
 }
 
-/* ── Monthly savings banner ─────────────────────────────── */
+/* ── Aesthetic Monthly savings banner ───────────────────── */
 .sv-monthly-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 22px 26px;
-  background:
-    radial-gradient(ellipse at 80% 10%, rgba(48,209,88,0.14) 0%, transparent 60%),
-    var(--glass);
+  padding: 28px 32px;
+  background: 
+    linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(139,92,246,0.05) 100%),
+    radial-gradient(ellipse at 85% 15%, rgba(99,102,241,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(139,92,246,0.08) 0%, transparent 50%),
+    linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(250,248,254,0.92) 100%);
+  border: 1px solid rgba(255,255,255,0.90);
+  border-radius: 28px;
+  box-shadow: 
+    0 8px 32px rgba(99,102,241,0.12),
+    0 2px 8px rgba(0,0,0,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.80);
+  position: relative;
+  overflow: hidden;
 }
 
-.sv-banner-left { display: flex; flex-direction: column; gap: 4px; }
+.sv-monthly-banner::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.sv-banner-left { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 6px; 
+  position: relative;
+  z-index: 1;
+}
 
 .sv-banner-amount {
-  font-size: 2rem;
+  font-size: 2.4rem;
   font-weight: 800;
-  letter-spacing: -0.05em;
-  margin: 6px 0 4px;
+  letter-spacing: -0.06em;
+  margin: 8px 0 6px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .sv-banner-sub {
-  font-size: 0.76rem;
-  color: var(--muted);
-  max-width: 340px;
-  line-height: 1.5;
+  font-size: 0.80rem;
+  color: var(--sub);
+  max-width: 360px;
+  line-height: 1.6;
+  font-weight: 500;
 }
 
 .sv-banner-right {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
 }
 
-.sv-banner-icon { font-size: 2.2rem; }
+.sv-banner-icon { 
+  font-size: 2.8rem; 
+  filter: drop-shadow(0 4px 8px rgba(99,102,241,0.20));
+}
 
 .sv-banner-count {
-  font-size: 0.80rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--muted);
 }
@@ -521,6 +962,30 @@ body[data-theme="dark"] .sv-contribute-btn:hover {
   border-radius: 20px;
   border: 1px solid rgba(255,255,255,0.85);
   min-height: 90px;
+}
+
+.refresh-motivation-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.70);
+  color: var(--sub);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.refresh-motivation-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: rotate(180deg);
 }
 
 /* Bucket-specific gradient backgrounds */

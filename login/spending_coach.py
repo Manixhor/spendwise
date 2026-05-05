@@ -66,32 +66,32 @@ def get_spending_message(spend_pct: float | None) -> dict:
     """
     if spend_pct is None:
         return {
-            'message': random.choice(NO_SALARY),
-            'tone': 'neutral',
-            'emoji': '💡',
+            "message": random.choice(NO_SALARY),
+            "tone": "neutral",
+            "emoji": "💡",
         }
 
     if spend_pct < 30:
-        return {'message': random.choice(EXCELLENT), 'tone': 'excellent', 'emoji': '🏆'}
+        return {"message": random.choice(EXCELLENT), "tone": "excellent", "emoji": "🏆"}
     elif spend_pct < 50:
-        return {'message': random.choice(GOOD),     'tone': 'good',     'emoji': '✅'}
+        return {"message": random.choice(GOOD), "tone": "good", "emoji": "✅"}
     elif spend_pct < 75:
-        return {'message': random.choice(WARNING),  'tone': 'warning',  'emoji': '⚠️'}
+        return {"message": random.choice(WARNING), "tone": "warning", "emoji": "⚠️"}
     elif spend_pct < 90:
-        return {'message': random.choice(HIGH),     'tone': 'high',     'emoji': '🔴'}
+        return {"message": random.choice(HIGH), "tone": "high", "emoji": "🔴"}
     else:
-        return {'message': random.choice(CRITICAL), 'tone': 'critical', 'emoji': '🚨'}
+        return {"message": random.choice(CRITICAL), "tone": "critical", "emoji": "🚨"}
 
 
 def fetch_dad_joke() -> str:
     """Fetches a random dad joke from icanhazdadjoke.com."""
     try:
         req = urllib.request.Request(
-            'https://icanhazdadjoke.com/',
-            headers={'Accept': 'text/plain', 'User-Agent': 'SpendWise/1.0'},
+            "https://icanhazdadjoke.com/",
+            headers={"Accept": "text/plain", "User-Agent": "SpendWise/1.0"},
         )
         with urllib.request.urlopen(req, timeout=3) as resp:
-            return resp.read().decode('utf-8').strip()
+            return resp.read().decode("utf-8").strip()
     except (urllib.error.URLError, Exception):
         # Fallback jokes if API is unreachable
         fallbacks = [
@@ -101,3 +101,52 @@ def fetch_dad_joke() -> str:
             "I asked my bank for a loan. They said 'Sure, what's your collateral?' I said 'My sense of humour.' They didn't laugh.",
         ]
         return random.choice(fallbacks)
+
+
+_SAVINGS_QUOTES = [
+    ("Do not save what is left after spending, but spend what is left after saving.", "Warren Buffett"),
+    ("Compound interest is the eighth wonder of the world. He who understands it, earns it.", "Albert Einstein"),
+    ("A penny saved is a penny earned.", "Benjamin Franklin"),
+    ("Financial freedom is available to those who learn about it and work for it.", "Robert Kiyosaki"),
+    ("It's not about how much money you make, but how much money you keep.", "Robert Kiyosaki"),
+    ("The habit of saving is itself an education; it fosters every virtue, teaches self-denial, cultivates the sense of order.", "T.T. Munger"),
+    ("Rich people buy assets. Poor people have only expenses. The middle class buys liabilities.", "Robert Kiyosaki"),
+    ("An investment in knowledge pays the best interest.", "Benjamin Franklin"),
+    ("Beware of little expenses; a small leak will sink a great ship.", "Benjamin Franklin"),
+    ("The secret to wealth is simple: find a way to do more for others than anyone else does.", "Tony Robbins"),
+    ("Never spend your money before you have it.", "Thomas Jefferson"),
+    ("A budget is telling your money where to go instead of wondering where it went.", "Dave Ramsey"),
+    ("The goal isn't more money. The goal is living life on your terms.", "Chris Brogan"),
+    ("Wealth is not about having a lot of money; it's about having a lot of options.", "Chris Rock"),
+    ("Financial peace isn't the acquisition of stuff. It's learning to live on less than you make.", "Dave Ramsey"),
+    ("Money is a terrible master but an excellent servant.", "P.T. Barnum"),
+    ("The more you learn, the more you earn.", "Warren Buffett"),
+    ("Saving is a great habit but without investing and tracking, it just sleeps.", "Manoj Arora"),
+    ("Every rupee you save today is a rupee working for you tomorrow.", "Indian Proverb"),
+    ("Small amounts saved daily add up to large amounts over time.", "Margo Vader"),
+    ("The stock market is a device for transferring money from the impatient to the patient.", "Warren Buffett"),
+    ("Don't tell me what you value, show me your budget, and I'll tell you what you value.", "Joe Biden"),
+    ("Opportunity is missed by most people because it is dressed in overalls and looks like work.", "Thomas Edison"),
+    ("It's not your salary that makes you rich, it's your spending habits.", "Charles A. Jaffe"),
+    ("Wealth consists not in having great possessions, but in having few wants.", "Epictetus"),
+    ("The art is not in making money, but in keeping it.", "Proverb"),
+    ("Frugality includes all the other virtues.", "Cicero"),
+    ("Too many people spend money they haven't earned to buy things they don't want to impress people they don't like.", "Will Rogers"),
+    ("If you would be wealthy, think of saving as well as getting.", "Benjamin Franklin"),
+    ("Money grows on the tree of persistence.", "Japanese Proverb"),
+]
+
+_last_savings_quote_index = -1
+
+
+def fetch_motivation() -> dict:
+    """Returns a savings-focused motivational quote, cycling through the list."""
+    global _last_savings_quote_index
+
+    available = [
+        (i, q) for i, q in enumerate(_SAVINGS_QUOTES)
+        if i != _last_savings_quote_index
+    ]
+    idx, (text, author) = random.choice(available)
+    _last_savings_quote_index = idx
+    return {"text": text, "author": author}

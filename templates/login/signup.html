@@ -2,25 +2,12 @@
 {% load static %}
 
 {% block title %}SpendWise – Sign Up{% endblock %}
-{% block left_tagline %}One clean account flow.<br/>Private verification, Apple-style calm.{% endblock %}
+{% block left_tagline %}Start your journey.<br/>Simple signup, instant access.{% endblock %}
 {% block card_class %}card-form{% endblock %}
 
 {% block card_content %}
   <h2 class="form-title">Sign Up</h2>
-  <p class="form-sub">Create your account, then confirm it with a private 6-digit email OTP before we unlock the app.</p>
-
-  <div class="auth-note auth-note-apple">
-    <div class="auth-note-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
-        <rect x="3" y="4" width="18" height="16" rx="4"></rect>
-        <path d="m7 10 3 3 7-7"></path>
-      </svg>
-    </div>
-    <div>
-      <p class="auth-note-title">Apple-style account verification</p>
-      <p class="auth-note-copy">Manual email signups stay inactive until the OTP is confirmed, so every new account is intentional and protected.</p>
-    </div>
-  </div>
+  <p class="form-sub">Create your account and start managing your finances.</p>
 
   {% if errors.general %}
     <div class="alert alert-error">{{ errors.general }}</div>
@@ -80,7 +67,7 @@
     </div>
     {% if errors.confirm_password %}<p class="field-msg">{{ errors.confirm_password }}</p>{% endif %}
 
-    <button type="submit" class="cta-btn">Create account & get OTP &rarr;</button>
+    <button type="submit" class="cta-btn">Create account &rarr;</button>
   </form>
 
   <p class="terms-copy">

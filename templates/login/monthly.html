@@ -21,8 +21,14 @@
     <!-- Header -->
     <header class="main-header">
       <div>
-        <p class="monthly-eyebrow">📊 Monthly Analysis</p>
-        <h1 class="welcome">Hey, {{ user.first_name|default:user.username }}! Welcome back!</h1>
+        <p class="monthly-eyebrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" style="vertical-align:-1px;margin-right:4px;">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <path d="M16 2v4M8 2v4M3 10h18"/>
+            <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>
+          </svg>
+          Monthly Analysis
+        </p>
       </div>
       <div class="header-actions">
         <div class="month-selector">
@@ -34,13 +40,6 @@
             <a class="month-btn" href="?month={{ next_month_param }}" aria-label="Next month">&#8250;</a>
           {% endif %}
         </div>
-        <a href="{% url 'logout' %}" class="logout-btn" title="Logout">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-        </a>
       </div>
     </header>
 
@@ -77,8 +76,8 @@
       <!-- Quick stats -->
       <div class="card ma-stats-card">
         <div class="ma-stat">
-          <span class="ma-stat-label">Income</span>
-          <span class="ma-stat-val positive">+₹{{ total_income|floatformat:2 }}</span>
+          <span class="ma-stat-label">Salary</span>
+          <span class="ma-stat-val">{% if profile.salary %}₹{{ profile.salary|floatformat:2 }}{% else %}—{% endif %}</span>
         </div>
         <div class="ma-stat-divider"></div>
         <div class="ma-stat">
@@ -107,7 +106,6 @@
             <p class="ma-chart-sub">{{ selected_month_label }}</p>
           </div>
           <div class="ma-chart-legend">
-            <span class="leg-dot green"></span><span class="leg-txt">Income</span>
             <span class="leg-dot purple"></span><span class="leg-txt">Expenses</span>
           </div>
         </div>
@@ -119,13 +117,9 @@
               <span>{{ tick }}</span>
             {% endfor %}
           </div>
-          <div class="ma-bars-wrap">
-            <svg viewBox="0 0 560 220" class="ma-bar-svg" aria-label="Monthly spending bar chart">
+          <div class="ma-bars-wrap" style="position:relative;">
+            <svg viewBox="0 0 560 220" class="ma-bar-svg" id="maBarSvg" aria-label="Monthly spending bar chart">
               <defs>
-                <linearGradient id="incomeBar" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#30d158" stop-opacity="0.9"/>
-                  <stop offset="100%" stop-color="#30d158" stop-opacity="0.5"/>
-                </linearGradient>
                 <linearGradient id="expenseBar" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.9"/>
                   <stop offset="100%" stop-color="#a78bfa" stop-opacity="0.5"/>
@@ -133,16 +127,35 @@
               </defs>
 
               {% for week in weekly_chart.weeks %}
-                <rect x="{{ week.income_x }}" y="{{ week.income_y }}" width="{{ week.bar_width }}" height="{{ week.income_height }}" rx="6" fill="url(#incomeBar)"/>
-                <rect x="{{ week.expense_x }}" y="{{ week.expense_y }}" width="{{ week.bar_width }}" height="{{ week.expense_height }}" rx="6" fill="url(#expenseBar)"/>
+                <rect
+                  class="ma-bar"
+                  x="{{ week.expense_x }}" y="{{ week.expense_y }}"
+                  width="{{ week.bar_width }}" height="{{ week.expense_height }}"
+                  rx="6" fill="url(#expenseBar)"
+                  data-label="{{ week.label }}"
+                  data-range="{{ week.range_label }}"
+                  data-expense="{{ week.expense }}"
+                  style="cursor:pointer;"/>
               {% endfor %}
-
-              {% if weekly_chart.trend_path %}
-                <path d="{{ weekly_chart.trend_path }}"
-                      fill="none" stroke="#1c1c1e" stroke-width="2" stroke-dasharray="5,3"
-                      stroke-linecap="round" opacity="0.3"/>
-              {% endif %}
             </svg>
+
+            <!-- Tooltip -->
+            <div id="maBarTip" style="
+              display:none;
+              position:absolute;
+              background:rgba(255,255,255,0.96);
+              backdrop-filter:blur(8px);
+              border:1px solid rgba(200,200,210,0.5);
+              border-radius:10px;
+              padding:5px 13px;
+              font-size:0.80rem;
+              font-weight:700;
+              color:#1c1c1e;
+              white-space:nowrap;
+              pointer-events:none;
+              box-shadow:0 4px 16px rgba(0,0,0,0.10);
+              z-index:10;
+            "></div>
 
             <!-- X axis labels -->
             <div class="ma-x-axis">
@@ -153,6 +166,34 @@
           </div>
         </div>
         <p class="ma-refresh">Refreshed for {{ month_period_label }}</p>
+
+        <script>
+        (function() {
+          const bars = document.querySelectorAll('.ma-bar');
+          const tip  = document.getElementById('maBarTip');
+          const wrap = document.querySelector('.ma-bars-wrap');
+          if (!bars.length || !tip || !wrap) return;
+
+          const fmt = v => '₹' + Number(v).toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+          bars.forEach(bar => {
+            bar.addEventListener('mouseenter', () => {
+              bar.setAttribute('opacity', '0.75');
+              tip.textContent = bar.dataset.range + ': ' + fmt(bar.dataset.expense);
+              tip.style.display = 'block';
+            });
+            bar.addEventListener('mousemove', (e) => {
+              const rect = wrap.getBoundingClientRect();
+              tip.style.left = Math.min(e.clientX - rect.left + 10, rect.width - 160) + 'px';
+              tip.style.top  = Math.max(e.clientY - rect.top  - 40, 4) + 'px';
+            });
+            bar.addEventListener('mouseleave', () => {
+              bar.setAttribute('opacity', '1');
+              tip.style.display = 'none';
+            });
+          });
+        })();
+        </script>
       </div>
 
       <!-- Category breakdown -->
@@ -256,5 +297,10 @@
 
 
 </div>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+const SELECTED_MONTH = '{{ selected_month }}';
+</script>
 </body>
 </html>
