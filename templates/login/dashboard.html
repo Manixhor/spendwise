@@ -20,29 +20,14 @@
     <!-- Header -->
     <header class="main-header">
       <h1 class="welcome">Welcome back, {{ user.first_name|default:user.username }}!</h1>
-      <div class="header-actions">
-        {% if profile.salary %}
-          <span class="salary-badge" id="salaryBadge">Salary: ₹{{ profile.salary }}</span>
-        {% endif %}
-        <button class="add-txn-btn" type="button" id="addTxnBtn">+ Add Transaction</button>
-        <button class="set-salary-btn" type="button" id="setSalaryBtn">
-          {% if profile.salary %}Edit Salary{% else %}+ Set Salary{% endif %}
-        </button>
-        <a href="{% url 'logout' %}" class="logout-btn" title="Logout">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-        </a>
-      </div>
     </header>
 
     <!-- ── Dad Joke Banner ───────────────────────────────── -->
     <div class="joke-banner">
       <span class="joke-banner-label">😄 Daily Joke</span>
-      <p class="joke-banner-text">{{ dad_joke }}</p>
+      <p class="joke-banner-text" id="jokeBannerText">{{ dad_joke }}</p>
     </div>
+
 
     <!-- Top row: Insights + Total Balance + Savings -->
     <div class="top-row">
@@ -54,7 +39,6 @@
             <span class="insight-stock-symbol" id="insightStockSymbol">{{ insight_stock.symbol }}</span>
             <span class="insight-stock-sub" id="insightStockSubtitle">{{ insight_stock.subtitle }}</span>
           </div>
-          <span class="insight-stock-badge">Live</span>
         </div>
         <div class="insights-body">
           <div class="insight-stock-copy">
@@ -68,27 +52,6 @@
             <svg viewBox="0 0 220 92" class="insight-stock-chart" id="insightStockChart" aria-label="Expense trend chart"></svg>
           </div>
         </div>
-      </div>
-
-      <!-- Total balance card -->
-      <div class="card balance-card">
-        <div class="card-top-row">
-          <span class="card-label">Total balance</span>
-        </div>
-        <p class="balance-amount" id="totalBalance">₹{{ total_balance|floatformat:2 }}</p>
-        <div class="balance-row">
-          <div class="balance-item">
-            <span class="bal-sub">Expenses this month</span>
-            <span class="bal-val negative" id="totalExpense">−₹{{ total_expense|floatformat:2 }}</span>
-          </div>
-          <div class="balance-item">
-            <span class="bal-sub">Savings</span>
-            <span class="bal-val {% if total_saved >= 0 %}positive{% else %}negative{% endif %}" id="totalSaved">
-              {% if total_saved >= 0 %}+{% endif %}₹{{ total_saved|floatformat:2 }}
-            </span>
-          </div>
-        </div>
-        <div class="balance-deco" aria-hidden="true"></div>
       </div>
 
       <!-- Savings widget -->
@@ -132,43 +95,34 @@
         <div class="savings-blob savings-blob-2" aria-hidden="true"></div>
       </div>
 
+      <!-- Motivation card (replaces Total Balance) -->
+      <div class="card motivation-card motivation-{{ motivation.bucket }}">
+        <div class="motivation-orb motivation-orb-1"></div>
+        <div class="motivation-orb motivation-orb-2"></div>
+        <div class="motivation-inner">
+          <span class="motivation-emoji">
+            {% if motivation.bucket == 'goal_reached' %}🏆
+            {% elif motivation.bucket == 'almost_there' %}🔥
+            {% elif motivation.bucket == 'making_progress' %}💪
+            {% elif motivation.bucket == 'just_started' %}🌱
+            {% elif motivation.bucket == 'broke' %}😬
+            {% else %}🎯{% endif %}
+          </span>
+          <div class="motivation-text">
+            <p class="motivation-quote">"{{ motivation.quote }}"</p>
+            <p class="motivation-author">{{ motivation.author }}</p>
+          </div>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Category tiles — dynamic -->
-    <div class="tiles-row" id="categoryTiles">
-      {% if cat_tiles %}
-        {% for cat in cat_tiles %}
-        <div class="tile" style="background:{{ cat.color }}20; border:1px solid {{ cat.color }}40;">
-          <div class="tile-icon" style="background:{{ cat.color }}40;">
-            <span style="font-size:1rem;">{{ cat.icon }}</span>
-          </div>
-          <p class="tile-amount" style="color:#1a1a2e;">₹{{ cat.amount|floatformat:2 }}</p>
-          <p class="tile-name" style="color:#3a3a3c;">{{ cat.label }}</p>
-        </div>
-        {% endfor %}
-      {% else %}
-        <div class="tile tile-cyan">
-          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
-          <p class="tile-amount">₹0.00</p><p class="tile-name">Rent</p>
-        </div>
-        <div class="tile tile-purple">
-          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11v6a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-6z"/></svg></div>
-          <p class="tile-amount">₹0.00</p><p class="tile-name">Transport</p>
-        </div>
-        <div class="tile tile-green">
-          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
-          <p class="tile-amount">₹0.00</p><p class="tile-name">Health</p>
-        </div>
-        <div class="tile tile-yellow">
-          <div class="tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></div>
-          <p class="tile-amount">₹0.00</p><p class="tile-name">Groceries</p>
-        </div>
-      {% endif %}
-    </div>
 
     <!-- ── Add Expense button + Filter row ──────────────── -->
     <div class="expense-action-row">
-      <button class="add-expense-btn" type="button" id="addExpenseBtn">+ Add Expense</button>
+      <div class="expense-btn-row">
+        <button class="add-expense-btn" type="button" id="addExpenseBtn">+ Add Expense</button>
+      </div>
       <div class="filter-tabs" id="filterTabs" role="tablist" aria-label="Filter by date"></div>
     </div>
 
@@ -176,7 +130,8 @@
     <div class="expense-stack" id="expenseCardsRow">
       {% for txn in recent_txns %}
         {% if txn.txn_type == 'expense' %}
-        <div class="expense-stack-card" data-date="{{ txn.date }}" data-id="{{ txn.id }}">
+        <div class="expense-stack-card" data-date="{{ txn.date|date:'Y-m-d' }}" data-id="{{ txn.id }}">
+          <button class="esc-minus" onclick="deleteTransaction({{ txn.id }})" title="Delete">−</button>
           <div class="esc-left">
             <span class="esc-icon">
               {% if txn.category == 'rent' %}🏠
@@ -196,7 +151,10 @@
           </div>
           <div class="esc-right">
             <p class="esc-amount">₹{{ txn.amount|floatformat:2 }}</p>
-            <button class="esc-delete" onclick="deleteTransaction({{ txn.id }})" title="Delete">×</button>
+            <div class="esc-actions">
+              <button class="esc-edit" onclick="editTransaction({{ txn.id }})" title="Edit">✏️</button>
+              <button class="esc-delete" onclick="deleteTransaction({{ txn.id }})" title="Delete">×</button>
+            </div>
           </div>
         </div>
         {% endif %}
@@ -205,168 +163,123 @@
       {% endfor %}
     </div>
 
-    <!-- ── Stock-style sparkline chart ──────────────────── -->
-    <div class="card sparkline-card">
-      <div class="spark-header">
-        <div class="spark-meta">
-          <span class="spark-label">Monthly Expense Trend</span>
-          <p class="spark-amount" id="sparkAmount">₹{{ total_expense|floatformat:2 }}</p>
-          <p class="spark-change {% if spend_pct %}{% if spend_pct > 50 %}spark-down{% else %}spark-up{% endif %}{% endif %}" id="sparkChange">
-            {% if spend_pct %}
-              {% if spend_pct > 50 %}↓ {{ spend_pct }}% of salary{% else %}↑ {{ spend_pct }}% of salary{% endif %}
-            {% else %}Set salary to see %{% endif %}
-          </p>
+
+    <div class="overview-target-grid">
+      <!-- Overview chart — Saved vs Expenses (dynamic) -->
+      <div class="card chart-card">
+        <div class="chart-header">
+          <h2 class="chart-title">Overview</h2>
+          <div class="legend">
+            <span class="leg-dot green"></span><span class="leg-txt">Saved</span>
+            <span class="leg-dot purple"></span><span class="leg-txt">Expenses</span>
+          </div>
         </div>
-        <div class="spark-meta">
-          <span class="spark-label">Total Saved</span>
-          <p class="spark-amount spark-saved" id="sparkSaved">₹{{ total_saved|floatformat:2 }}</p>
-          <p class="spark-change spark-up" id="sparkSavedChange">
-            {% if savings_pct %}↑ {{ savings_pct }}% of target{% else %}Set target to track{% endif %}
-          </p>
+        <div class="chart-body">
+          <div class="y-axis" id="chartYAxis">
+            <span>—</span><span></span><span></span><span></span><span>₹0</span>
+          </div>
+          <div class="chart-svg-wrap">
+            <svg viewBox="0 0 680 230" class="chart-svg" preserveAspectRatio="xMidYMid meet" id="overviewSvg" aria-label="Overview chart">
+              <defs>
+                <linearGradient id="savedG" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stop-color="rgba(110,231,183,0.70)"/>
+                  <stop offset="100%" stop-color="rgba(110,231,183,0.12)"/>
+                </linearGradient>
+                <linearGradient id="expG2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stop-color="rgba(167,139,250,0.60)"/>
+                  <stop offset="100%" stop-color="rgba(167,139,250,0.12)"/>
+                </linearGradient>
+                <linearGradient id="areaG2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stop-color="rgba(52,211,153,0.18)"/>
+                  <stop offset="100%" stop-color="rgba(52,211,153,0.00)"/>
+                </linearGradient>
+              </defs>
+              <!-- Bars rendered by JS -->
+            </svg>
+            <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
+          </div>
+        </div>
+        <div class="x-axis" id="chartXAxis">
+          {% for m in chart_months %}<span>{{ m.label }}</span>{% endfor %}
         </div>
       </div>
 
-      <!-- Dual sparkline SVG -->
-      <div class="spark-chart-wrap">
-        <svg viewBox="0 0 600 100" class="spark-svg" preserveAspectRatio="none" id="sparkSvg" aria-hidden="true">
-          <defs>
-            <linearGradient id="expSparkGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="rgba(255,100,100,0.25)"/>
-              <stop offset="100%" stop-color="rgba(255,100,100,0.00)"/>
-            </linearGradient>
-            <linearGradient id="savedSparkGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="rgba(100,200,150,0.25)"/>
-              <stop offset="100%" stop-color="rgba(100,200,150,0.00)"/>
-            </linearGradient>
-          </defs>
-          <!-- Rendered by JS -->
-        </svg>
-      </div>
-      <div class="spark-x-axis" id="sparkXAxis">
-        {% for m in chart_months %}<span>{{ m.label }}</span>{% endfor %}
-      </div>
+      <!-- Target Savings widget -->
+      <section class="card target-savings-inline">
+        <div class="rp-row">
+          <h2 class="rp-title">Target Savings</h2>
+          <button class="set-target-btn" id="setTargetBtn" type="button">
+            {% if profile.target_savings %}Edit{% else %}+ Set{% endif %}
+          </button>
+        </div>
+
+        <div class="savings-target-card">
+          <!-- Progress ring -->
+          <div class="st-ring-wrap">
+            <svg viewBox="0 0 100 100" class="st-ring" aria-hidden="true">
+              <!-- Track -->
+              <circle cx="50" cy="50" r="42" fill="none"
+                stroke="rgba(94,92,230,0.10)" stroke-width="10"/>
+              <!-- Progress -->
+              <circle cx="50" cy="50" r="42" fill="none"
+                stroke="url(#stGrad)" stroke-width="10"
+                stroke-dasharray="{{ ring_dash }} {{ ring_gap }}"
+                stroke-dashoffset="0"
+                stroke-linecap="round"
+                transform="rotate(-90 50 50)"
+                id="savingsRing"/>
+              <defs>
+                <linearGradient id="stGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%"   stop-color="#6e6cf0"/>
+                  <stop offset="100%" stop-color="#a78bfa"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="st-ring-center">
+              <span class="st-pct" id="savingsPct">
+                {% if savings_pct %}{{ savings_pct }}%{% else %}—{% endif %}
+              </span>
+              <span class="st-pct-label">saved</span>
+            </div>
+          </div>
+
+          <!-- Numbers -->
+          <div class="st-info">
+            <div class="st-row">
+              <span class="st-label">Saved so far</span>
+              <span class="st-val {% if total_saved >= 0 %}positive{% else %}negative{% endif %}">₹{{ total_saved|floatformat:2 }}</span>
+            </div>
+            <div class="st-row">
+              <span class="st-label">Target</span>
+              <span class="st-val" id="targetDisplay">
+                {% if profile.target_savings %}₹{{ profile.target_savings }}{% else %}Not set{% endif %}
+              </span>
+            </div>
+            {% if savings_pct %}
+            <div class="st-progress-track">
+              <div class="st-progress-fill" id="targetProgressBar"
+                   style="width: {{ savings_pct }}%"></div>
+            </div>
+            {% else %}
+            <div class="st-progress-track">
+              <div class="st-progress-fill" id="targetProgressBar" style="width:0%"></div>
+            </div>
+            {% endif %}
+            <p class="st-hint">
+              {% if profile.target_savings %}
+                {% if savings_pct >= 100 %}🎉 Goal reached!
+                {% else %}₹{{ profile.target_savings }} goal · keep going!{% endif %}
+              {% else %}Set a savings goal to track progress{% endif %}
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
 
-    <!-- Overview chart — Saved vs Expenses (dynamic) -->
-    <div class="card chart-card">
-      <div class="chart-header">
-        <h2 class="chart-title">Overview</h2>
-        <div class="legend">
-          <span class="leg-dot green"></span><span class="leg-txt">Saved</span>
-          <span class="leg-dot purple"></span><span class="leg-txt">Expenses</span>
-        </div>
-      </div>
-      <div class="chart-body">
-        <div class="y-axis" id="chartYAxis">
-          <span>—</span><span></span><span></span><span></span><span>₹0</span>
-        </div>
-        <div class="chart-svg-wrap">
-          <svg viewBox="0 0 680 230" class="chart-svg" preserveAspectRatio="xMidYMid meet" id="overviewSvg" aria-label="Overview chart">
-            <defs>
-              <linearGradient id="savedG" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stop-color="rgba(110,231,183,0.70)"/>
-                <stop offset="100%" stop-color="rgba(110,231,183,0.12)"/>
-              </linearGradient>
-              <linearGradient id="expG2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stop-color="rgba(167,139,250,0.60)"/>
-                <stop offset="100%" stop-color="rgba(167,139,250,0.12)"/>
-              </linearGradient>
-              <linearGradient id="areaG2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stop-color="rgba(52,211,153,0.18)"/>
-                <stop offset="100%" stop-color="rgba(52,211,153,0.00)"/>
-              </linearGradient>
-            </defs>
-            <!-- Bars rendered by JS -->
-          </svg>
-          <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
-        </div>
-      </div>
-      <div class="x-axis" id="chartXAxis">
-        {% for m in chart_months %}<span>{{ m.label }}</span>{% endfor %}
-      </div>
-    </div>
-
-  </main>
-
-  <!-- ── Right panel ─────────────────────────────────── -->
-  <aside class="right-panel">
-
-    <!-- Target Savings widget -->
-    <section class="rp-section">
-      <div class="rp-row">
-        <h2 class="rp-title">Target Savings</h2>
-        <button class="set-target-btn" id="setTargetBtn" type="button">
-          {% if profile.target_savings %}Edit{% else %}+ Set{% endif %}
-        </button>
-      </div>
-
-      <div class="savings-target-card">
-        <!-- Progress ring -->
-        <div class="st-ring-wrap">
-          <svg viewBox="0 0 100 100" class="st-ring" aria-hidden="true">
-            <!-- Track -->
-            <circle cx="50" cy="50" r="42" fill="none"
-              stroke="rgba(94,92,230,0.10)" stroke-width="10"/>
-            <!-- Progress -->
-            <circle cx="50" cy="50" r="42" fill="none"
-              stroke="url(#stGrad)" stroke-width="10"
-              stroke-dasharray="{{ ring_dash }} {{ ring_gap }}"
-              stroke-dashoffset="0"
-              stroke-linecap="round"
-              transform="rotate(-90 50 50)"
-              id="savingsRing"/>
-            <defs>
-              <linearGradient id="stGrad" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%"   stop-color="#6e6cf0"/>
-                <stop offset="100%" stop-color="#a78bfa"/>
-              </linearGradient>
-            </defs>
-          </svg>
-          <div class="st-ring-center">
-            <span class="st-pct" id="savingsPct">
-              {% if savings_pct %}{{ savings_pct }}%{% else %}—{% endif %}
-            </span>
-            <span class="st-pct-label">saved</span>
-          </div>
-        </div>
-
-        <!-- Numbers -->
-        <div class="st-info">
-          <div class="st-row">
-            <span class="st-label">Saved so far</span>
-            <span class="st-val {% if total_saved >= 0 %}positive{% else %}negative{% endif %}">₹{{ total_saved|floatformat:2 }}</span>
-          </div>
-          <div class="st-row">
-            <span class="st-label">Target</span>
-            <span class="st-val" id="targetDisplay">
-              {% if profile.target_savings %}₹{{ profile.target_savings }}{% else %}Not set{% endif %}
-            </span>
-          </div>
-          {% if savings_pct %}
-          <div class="st-progress-track">
-            <div class="st-progress-fill" id="targetProgressBar"
-                 style="width: {{ savings_pct }}%"></div>
-          </div>
-          {% else %}
-          <div class="st-progress-track">
-            <div class="st-progress-fill" id="targetProgressBar" style="width:0%"></div>
-          </div>
-          {% endif %}
-          <p class="st-hint">
-            {% if profile.target_savings %}
-              {% if savings_pct >= 100 %}🎉 Goal reached!
-              {% else %}₹{{ profile.target_savings }} goal · keep going!{% endif %}
-            {% else %}Set a savings goal to track progress{% endif %}
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Latest transactions — dynamic -->
-    <section class="rp-section txn-section">
+    <!-- Latest transactions — moved below overview -->
+    <section class="card txn-section">
       <div class="rp-row">
         <span class="rp-sub-title">Latest transactions</span>
-        <a href="#" class="card-link">Show more</a>
       </div>
       <ul class="txn-list" id="txnList">
         {% for txn in recent_txns %}
@@ -397,27 +310,9 @@
       </ul>
     </section>
 
-  </aside>
+  </main>
 
-</div>
 
-<!-- ── Set Salary Modal ────────────────────────────────── -->
-<div class="modal-overlay" id="salaryModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h2 class="modal-title" id="modalTitle">Set Your Salary</h2>
-      <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
-    </div>
-    <p class="modal-sub">Enter your monthly salary to track your budget accurately.</p>
-    <div class="modal-field-wrap">
-      <span class="modal-currency">₹</span>
-      <input type="number" id="salaryInput" class="modal-input"
-             placeholder="e.g. 5000" min="0" step="0.01"
-             value="{{ profile.salary|default:'' }}" />
-    </div>
-    <p class="modal-error" id="salaryError"></p>
-    <button class="modal-save-btn" id="modalSave">Save Salary</button>
-  </div>
 </div>
 
 <!-- ── Target Savings Modal ───────────────────────────── -->
@@ -488,87 +383,12 @@
 </script>
 
 <script>
-  const modal      = document.getElementById('salaryModal');
-  const openBtn    = document.getElementById('setSalaryBtn');
-  const closeBtn   = document.getElementById('modalClose');
-  const saveBtn    = document.getElementById('modalSave');
-  const input      = document.getElementById('salaryInput');
-  const errorEl    = document.getElementById('salaryError');
-
-  function openModal()  { modal.classList.add('active'); input.focus(); }
-  function closeModal() { modal.classList.remove('active'); errorEl.textContent = ''; }
-
-  openBtn.addEventListener('click', openModal);
-  closeBtn.addEventListener('click', closeModal);
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
-  });
-
-  saveBtn.addEventListener('click', async () => {
-    const val = input.value.trim();
-    if (!val || isNaN(val) || parseFloat(val) < 0) {
-      errorEl.textContent = 'Please enter a valid salary amount.';
-      return;
-    }
-
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving…';
-    errorEl.textContent = '';
-
-    try {
-      const res = await fetch('/api/salary/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': '{{ csrf_token }}',
-        },
-        body: JSON.stringify({ salary: parseFloat(val) }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        // Update badge in header
-        const badge = document.querySelector('.salary-badge');
-        const formatted = '₹' + parseFloat(data.salary).toLocaleString('en-IN', {minimumFractionDigits: 2});
-        if (badge) {
-          badge.textContent = 'Salary: ₹' + formatted.replace('₹', '');
-        } else {
-          const newBadge = document.createElement('span');
-          newBadge.className = 'salary-badge';
-          newBadge.textContent = 'Salary: ' + formatted;
-          openBtn.parentElement.insertBefore(newBadge, openBtn);
-        }
-        document.getElementById('totalBalance').textContent = formatCurrency(data.total_balance);
-        document.getElementById('totalSaved').textContent = formatCurrency(data.total_saved, { showPlus: true });
-        document.getElementById('savingsAmount').textContent = formatCurrency(data.total_saved, { showPlus: true });
-        if (Array.isArray(data.chart_months)) {
-          dashboardChartData = data.chart_months;
-          renderSparkline(dashboardChartData);
-          renderInsightStockChart(dashboardChartData);
-          renderChart(dashboardChartData);
-        }
-        renderInsightStockSummary(data.insight_stock);
-        renderCategoryTiles(data.cat_tiles);
-        openBtn.textContent = 'Edit Salary';
-        closeModal();
-      } else {
-        errorEl.textContent = data.error || 'Something went wrong.';
-      }
-    } catch (err) {
-      errorEl.textContent = 'Network error. Please try again.';
-    } finally {
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Save Salary';
-    }
-  });
   // ── Add Expense button (below tiles) ─────────────────
   const addExpenseBtn = document.getElementById('addExpenseBtn');
   if (addExpenseBtn) {
     addExpenseBtn.addEventListener('click', () => {
-      // Pre-select expense type
+      // Ensure we're in "add" mode, not edit mode
+      if (txnSaveBtn) delete txnSaveBtn.dataset.editingId;
       document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('typeExpense').classList.add('active');
       activeType = 'expense';
@@ -579,17 +399,19 @@
   // ── Filter tabs ────────────────────────────────────────
   const today = new Date();
   const filterTabs = document.getElementById('filterTabs');
-  const expenseDateCards = [...document.querySelectorAll('.expense-stack-card[data-date]')];
-  const availableExpenseDates = [...new Set(
-    expenseDateCards
-      .map((card) => card.dataset.date)
-      .filter(Boolean)
-      .sort()
-  )];
+  let availableExpenseDates = [];
+  function refreshAvailableExpenseDatesFromDom() {
+    availableExpenseDates = [...new Set([
+      ...document.querySelectorAll('.expense-stack-card[data-date]')
+    ].map(card => card.dataset.date).filter(Boolean).sort())];
+    return availableExpenseDates;
+  }
+  refreshAvailableExpenseDatesFromDom();
   let activeFilterDate = availableExpenseDates.includes(toIsoDate(today))
     ? toIsoDate(today)
     : (availableExpenseDates[availableExpenseDates.length - 1] || toIsoDate(today));
   let dateTabsResizeToken = null;
+  let dateTabsRequestId = 0;
   const FILTER_TAB_MIN_WIDTH = 58;
   const FILTER_TAB_MIN_COUNT = 4;
   const FILTER_TAB_MAX_COUNT = 7;
@@ -636,8 +458,97 @@
     return offsets;
   }
 
-  function setupDateTabs() {
+  async function hydrateDashboardFromApi() {
+    try {
+      const res = await fetch('/api/dashboard/summary/');
+      const data = await res.json();
+      if (!res.ok || !data.success) return;
+
+      if (Array.isArray(data.available_expense_dates)) {
+        availableExpenseDates = [...data.available_expense_dates].sort();
+      }
+      if (Array.isArray(data.chart_months)) {
+        dashboardChartData = data.chart_months;
+        renderSparkline(dashboardChartData);
+        renderInsightStockChart(dashboardChartData);
+        renderChart(dashboardChartData);
+      }
+      renderInsightStockSummary(data.insight_stock);
+      renderCategoryTiles(data.cat_tiles || []);
+
+      const jokeText = document.getElementById('jokeBannerText');
+      if (jokeText && data.dad_joke) {
+        jokeText.textContent = data.dad_joke;
+      }
+      if (typeof data.total_saved === 'number' && typeof data.total_expense === 'number') {
+        updateMotivationCard(data.total_saved, data.total_expense);
+      }
+    } catch (error) {
+      // Non-blocking; initial server render remains visible.
+    }
+  }
+
+  function renderExpenseCards(expenses = [], filterDate = '') {
+    const wrap = document.getElementById('expenseCardsRow');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+
+    expenses.forEach((txn) => {
+      const card = document.createElement('div');
+      card.className = 'expense-stack-card';
+      card.dataset.date = txn.date;
+      card.dataset.id = txn.id;
+
+      const amountText = parseFloat(txn.amount || 0).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      card.innerHTML = `
+        <button class="esc-minus" onclick="deleteTransaction(${txn.id})" title="Delete">−</button>
+        <div class="esc-left">
+          <span class="esc-icon">${txn.icon || '📦'}</span>
+          <div class="esc-info">
+            <p class="esc-title">${txn.title || 'Untitled'}</p>
+            <p class="esc-meta">${txn.category_label || txn.category || 'Other'} · ${txn.date}</p>
+          </div>
+        </div>
+        <div class="esc-right">
+          <p class="esc-amount">₹${amountText}</p>
+          <div class="esc-actions">
+            <button class="esc-edit" onclick="editTransaction(${txn.id})" title="Edit">✏️</button>
+            <button class="esc-delete" onclick="deleteTransaction(${txn.id})" title="Delete">×</button>
+          </div>
+        </div>
+      `;
+      wrap.appendChild(card);
+    });
+
+    ensureExpenseEmptyState(expenses.length, filterDate);
+  }
+
+  async function fetchExpensesForDate(filterDate) {
+    const res = await fetch(`/api/expenses-by-date/?date=${encodeURIComponent(filterDate)}`);
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to load expenses.');
+    }
+    if (Array.isArray(data.available_expense_dates)) {
+      availableExpenseDates = [...data.available_expense_dates].sort();
+    }
+    return data;
+  }
+
+  async function setupDateTabs() {
+    const requestId = ++dateTabsRequestId;
     if (!filterTabs) return;
+    let expenses = [];
+    try {
+      const data = await fetchExpensesForDate(activeFilterDate);
+      if (requestId !== dateTabsRequestId) return;
+      expenses = Array.isArray(data.expenses) ? data.expenses : [];
+    } catch (error) {
+      refreshAvailableExpenseDatesFromDom();
+    }
 
     const weekdayFmt = new Intl.DateTimeFormat('en-US', { weekday: 'short' });
     const offsets = getDateTabOffsets();
@@ -683,17 +594,30 @@
       });
     });
 
-    filterExpenseCards(activeFilterDate);
+    renderExpenseCards(expenses, activeFilterDate);
   }
 
-  function filterExpenseCards(filterDate) {
-    const cards = document.querySelectorAll('.expense-stack-card');
-    cards.forEach(card => {
-      card.style.display = card.dataset.date === filterDate ? '' : 'none';
-    });
+  function ensureExpenseEmptyState(visibleCount = 0, filterDate = '') {
+    const wrap = document.getElementById('expenseCardsRow');
+    if (!wrap) return;
+    let emptyEl = wrap.querySelector('.esc-empty');
+    if (visibleCount > 0) {
+      if (emptyEl) emptyEl.remove();
+      return;
+    }
+    if (!emptyEl) {
+      emptyEl = document.createElement('div');
+      emptyEl.className = 'esc-empty';
+      emptyEl.textContent = filterDate
+        ? `No expenses for ${filterDate}.`
+        : 'No expenses for this date.';
+      wrap.appendChild(emptyEl);
+    }
   }
 
-  setupDateTabs();
+  hydrateDashboardFromApi().finally(() => {
+    setupDateTabs();
+  });
 
   window.addEventListener('resize', () => {
     window.clearTimeout(dateTabsResizeToken);
@@ -956,82 +880,194 @@
     });
   });
 
-  function openTxnModal()  { txnModal.classList.add('active'); document.getElementById('txnTitle').focus(); }
-  function closeTxnModal() { txnModal.classList.remove('active'); txnError.textContent = ''; }
+  function openTxnModal()  {
+    if (!txnModal) return;
+    // Only reset form if NOT in edit mode
+    if (!txnSaveBtn || !txnSaveBtn.dataset.editingId) {
+      document.getElementById('txnModalTitle').textContent = 'Add Transaction';
+      if (txnSaveBtn) txnSaveBtn.textContent = 'Add Transaction';
+      document.getElementById('txnTitle').value = '';
+      document.getElementById('txnAmount').value = '';
+      document.getElementById('txnCategory').value = 'other';
+      document.getElementById('txnDate').value = new Date().toISOString().split('T')[0];
+    }
+    txnModal.classList.add('active');
+    document.getElementById('txnTitle')?.focus();
+  }
+  function closeTxnModal() {
+    if (!txnModal) return;
+    txnModal.classList.remove('active');
+    if (txnError) txnError.textContent = '';
+    // Always reset modal state on close
+    document.getElementById('txnModalTitle').textContent = 'Add Transaction';
+    if (txnSaveBtn) {
+      txnSaveBtn.textContent = 'Add Transaction';
+      delete txnSaveBtn.dataset.editingId;
+    }
+  }
 
-  txnOpenBtn.addEventListener('click', openTxnModal);
-  txnClose.addEventListener('click', closeTxnModal);
-  txnModal.addEventListener('click', e => { if (e.target === txnModal) closeTxnModal(); });
+  if (txnOpenBtn) {
+    txnOpenBtn.addEventListener('click', openTxnModal);
+  }
+  if (txnClose) {
+    txnClose.addEventListener('click', closeTxnModal);
+  }
+  if (txnModal) {
+    txnModal.addEventListener('click', e => { if (e.target === txnModal) closeTxnModal(); });
+  }
 
-  txnSaveBtn.addEventListener('click', async () => {
-    const title    = document.getElementById('txnTitle').value.trim() || 'Untitled';
-    const amount   = parseFloat(document.getElementById('txnAmount').value) || 0;
-    const category = document.getElementById('txnCategory').value || 'other';
-    const date     = document.getElementById('txnDate').value || new Date().toISOString().split('T')[0];
+  if (txnSaveBtn && txnError) {
+    txnSaveBtn.addEventListener('click', async () => {
+    const title     = document.getElementById('txnTitle').value.trim() || 'Untitled';
+    const amount    = parseFloat(document.getElementById('txnAmount').value) || 0;
+    const category  = document.getElementById('txnCategory').value || 'other';
+    const txnDate   = document.getElementById('txnDate').value || new Date().toISOString().split('T')[0];
+    const editingId = txnSaveBtn.dataset.editingId || null;
 
-    txnSaveBtn.disabled = true; txnSaveBtn.textContent = 'Saving…'; txnError.textContent = '';
+    if (!amount || amount <= 0) {
+      txnError.textContent = 'Please enter a valid amount greater than 0.';
+      return;
+    }
+
+    txnSaveBtn.disabled = true;
+    txnSaveBtn.textContent = editingId ? 'Updating…' : 'Saving…';
+    txnError.textContent = '';
 
     try {
-      const res  = await fetch('/api/transactions/', {
-        method: 'POST',
+      const url    = editingId ? `/api/transactions/${editingId}/update/` : '/api/transactions/';
+      const method = editingId ? 'PUT' : 'POST';
+
+      const res  = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-        body: JSON.stringify({ title, amount: +amount, txn_type: activeType, category, date }),
+        body: JSON.stringify({ title, amount: +amount, txn_type: activeType, category, date: txnDate }),
       });
       const data = await res.json();
 
       if (res.ok && data.success) {
-        // Update balance cards
-        document.getElementById('totalBalance').textContent  = formatCurrency(data.total_balance);
-        document.getElementById('totalExpense').textContent  = '−₹' + data.total_expense.toLocaleString('en-IN', {minimumFractionDigits:2});
-        document.getElementById('totalSaved').textContent    = formatCurrency(data.total_saved, { showPlus: true });
-
-        // Add to transaction list
-        const list  = document.getElementById('txnList');
-        const empty = document.getElementById('txnEmpty');
-        if (empty) empty.remove();
-
-        const li = document.createElement('li');
-        li.className = 'txn-item'; li.id = 'txn-' + data.txn.id;
-        li.innerHTML = `
-          <div class="txn-icon" style="font-size:1rem;">${data.txn.icon}</div>
-          <div class="txn-info">
-            <span class="txn-name">${data.txn.title}</span>
-            <span class="txn-time">${data.txn.date}</span>
-          </div>
-          <span class="txn-amt ${data.txn.txn_type === 'expense' ? 'neg' : ''}">
-            ${data.txn.txn_type === 'income' ? '+' : '−'}₹${parseFloat(data.txn.amount).toLocaleString('en-IN', {minimumFractionDigits:2})}
-          </span>
-          <button class="txn-delete" onclick="deleteTransaction(${data.txn.id})" title="Delete">×</button>`;
-        list.prepend(li);
-
-        // Reset form
-        document.getElementById('txnTitle').value = '';
-        document.getElementById('txnAmount').value = '';
-        closeTxnModal();
-        location.reload(); // reload to refresh chart + tiles
+        const totalBalanceEl = document.getElementById('totalBalance');
+        const totalExpenseEl = document.getElementById('totalExpense');
+        const totalSavedEl   = document.getElementById('totalSaved');
+        if (totalBalanceEl) totalBalanceEl.textContent = formatCurrency(data.total_balance);
+        if (totalExpenseEl) totalExpenseEl.textContent = '−₹' + data.total_expense.toLocaleString('en-IN', {minimumFractionDigits:2});
+        if (totalSavedEl)   totalSavedEl.textContent   = formatCurrency(data.total_saved, { showPlus: true });
+        document.getElementById('savingsAmount').textContent = formatCurrency(data.total_saved, { showPlus: true });
+        updateMotivationCard(data.total_saved, data.total_expense);
+        if (Array.isArray(data.chart_months)) {
+          dashboardChartData = data.chart_months;
+          renderSparkline(dashboardChartData);
+          renderInsightStockChart(dashboardChartData);
+          renderChart(dashboardChartData);
+        }
+        renderInsightStockSummary(data.insight_stock);
+        renderCategoryTiles(data.cat_tiles || []);
+        if (Array.isArray(data.available_expense_dates)) {
+          availableExpenseDates = [...data.available_expense_dates].sort();
+        }
+        if (data.txn && data.txn.txn_type === 'expense') {
+          activeFilterDate = data.txn.date;
+        }
+        setupDateTabs();
+        closeTxnModal(); // resets editingId, title, button text
       } else {
         txnError.textContent = data.error || 'Something went wrong.';
+        txnSaveBtn.disabled = false;
+        txnSaveBtn.textContent = editingId ? 'Update Transaction' : 'Add Transaction';
       }
     } catch (err) {
       txnError.textContent = 'Network error.';
-    } finally {
-      txnSaveBtn.disabled = false; txnSaveBtn.textContent = 'Add Transaction';
+      txnSaveBtn.disabled = false;
+      txnSaveBtn.textContent = editingId ? 'Update Transaction' : 'Add Transaction';
     }
-  });
+    });
+  }
+
+  // ── Edit transaction ───────────────────────────────────
+  async function editTransaction(id) {
+    try {
+      const expenseCard = document.querySelector(`.expense-stack-card[data-id="${id}"]`);
+      if (!expenseCard) return;
+
+      const titleEl  = expenseCard.querySelector('.esc-title');
+      const metaEl   = expenseCard.querySelector('.esc-meta');
+      const amountEl = expenseCard.querySelector('.esc-amount');
+      if (!titleEl || !metaEl || !amountEl) return;
+
+      const currentTitle  = titleEl.textContent.trim();
+      const currentAmount = amountEl.textContent.replace('₹', '').replace(/,/g, '').trim();
+      const currentDate   = expenseCard.dataset.date;
+      const categoryText  = metaEl.textContent.split(' · ')[0].trim();
+
+      // Set editingId BEFORE openTxnModal so the reset guard works
+      txnSaveBtn.dataset.editingId = id;
+
+      // Pre-fill form
+      document.getElementById('txnTitle').value  = currentTitle;
+      document.getElementById('txnAmount').value = currentAmount;
+      document.getElementById('txnDate').value   = currentDate;
+
+      // Match category by label text
+      const categorySelect = document.getElementById('txnCategory');
+      let matched = false;
+      for (let option of categorySelect.options) {
+        if (option.text.trim() === categoryText) {
+          categorySelect.value = option.value;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) categorySelect.value = 'other';
+
+      // Set type to expense
+      document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('typeExpense').classList.add('active');
+      activeType = 'expense';
+
+      // Update modal title and button
+      document.getElementById('txnModalTitle').textContent = 'Edit Transaction';
+      txnSaveBtn.textContent = 'Update Transaction';
+
+      openTxnModal();
+    } catch (error) {
+      console.error('editTransaction error:', error);
+    }
+  }
 
   // ── Delete transaction ─────────────────────────────────
   async function deleteTransaction(id) {
-    if (!confirm('Delete this transaction?')) return;
     try {
       const res = await fetch(`/api/transactions/${id}/delete/`, {
         method: 'DELETE',
         headers: { 'X-CSRFToken': '{{ csrf_token }}' },
       });
-      if (res.ok) {
+      const data = await res.json();
+      if (res.ok && data.success) {
         document.getElementById('txn-' + id)?.remove();
-        location.reload();
+        const expenseCard = document.querySelector(`.expense-stack-card[data-id="${id}"]`);
+        expenseCard?.remove();
+
+        const delBalEl  = document.getElementById('totalBalance');
+        const delExpEl  = document.getElementById('totalExpense');
+        const delSaveEl = document.getElementById('totalSaved');
+        if (delBalEl)  delBalEl.textContent  = formatCurrency(data.total_balance);
+        if (delExpEl)  delExpEl.textContent  = '−₹' + data.total_expense.toLocaleString('en-IN', {minimumFractionDigits:2});
+        if (delSaveEl) delSaveEl.textContent = formatCurrency(data.total_saved, { showPlus: true });
+        document.getElementById('savingsAmount').textContent = formatCurrency(data.total_saved, { showPlus: true });
+        updateMotivationCard(data.total_saved, data.total_expense);
+        if (Array.isArray(data.chart_months)) {
+          dashboardChartData = data.chart_months;
+          renderSparkline(dashboardChartData);
+          renderInsightStockChart(dashboardChartData);
+          renderChart(dashboardChartData);
+        }
+        renderInsightStockSummary(data.insight_stock);
+        renderCategoryTiles(data.cat_tiles || []);
+        if (Array.isArray(data.available_expense_dates)) {
+          availableExpenseDates = [...data.available_expense_dates].sort();
+        }
+        setupDateTabs();
       }
-    } catch (e) { alert('Error deleting transaction.'); }
+    } catch (e) { console.error('Delete error:', e); }
   }
 
   // ── Target Savings Modal ──────────────────────────────
@@ -1043,18 +1079,29 @@
   const targetError   = document.getElementById('targetError');
   const CIRC          = 263.9;
 
-  function openTargetModal()  { targetModal.classList.add('active'); targetInput.focus(); }
-  function closeTargetModal() { targetModal.classList.remove('active'); targetError.textContent = ''; }
+  function openTargetModal()  {
+    if (!targetModal || !targetInput) return;
+    targetModal.classList.add('active');
+    targetInput.focus();
+  }
+  function closeTargetModal() {
+    if (!targetModal) return;
+    targetModal.classList.remove('active');
+    if (targetError) targetError.textContent = '';
+  }
 
-  targetOpenBtn.addEventListener('click', openTargetModal);
-  targetClose.addEventListener('click', closeTargetModal);
-  targetModal.addEventListener('click', (e) => { if (e.target === targetModal) closeTargetModal(); });
+  if (targetOpenBtn && targetClose && targetModal && targetSave && targetInput && targetError) {
+    targetOpenBtn.addEventListener('click', openTargetModal);
+    targetClose.addEventListener('click', closeTargetModal);
+    targetModal.addEventListener('click', (e) => { if (e.target === targetModal) closeTargetModal(); });
+  }
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { closeTargetModal(); closeTxnModal(); closeModal(); }
   });
 
-  targetSave.addEventListener('click', async () => {
+  if (targetOpenBtn && targetClose && targetModal && targetSave && targetInput && targetError) {
+    targetSave.addEventListener('click', async () => {
     const val = targetInput.value.trim();
     if (!val || isNaN(val) || parseFloat(val) <= 0) {
       targetError.textContent = 'Please enter a valid target amount.';
@@ -1073,7 +1120,7 @@
         document.getElementById('savingsPct').textContent = data.savings_pct + '%';
         document.getElementById('targetProgressBar').style.width = data.savings_pct + '%';
         const ring = document.getElementById('savingsRing');
-        ring.setAttribute('stroke-dasharray', data.ring_dash + ' ' + data.ring_gap);
+        if (ring) ring.setAttribute('stroke-dasharray', data.ring_dash + ' ' + data.ring_gap);
         targetOpenBtn.textContent = 'Edit';
         closeTargetModal();
       } else {
@@ -1084,13 +1131,173 @@
     } finally {
       targetSave.disabled = false; targetSave.textContent = 'Save Target';
     }
-  });
+    });
+  }
 
   function formatCurrency(value, { showPlus = false } = {}) {
     const number = Number(value || 0);
     const prefix = number < 0 ? '-' : (showPlus && number > 0 ? '+' : '');
     return `${prefix}₹${Math.abs(number).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
+
+  function buildAiStyleMotivationMessage(saved, spent, ratio, tone) {
+    const daySeed = new Date().getDate() + new Date().getMonth() * 31 + new Date().getFullYear();
+    const metricSeed = Math.round((saved * 13) + (spent * 7) + (ratio * 100));
+    let seed = Math.abs(daySeed + metricSeed);
+    const pick = (arr) => {
+      if (!arr.length) return '';
+      seed = (seed * 9301 + 49297) % 233280;
+      return arr[seed % arr.length];
+    };
+
+    const intros = {
+      reset: [
+        'A reset month is still progress.',
+        'You are one decision away from momentum.',
+        'This is the perfect point to restart your savings rhythm.',
+      ],
+      build: [
+        'Nice start, your savings engine is warming up.',
+        'You are building traction with every small win.',
+        'Momentum is visible, now keep it steady.',
+      ],
+      steady: [
+        'Your money discipline is getting stronger.',
+        'This is balanced money management in action.',
+        'You are saving and spending with intention.',
+      ],
+      strong: [
+        'Powerful month so far, your consistency is working.',
+        'You are close to a standout savings month.',
+        'This is high-quality financial behavior.',
+      ],
+      elite: [
+        'Elite control, your savings are leading this month.',
+        'You are in wealth-building mode right now.',
+        'Outstanding pace, keep protecting this edge.',
+      ],
+      clean: [
+        'Clean month start, this is premium discipline.',
+        'Strong control: savings positive with zero expense.',
+        'You started this cycle like a pro saver.',
+      ],
+      start: [
+        'Every strong saver starts with one clean step.',
+        'Today can be the day your saving habit locks in.',
+        'Begin small, stay consistent, grow fast.',
+      ],
+    };
+
+    const actions = [
+      'Move one non-essential spend into savings today.',
+      'Keep one daily spend capped and redirect the rest.',
+      'Use a simple 24-hour pause before non-urgent purchases.',
+      'Set a tiny daily savings target and defend it.',
+      'Track one category tightly for the next 7 days.',
+    ];
+
+    const payoffs = [
+      'Your future self will thank you.',
+      'Small discipline now creates big freedom later.',
+      'Consistency beats intensity in personal finance.',
+      'That habit compounds faster than you think.',
+      'This is how stable wealth gets built.',
+    ];
+
+    const introPool = intros[tone] || intros.start;
+    const spentText = formatCurrency(spent);
+    const savedText = formatCurrency(saved);
+
+    return `${pick(introPool)} You saved ${savedText} while spending ${spentText}. ${pick(actions)} ${pick(payoffs)}`;
+  }
+
+  let motivationRequestId = 0;
+
+  async function fetchMotivationMessage(savedAmount, expenseAmount) {
+    const requestId = ++motivationRequestId;
+    try {
+      const res = await fetch('/api/motivation-message/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify({
+          saved_amount: savedAmount,
+          expense_amount: expenseAmount,
+        }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (requestId !== motivationRequestId) return null;
+      if (data && data.success && typeof data.quote === 'string' && data.quote.trim()) {
+        return data;
+      }
+    } catch (error) {
+      // Keep fallback quote if API is unavailable.
+    }
+    return null;
+  }
+
+  async function updateMotivationCard(savedAmount, expenseAmount) {
+    const quoteEl = document.getElementById('motivationQuote');
+    const badgeEl = document.getElementById('motivationBadge');
+    const metaEl = document.getElementById('motivationMeta');
+    const cardEl = document.getElementById('motivationCard');
+    if (!quoteEl || !badgeEl || !metaEl || !cardEl) return;
+
+    const saved = Number(savedAmount || 0);
+    const spent = Number(expenseAmount || 0);
+    const ratio = saved / Math.max(spent, 1);
+
+    let quote = 'Saving starts with one clear decision. Track one expense today and keep one promise to your future self.';
+    let badge = 'Start';
+    let tone = 'start';
+
+    if (saved <= 0 && spent > 0) {
+      badge = 'Reset';
+      tone = 'reset';
+    } else if (saved > 0 && ratio < 0.25) {
+      badge = 'Build';
+      tone = 'build';
+    } else if (ratio >= 0.25 && ratio < 0.75) {
+      badge = 'Steady';
+      tone = 'steady';
+    } else if (ratio >= 0.75 && ratio < 1.2) {
+      badge = 'Strong';
+      tone = 'strong';
+    } else if (ratio >= 1.2) {
+      badge = 'Elite';
+      tone = 'elite';
+    }
+
+    if (saved > 0 && spent === 0) {
+      badge = 'Clean';
+      tone = 'clean';
+    }
+
+    quote = buildAiStyleMotivationMessage(saved, spent, ratio, tone);
+
+    quoteEl.textContent = quote;
+    badgeEl.textContent = badge;
+    metaEl.textContent = `Saved: ${formatCurrency(saved)} · Spent: ${formatCurrency(spent)}`;
+    cardEl.dataset.tone = tone;
+
+    // Safety: enforce visibility even if any theme override conflicts.
+    quoteEl.style.opacity = '1';
+    quoteEl.style.display = 'block';
+    metaEl.style.opacity = '1';
+    metaEl.style.display = 'block';
+
+    const aiData = await fetchMotivationMessage(saved, spent);
+    if (!aiData) return;
+
+    quoteEl.textContent = aiData.quote;
+    badgeEl.textContent = aiData.badge || badge;
+    cardEl.dataset.tone = aiData.tone || tone;
+  }
+
+  updateMotivationCard({{ total_saved|default:0 }}, {{ total_expense|default:0 }});
 
   function renderCategoryTiles(tiles) {
     const wrap = document.getElementById('categoryTiles');

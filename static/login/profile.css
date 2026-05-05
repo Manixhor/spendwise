@@ -1,5 +1,65 @@
 /* ── Profile Page ────────────────────────────────────────── */
-.pf-main { gap: 18px; }
+.pf-main { 
+  gap: 18px;
+}
+
+/* Mobile back arrow */
+.mobile-back-btn {
+  display: none; /* Hidden on desktop */
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(255,255,255,0.95);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.mobile-back-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mobile-back-btn:hover {
+  background: rgba(255,255,255,0.95);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+
+/* Dark theme mobile back arrow */
+body[data-theme="dark"] .mobile-back-btn {
+  background: rgba(30,30,35,0.85);
+  border: 1px solid rgba(60,60,70,0.95);
+  color: #fff;
+}
+
+body[data-theme="dark"] .mobile-back-btn:hover {
+  background: rgba(40,40,45,0.95);
+}
+
+/* Header content wrapper */
+.pf-header-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Ensure profile page can scroll properly on desktop */
+.profile-page .app {
+  height: auto;
+  min-height: 100vh;
+}
+
+.profile-page {
+  overflow: auto;
+}
 
 .pf-back-btn {
   min-width: 122px;
@@ -134,4 +194,70 @@ body[data-theme="dark"] .pf-avatar-initials {
 @media (max-width: 640px) {
   .pf-avatar-card { flex-direction: column; align-items: flex-start; }
   .pf-field-row   { grid-template-columns: 1fr; }
+}
+
+/* Mobile responsive - show mobile back arrow, hide desktop back button */
+@media (max-width: 768px) {
+  .mobile-back-btn {
+    display: flex; /* Show on mobile */
+  }
+  
+  .pf-back-btn {
+    display: none; /* Hide desktop back button on mobile */
+  }
+  
+  .main-header {
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .pf-header-content {
+    text-align: center;
+    align-items: center;
+  }
+  
+  .header-actions {
+    gap: 12px;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+  .mobile-back-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+  
+  .mobile-back-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ── Salary section ────────────────────────────────────── */
+.pf-salary-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.pf-salary-info {
+  flex: 1;
+}
+
+.pf-salary-display {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 6px 0 4px 0;
+}
+
+@media (max-width: 640px) {
+  .pf-salary-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
 }

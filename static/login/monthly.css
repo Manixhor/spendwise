@@ -380,21 +380,22 @@
 .ma-reminder-btn {
   font-size: 0.76rem;
   font-weight: 700;
-  color: #6b56c7;
+  color: #fff;
   text-decoration: none;
   white-space: nowrap;
   padding: 6px 14px;
   border-radius: 8px;
-  background: var(--btn-soft-bg);
-  border: 1px solid var(--btn-soft-border);
-  box-shadow: var(--btn-soft-shadow);
+  background: linear-gradient(135deg, #3b0764 0%, #6b21a8 50%, #7c3aed 100%);
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 4px 18px rgba(107, 33, 168, 0.40),
+              0 1px 0 rgba(255,255,255,0.18) inset;
   transition: background 0.15s, color 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 .ma-reminder-btn:hover {
-  background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(236,228,255,0.96) 100%);
-  color: var(--accent);
+  background: linear-gradient(135deg, #2e0657 0%, #581c87 50%, #6d28d9 100%);
   transform: translateY(-1px);
-  box-shadow: 0 12px 22px rgba(138,122,255,0.14), 0 1px 0 rgba(255,255,255,0.8) inset;
+  box-shadow: 0 8px 28px rgba(107, 33, 168, 0.52),
+              0 1px 0 rgba(255,255,255,0.18) inset;
 }
 
 body[data-theme="dark"] .month-btn {

@@ -1,0 +1,88 @@
+{% extends "login/base_auth.html" %}
+{% load static %}
+
+{% block title %}SpendWise – Verify Account{% endblock %}
+{% block left_tagline %}One last step.<br/>Secure your account like a premium app.{% endblock %}
+{% block card_class %}card-form card-verify{% endblock %}
+
+{% block card_content %}
+  <div class="verify-pill">Step 2 of 2</div>
+  <h2 class="form-title">Verify your email OTP</h2>
+  <p class="form-sub">Enter the 6-digit OTP sent to <strong>{{ user_email }}</strong>. The OTP expires in {{ expiry_minutes }} minutes.</p>
+
+  {% if is_console_mail %}
+    <div class="alert alert-success">Mailtrap SMTP is not configured yet, so the OTP is printed in your Django server terminal for local testing.</div>
+  {% endif %}
+
+  {% if info_message %}
+    <div class="alert alert-success">{{ info_message }}</div>
+  {% endif %}
+
+  {% if errors.general %}
+    <div class="alert alert-error">{{ errors.general }}</div>
+  {% endif %}
+
+  <div class="verify-card">
+    <div class="verify-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <rect x="3" y="4" width="18" height="16" rx="4"></rect>
+        <path d="m7 10 3 3 7-7"></path>
+      </svg>
+    </div>
+    <div>
+      <p class="verify-card-title">Protected sign up</p>
+      <p class="verify-card-copy">Your SpendWise account stays locked until this email OTP is confirmed, which keeps manual signups private and intentional.</p>
+    </div>
+  </div>
+
+  <form method="post" action="{% url 'signup_verify' %}" class="auth-form verify-form" novalidate>
+    {% csrf_token %}
+
+    <div class="field-group verify-field {% if errors.code %}field-error{% endif %}">
+      <span class="field-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M7 8h10"></path>
+          <path d="M7 12h6"></path>
+          <path d="M7 16h10"></path>
+        </svg>
+      </span>
+      <input
+        type="text"
+        name="code"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        maxlength="6"
+        placeholder="000000"
+        class="field-input verify-code-input"
+        autocomplete="one-time-code"
+        value="{{ form.code|default:'' }}"
+      />
+    </div>
+    {% if errors.code %}<p class="field-msg">{{ errors.code }}</p>{% endif %}
+
+    <button type="submit" class="cta-btn">Verify OTP &rarr;</button>
+  </form>
+
+  <form method="post" action="{% url 'signup_verify' %}" class="verify-actions">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="resend" />
+    <button type="submit" class="cta-btn cta-soft">Resend OTP</button>
+  </form>
+
+  <p class="footer-copy">
+    Wrong email? <a href="{% url 'signup' %}" class="link-accent">Create a different account</a>
+  </p>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    const codeInput = document.querySelector('.verify-code-input');
+    if (codeInput) {
+      codeInput.addEventListener('input', () => {
+        codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 6);
+      });
+      codeInput.focus();
+      codeInput.setSelectionRange(codeInput.value.length, codeInput.value.length);
+    }
+  </script>
+{% endblock %}

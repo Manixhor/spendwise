@@ -7,6 +7,9 @@ class UserProfile(models.Model):
     salary         = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     target_savings = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     avatar         = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    email_is_verified = models.BooleanField(default=False)
+    email_verification_code = models.CharField(max_length=6, blank=True, default='')
+    email_verification_sent_at = models.DateTimeField(null=True, blank=True)
     created_at     = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

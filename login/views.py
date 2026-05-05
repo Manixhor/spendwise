@@ -1,20 +1,103 @@
 import json
 import decimal
+import smtplib
+import random
+import urllib.error
+import urllib.request
 from datetime import date, timedelta
 from decimal import Decimal
 from math import ceil, pi
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
 from django.db.models import Sum, Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django.views.decorators.http import require_POST, require_http_methods
 
 from .models import Transaction, UserProfile, SavingsGoal
 from .spending_coach import fetch_dad_joke, get_spending_message
+
+
+# ── Smart Savings Motivation ──────────────────────────────
+_MOTIVATION_QUOTES = {
+    'broke': [
+        ("₹0 saved? Bold strategy. Let's see if it pays off.", "— Your Future Self, Nervous"),
+        ("Your savings account called. It said it's lonely and considering therapy.", "— Bank of Feelings"),
+        ("Not saving is just borrowing stress from your future self. He's not happy.", "— Future You, Crying"),
+        ("The good news: you can only go up from here. The bad news: you're here.", "— Motivational Rock Bottom"),
+        ("Your wallet is on a juice cleanse. Involuntarily.", "— Financial Wellness Guru"),
+    ],
+    'just_started': [
+        ("You saved something! It's not much, but neither was the first step on the moon.", "— Neil Armstrong, Probably"),
+        ("A tiny saving today is a slightly less tiny saving tomorrow. Math!", "— Einstein's Finance Cousin"),
+        ("You've started! That's more than 90% of people who said 'I'll start Monday'.", "— The Monday Club"),
+        ("Your savings are like a baby — small, fragile, but full of potential. Don't drop it.", "— Parenting & Finance Weekly"),
+        ("Progress: tiny. Attitude: massive. Keep going, legend.", "— Your Hype Person"),
+    ],
+    'making_progress': [
+        ("You're not broke, you're 'pre-wealthy'. Keep going.", "— Optimism Department"),
+        ("Halfway there! Your future self just sent a thumbs up emoji.", "— Time Travel Update"),
+        ("You're saving money like it owes you something. It does. Keep at it.", "— Debt Collector (Nice Version)"),
+        ("Look at you, being financially responsible. Your parents would be shocked.", "— Family Group Chat"),
+        ("You're in the top 40% of people who actually save. The bar is low, but you cleared it!", "— Statistics That Slap"),
+    ],
+    'almost_there': [
+        ("So close! Don't you dare buy that thing you're thinking about right now.", "— Your Conscience"),
+        ("You're 80%+ there. This is not the time to 'treat yourself'.", "— The Voice of Reason"),
+        ("Almost at your goal. One more month of pretending you don't need takeout.", "— Delivery App, Sad"),
+        ("The finish line is RIGHT THERE. Don't look at the sale section.", "— Coach Willpower"),
+        ("You've come too far to spend it on something you'll return in 3 days.", "— Return Policy Dept."),
+    ],
+    'goal_reached': [
+        ("GOAL REACHED! You did it! Now set a harder one so we can do this again.", "— Masochism & Finance"),
+        ("You actually saved the money. We're as surprised as you are. Congrats!", "— SpendWise HQ"),
+        ("Achievement unlocked: 'Person Who Has Their Life Together (Financially)'.", "— Achievement System"),
+        ("Your savings goal is complete. Your future self is doing a little dance right now.", "— Future You, Thriving"),
+        ("You saved it all! Now don't spend it all in one place. Or do. We're not your mom.", "— SpendWise (Neutral)"),
+    ],
+    'no_goals': [
+        ("No savings goals? That's fine. Living on vibes is a valid strategy. (It's not.)", "— Financial Advisor, Concerned"),
+        ("A goal without a plan is just a wish. A wish without savings is just a dream. Add a goal!", "— Confucius (Finance Edition)"),
+        ("You have no savings goals. Your money is just... free range. Wild. Unstructured.", "— Chaos Economist"),
+        ("Set a goal! Even 'save enough to not panic at the grocery store' counts.", "— Grocery Store Anxiety Support"),
+        ("Goals are just dreams with deadlines and spreadsheets. Add one!", "— Spreadsheet Enthusiast"),
+    ],
+}
+
+def _get_motivation_quote(monthly_saved: float, goals_data: list, last_quote: str = None) -> dict:
+    """Pick a contextually funny quote based on the user's actual savings state."""
+    if not goals_data:
+        bucket = 'no_goals'
+    else:
+        best_pct = max(g['progress_pct'] for g in goals_data)
+        any_complete = any(g['is_complete'] for g in goals_data)
+        if any_complete:
+            bucket = 'goal_reached'
+        elif monthly_saved <= 0:
+            bucket = 'broke'
+        elif best_pct < 15:
+            bucket = 'just_started'
+        elif best_pct < 70:
+            bucket = 'making_progress'
+        else:
+            bucket = 'almost_there'
+
+    # Filter out the last quote to guarantee variety
+    available = [q for q in _MOTIVATION_QUOTES[bucket] if q[0] != last_quote]
+    if not available:  # Fallback if somehow all filtered
+        available = _MOTIVATION_QUOTES[bucket]
+    
+    quote, author = random.choice(available)
+    return {'quote': quote, 'author': author, 'bucket': bucket}
 
 
 # ── Helpers ───────────────────────────────────────────────
@@ -57,6 +140,164 @@ CATEGORY_ACCENTS = {
 INSIGHTS_DONUT_CIRCUMFERENCE = round(2 * pi * 46, 1)
 INSIGHTS_SEGMENT_LIMIT = 5
 MONTHLY_SCORE_CIRCUMFERENCE = round(2 * pi * 40, 1)
+MOTIVATION_BADGES = {
+    'start': 'Start',
+    'reset': 'Reset',
+    'build': 'Build',
+    'steady': 'Steady',
+    'strong': 'Strong',
+    'elite': 'Elite',
+    'clean': 'Clean',
+}
+
+
+def _motivation_tone(saved_amount: float, expense_amount: float) -> str:
+    spent = float(expense_amount or 0)
+    saved = float(saved_amount or 0)
+    ratio = saved / max(spent, 1)
+
+    if saved > 0 and spent == 0:
+        return 'clean'
+    if saved <= 0 and spent > 0:
+        return 'reset'
+    if saved > 0 and ratio < 0.25:
+        return 'build'
+    if 0.25 <= ratio < 0.75:
+        return 'steady'
+    if 0.75 <= ratio < 1.2:
+        return 'strong'
+    if ratio >= 1.2:
+        return 'elite'
+    return 'start'
+
+
+def _local_ai_style_motivation_quote(saved_amount: float, expense_amount: float, tone: str) -> str:
+    intros = {
+        'reset': [
+            'A reset month is still progress.',
+            'You are one decision away from momentum.',
+            'This is the perfect point to restart your savings rhythm.',
+        ],
+        'build': [
+            'Nice start, your savings engine is warming up.',
+            'You are building traction with every small win.',
+            'Momentum is visible, now keep it steady.',
+        ],
+        'steady': [
+            'Your money discipline is getting stronger.',
+            'This is balanced money management in action.',
+            'You are saving and spending with intention.',
+        ],
+        'strong': [
+            'Powerful month so far, your consistency is working.',
+            'You are close to a standout savings month.',
+            'This is high-quality financial behavior.',
+        ],
+        'elite': [
+            'Elite control, your savings are leading this month.',
+            'You are in wealth-building mode right now.',
+            'Outstanding pace, keep protecting this edge.',
+        ],
+        'clean': [
+            'Clean month start, this is premium discipline.',
+            'Strong control: savings positive with zero expense.',
+            'You started this cycle like a pro saver.',
+        ],
+        'start': [
+            'Every strong saver starts with one clean step.',
+            'Today can be the day your saving habit locks in.',
+            'Begin small, stay consistent, grow fast.',
+        ],
+    }
+    actions = [
+        'Move one non-essential spend into savings today.',
+        'Keep one daily spend capped and redirect the rest.',
+        'Use a simple 24-hour pause before non-urgent purchases.',
+        'Set a tiny daily savings target and defend it.',
+        'Track one category tightly for the next 7 days.',
+    ]
+    payoffs = [
+        'Your future self will thank you.',
+        'Small discipline now creates big freedom later.',
+        'Consistency beats intensity in personal finance.',
+        'That habit compounds faster than you think.',
+        'This is how stable wealth gets built.',
+    ]
+
+    saved = float(saved_amount or 0)
+    spent = float(expense_amount or 0)
+    seed = int(date.today().strftime('%Y%m%d')) + int(saved * 11) + int(spent * 7)
+    rng = random.Random(seed)
+    intro_pool = intros.get(tone, intros['start'])
+
+    saved_text = f"₹{abs(saved):,.2f}"
+    spent_text = f"₹{abs(spent):,.2f}"
+    return (
+        f"{rng.choice(intro_pool)} You saved {saved_text} while spending {spent_text}. "
+        f"{rng.choice(actions)} {rng.choice(payoffs)}"
+    )
+
+
+def _extract_openai_text(response_payload: dict) -> str:
+    output = response_payload.get('output')
+    if not isinstance(output, list):
+        return ''
+
+    texts = []
+    for item in output:
+        if not isinstance(item, dict):
+            continue
+        for content in item.get('content', []):
+            if not isinstance(content, dict):
+                continue
+            text = content.get('text')
+            if isinstance(text, str) and text.strip():
+                texts.append(text.strip())
+
+    return ' '.join(texts).strip()
+
+
+def _generate_motivation_quote(saved_amount: float, expense_amount: float, tone: str) -> tuple[str, bool]:
+    fallback_quote = _local_ai_style_motivation_quote(saved_amount, expense_amount, tone)
+    api_key = getattr(settings, 'OPENAI_API_KEY', '').strip()
+    if not api_key:
+        return fallback_quote, False
+
+    model = getattr(settings, 'OPENAI_MOTIVATION_MODEL', 'gpt-4.1-mini').strip() or 'gpt-4.1-mini'
+    prompt = (
+        "Write one concise motivational saving message for a personal finance app user. "
+        f"Saved amount: {saved_amount:.2f} INR. Spent amount: {expense_amount:.2f} INR. "
+        f"Tone: {tone}. Keep it under 40 words. Be positive, practical, and premium sounding."
+    )
+    payload = {
+        'model': model,
+        'input': prompt,
+        'temperature': 0.9,
+        'max_output_tokens': 90,
+    }
+    body = json.dumps(payload).encode('utf-8')
+    req = urllib.request.Request(
+        'https://api.openai.com/v1/responses',
+        data=body,
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+        },
+        method='POST',
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            response_payload = json.loads(response.read().decode('utf-8'))
+    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError, TimeoutError, ValueError):
+        return fallback_quote, False
+
+    ai_text = _extract_openai_text(response_payload)
+    if not ai_text:
+        return fallback_quote, False
+
+    clean_text = ' '.join(ai_text.split()).strip()
+    return clean_text[:260], True
 
 
 def _serialize_category_tiles(cat_data):
@@ -121,6 +362,30 @@ def _dashboard_stats_payload(stats):
         'chart_months': stats['chart_months'],
         'coach': get_spending_message(stats['spend_pct']),
     }
+
+
+def _serialize_txn(txn: Transaction) -> dict:
+    return {
+        'id': txn.id,
+        'title': txn.title,
+        'amount': float(txn.amount),
+        'txn_type': txn.txn_type,
+        'category': txn.category,
+        'category_label': txn.get_category_display(),
+        'date': txn.date.isoformat(),
+        'icon': CATEGORY_ICONS.get(txn.category, '📦'),
+    }
+
+
+def _available_expense_dates(user) -> list[str]:
+    raw_dates = (
+        Transaction.objects
+        .filter(user=user, txn_type='expense')
+        .order_by('date')
+        .values_list('date', flat=True)
+        .distinct()
+    )
+    return [d.isoformat() for d in raw_dates]
 
 
 def _add_months(month_start: date, delta: int) -> date:
@@ -449,6 +714,72 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
     }
 
 
+EMAIL_VERIFICATION_SESSION_KEY = 'pending_verification_user_id'
+
+
+class EmailVerificationDeliveryError(Exception):
+    """Raised when the OTP email cannot be delivered."""
+
+
+def _generate_email_verification_code() -> str:
+    return get_random_string(6, allowed_chars='0123456789')
+
+
+def _format_email_delivery_error(exc: Exception) -> str:
+    if isinstance(exc, smtplib.SMTPAuthenticationError):
+        return (
+            'We could not send your OTP because Mailtrap SMTP authentication failed. '
+            'Check the Mailtrap SMTP username, password, and verified sending domain, then try again.'
+        )
+    if isinstance(exc, smtplib.SMTPException):
+        return 'We could not send your OTP because the mail service rejected the request. Please try again shortly.'
+    if isinstance(exc, OSError):
+        return 'We could not reach the mail server right now. Please check your mail configuration and try again.'
+    return 'We could not send your OTP right now. Please try again in a moment.'
+
+
+def _send_email_verification(user: User, code: str) -> None:
+    try:
+        send_mail(
+            subject='Your SpendWise email OTP',
+            message=(
+                f'Hi {user.first_name or "there"},\n\n'
+                f'Use this 6-digit OTP to verify your SpendWise account: {code}\n\n'
+                f'This OTP expires in {settings.EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES} minutes.'
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+    except (smtplib.SMTPException, OSError) as exc:
+        raise EmailVerificationDeliveryError(_format_email_delivery_error(exc)) from exc
+
+
+def _issue_email_verification(user: User, profile: UserProfile) -> str:
+    code = _generate_email_verification_code()
+    profile.email_verification_code = code
+    profile.email_verification_sent_at = timezone.now()
+    profile.email_is_verified = False
+    profile.save(update_fields=[
+        'email_verification_code',
+        'email_verification_sent_at',
+        'email_is_verified',
+    ])
+    _send_email_verification(user, code)
+    return code
+
+
+def _verification_code_is_valid(profile: UserProfile, submitted_code: str) -> bool:
+    if not profile.email_verification_code or not profile.email_verification_sent_at:
+        return False
+
+    expiry_delta = timedelta(minutes=getattr(settings, 'EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES', 10))
+    if timezone.now() > profile.email_verification_sent_at + expiry_delta:
+        return False
+
+    return profile.email_verification_code == submitted_code
+
+
 def _build_insight_stock_card(chart_months, total_expense):
     """Create stock-style summary data for the dashboard hero card."""
     latest_expense = float(total_expense)
@@ -577,35 +908,124 @@ def signup(request: HttpRequest) -> HttpResponse:
         return redirect('dashboard')
 
     if request.method == 'POST':
-        name     = request.POST.get('name', '').strip()
-        email    = request.POST.get('email', '').strip().lower()
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip().lower()
         password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        existing_user = User.objects.filter(email=email).first() if email else None
 
         errors = {}
         if not name:
             errors['name'] = 'Name is required.'
         if not email:
             errors['email'] = 'Email is required.'
-        elif User.objects.filter(email=email).exists():
+        elif existing_user and existing_user.is_active:
             errors['email'] = 'An account with this email already exists.'
-        if not password or len(password) < 8:
-            errors['password'] = 'Password must be at least 8 characters.'
+        if not password:
+            errors['password'] = 'Password is required.'
+        else:
+            try:
+                validate_password(password)
+            except ValidationError as exc:
+                errors['password'] = exc.messages[0]
+        if not confirm_password:
+            errors['confirm_password'] = 'Please confirm your password.'
+        elif password and password != confirm_password:
+            errors['confirm_password'] = 'Passwords do not match.'
 
         if errors:
             return render(request, 'login/signup.html', {'errors': errors, 'form': request.POST})
 
-        username = email
-        user = User.objects.create_user(
-            username=username, email=email, password=password,
-            first_name=name.split()[0],
-            last_name=' '.join(name.split()[1:]) if len(name.split()) > 1 else '',
-        )
-        UserProfile.objects.create(user=user)
-        login(request, user)
-        messages.success(request, f'Welcome to SpendWise, {user.first_name}!')
-        return redirect('dashboard')
+        if existing_user and not existing_user.is_active:
+            user = existing_user
+            user.username = email
+            user.email = email
+            user.first_name = name.split()[0]
+            user.last_name = ' '.join(name.split()[1:]) if len(name.split()) > 1 else ''
+            user.set_password(password)
+            user.save(update_fields=['username', 'email', 'first_name', 'last_name', 'password'])
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+        else:
+            username = email
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=name.split()[0],
+                last_name=' '.join(name.split()[1:]) if len(name.split()) > 1 else '',
+                is_active=False,
+            )
+            profile = UserProfile.objects.create(user=user)
+
+        try:
+            _issue_email_verification(user, profile)
+        except EmailVerificationDeliveryError as exc:
+            errors['general'] = str(exc)
+            return render(request, 'login/signup.html', {'errors': errors, 'form': request.POST})
+
+        request.session[EMAIL_VERIFICATION_SESSION_KEY] = user.id
+        return redirect('signup_verify')
 
     return render(request, 'login/signup.html')
+
+
+def signup_verify(request: HttpRequest) -> HttpResponse:
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    user_id = request.session.get(EMAIL_VERIFICATION_SESSION_KEY)
+    if not user_id:
+        return redirect('signup')
+
+    try:
+        user = User.objects.get(id=user_id)
+        profile = user.profile
+    except (User.DoesNotExist, UserProfile.DoesNotExist):
+        request.session.pop(EMAIL_VERIFICATION_SESSION_KEY, None)
+        return redirect('signup')
+
+    errors = {}
+    info_message = None
+    is_console_mail = settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend'
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'verify')
+
+        if action == 'resend':
+            try:
+                _issue_email_verification(user, profile)
+                info_message = 'A fresh verification code has been sent.'
+            except EmailVerificationDeliveryError as exc:
+                errors['general'] = str(exc)
+        else:
+            submitted_code = ''.join(ch for ch in request.POST.get('code', '') if ch.isdigit())[:6]
+            if len(submitted_code) != 6:
+                errors['code'] = 'Enter the 6-digit OTP.'
+            elif not _verification_code_is_valid(profile, submitted_code):
+                expiry_delta = timedelta(minutes=getattr(settings, 'EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES', 10))
+                if profile.email_verification_sent_at and timezone.now() > profile.email_verification_sent_at + expiry_delta:
+                    errors['code'] = 'That OTP has expired. Please request a new one.'
+                else:
+                    errors['code'] = 'That OTP is not correct.'
+            else:
+                user.is_active = True
+                user.save(update_fields=['is_active'])
+                profile.email_is_verified = True
+                profile.email_verification_code = ''
+                profile.save(update_fields=['email_is_verified', 'email_verification_code'])
+                request.session.pop(EMAIL_VERIFICATION_SESSION_KEY, None)
+                login(request, user)
+                messages.success(request, f'Welcome to SpendWise, {user.first_name}! Your account is verified.')
+                return redirect('dashboard')
+
+    return render(request, 'login/signup_verify.html', {
+        'user_email': user.email,
+        'errors': errors,
+        'form': request.POST,
+        'info_message': info_message,
+        'expiry_minutes': getattr(settings, 'EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES', 10),
+        'is_console_mail': is_console_mail,
+    })
 
 
 # ── Login ─────────────────────────────────────────────────
@@ -629,6 +1049,10 @@ def login_view(request: HttpRequest) -> HttpResponse:
                 login(request, user)
                 return redirect('dashboard')
             else:
+                pending_user = User.objects.filter(email=email).first()
+                if pending_user and pending_user.check_password(password) and not pending_user.is_active:
+                    request.session[EMAIL_VERIFICATION_SESSION_KEY] = pending_user.id
+                    return redirect('signup_verify')
                 errors['general'] = 'Invalid email or password.'
 
         return render(request, 'login/login.html', {'errors': errors, 'form': request.POST})
@@ -650,17 +1074,93 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     coach      = get_spending_message(stats['spend_pct'])
     dad_joke   = fetch_dad_joke()
 
+    # Smart motivation quote — context-aware, no repeats
+    goals = SavingsGoal.objects.filter(user=request.user)
+    monthly_saved = float(stats['total_saved'])
+    goals_data = []
+    for g in goals:
+        if float(g.target_amount) > 0:
+            pct = min(round(float(monthly_saved) / float(g.target_amount) * 100, 1), 100)
+        else:
+            pct = 0
+        pct = max(pct, 0)
+        goals_data.append({
+            'progress_pct': pct,
+            'is_complete': float(monthly_saved) >= float(g.target_amount),
+        })
+    
+    last_quote = request.session.get('last_dash_motivation_quote', None)
+    motivation = _get_motivation_quote(monthly_saved, goals_data, last_quote)
+    request.session['last_dash_motivation_quote'] = motivation['quote']
+
     return render(request, 'login/dashboard.html', {
         'user':         request.user,
         'profile':      profile,
         'coach':        coach,
         'dad_joke':     dad_joke,
+        'motivation':   motivation,
         'categories':   Transaction.CATEGORY_CHOICES,
         'today':        date.today().isoformat(),
         'active_nav':   'dashboard',
         **stats,
         'chart_months': json.dumps(stats['chart_months']),
         'insight_segments_json': json.dumps(stats['insight_segments']),
+    })
+
+
+@login_required(login_url='/login/')
+@require_http_methods(['GET'])
+def api_dashboard_summary(request: HttpRequest) -> JsonResponse:
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    stats = _dashboard_stats(request.user, profile)
+    recent_expenses = [
+        _serialize_txn(txn)
+        for txn in stats['recent_txns']
+        if txn.txn_type == 'expense'
+    ]
+    return JsonResponse({
+        'success': True,
+        'dad_joke': fetch_dad_joke(),
+        'available_expense_dates': _available_expense_dates(request.user),
+        'recent_expenses': recent_expenses,
+        **_dashboard_stats_payload(stats),
+    })
+
+
+@login_required(login_url='/login/')
+@require_http_methods(['GET'])
+def api_expenses_by_date(request: HttpRequest) -> JsonResponse:
+    requested_date = (request.GET.get('date') or '').strip()
+    selected_date = None
+    if requested_date:
+        try:
+            selected_date = date.fromisoformat(requested_date)
+        except ValueError:
+            return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
+
+    qs = (
+        Transaction.objects
+        .filter(user=request.user, txn_type='expense')
+        .order_by('-date', '-created_at')
+    )
+    if selected_date:
+        qs = qs.filter(date=selected_date)
+
+    expenses = [_serialize_txn(txn) for txn in qs[:30]]
+    return JsonResponse({
+        'success': True,
+        'selected_date': selected_date.isoformat() if selected_date else '',
+        'available_expense_dates': _available_expense_dates(request.user),
+        'expenses': expenses,
+    })
+
+
+@login_required(login_url='/login/')
+@require_http_methods(['GET'])
+def api_dad_joke(request: HttpRequest) -> JsonResponse:
+    return JsonResponse({
+        'success': True,
+        'dad_joke': fetch_dad_joke(),
     })
 
 
@@ -693,12 +1193,18 @@ def savings(request: HttpRequest) -> HttpResponse:
             'remaining':     max(float(g.target_amount) - float(monthly_saved), 0),
         })
 
+    # Get motivation quote (avoid repeating the last one)
+    last_quote = request.session.get('last_motivation_quote', None)
+    motivation = _get_motivation_quote(float(monthly_saved), goals_data, last_quote)
+    request.session['last_motivation_quote'] = motivation['quote']
+
     return render(request, 'login/savings.html', {
         'user':          request.user,
         'profile':       profile,
         'goals':         goals_data,
         'goal_count':    goals.count(),
         'monthly_saved': monthly_saved,
+        'motivation':    motivation,
         'active_nav':    'savings',
     })
 
@@ -846,7 +1352,11 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
         amount   = data.get('amount', 0)
         txn_type = data.get('txn_type', 'expense').strip()
         category = data.get('category', 'other').strip()
-        txn_date = data.get('date', str(date.today()))
+        txn_date_str = data.get('date', str(date.today()))
+        try:
+            txn_date = date.fromisoformat(txn_date_str)
+        except (ValueError, TypeError):
+            txn_date = date.today()
 
         if txn_type not in ('income', 'expense'):
             txn_type = 'expense'
@@ -868,15 +1378,8 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
 
         return JsonResponse({
             'success': True,
-            'txn': {
-                'id':       txn.id,
-                'title':    txn.title,
-                'amount':   float(txn.amount),
-                'txn_type': txn.txn_type,
-                'category': txn.category,
-                'date':     str(txn.date),
-                'icon':     CATEGORY_ICONS.get(txn.category, '📦'),
-            },
+            'txn': _serialize_txn(txn),
+            'available_expense_dates': _available_expense_dates(request.user),
             **_dashboard_stats_payload(stats),
         })
     except Exception as e:
@@ -894,6 +1397,7 @@ def api_delete_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
         stats = _dashboard_stats(request.user, profile)
         return JsonResponse({
             'success':       True,
+            'available_expense_dates': _available_expense_dates(request.user),
             **_dashboard_stats_payload(stats),
         })
     except Transaction.DoesNotExist:
@@ -959,5 +1463,76 @@ def api_set_target_savings(request: HttpRequest) -> JsonResponse:
         })
     except (ValueError, TypeError):
         return JsonResponse({'error': 'Invalid value.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required(login_url='/login/')
+@require_POST
+def api_motivation_message(request: HttpRequest) -> JsonResponse:
+    try:
+        data = json.loads(request.body)
+        saved_amount = float(data.get('saved_amount', 0) or 0)
+        expense_amount = float(data.get('expense_amount', 0) or 0)
+    except (ValueError, TypeError, json.JSONDecodeError):
+        return JsonResponse({'error': 'Invalid payload.'}, status=400)
+
+    tone = _motivation_tone(saved_amount, expense_amount)
+    badge = MOTIVATION_BADGES.get(tone, 'Start')
+    quote, used_ai = _generate_motivation_quote(saved_amount, expense_amount, tone)
+
+    return JsonResponse({
+        'success': True,
+        'quote': quote,
+        'tone': tone,
+        'badge': badge,
+        'used_ai': used_ai,
+    })
+
+
+# ── API: Update Transaction ───────────────────────────────
+@login_required(login_url='/login/')
+@require_http_methods(['PUT'])
+def api_update_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
+    try:
+        txn = Transaction.objects.get(id=txn_id, user=request.user)
+        data = json.loads(request.body)
+        
+        title = data.get('title', '').strip() or 'Untitled'
+        amount = data.get('amount', 0)
+        txn_type = data.get('txn_type', 'expense').strip()
+        category = data.get('category', 'other').strip()
+        txn_date_str = data.get('date', str(date.today()))
+        
+        try:
+            txn_date = date.fromisoformat(txn_date_str)
+        except (ValueError, TypeError):
+            txn_date = date.today()
+
+        if txn_type not in ('income', 'expense'):
+            txn_type = 'expense'
+        if not amount or float(amount) <= 0:
+            return JsonResponse({'error': 'Amount must be greater than 0.'}, status=400)
+
+        # Update the transaction
+        txn.title = title
+        txn.amount = Decimal(str(amount))
+        txn.txn_type = txn_type
+        txn.category = category
+        txn.date = txn_date
+        txn.note = data.get('note', '')
+        txn.save()
+
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        stats = _dashboard_stats(request.user, profile)
+
+        return JsonResponse({
+            'success': True,
+            'txn': _serialize_txn(txn),
+            'available_expense_dates': _available_expense_dates(request.user),
+            **_dashboard_stats_payload(stats),
+        })
+    except Transaction.DoesNotExist:
+        return JsonResponse({'error': 'Transaction not found.'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

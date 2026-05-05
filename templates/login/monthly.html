@@ -254,54 +254,6 @@
 
   </main>
 
-  <!-- ── Right panel ─────────────────────────────────── -->
-  <aside class="right-panel">
-
-    <!-- Monthly score -->
-    <section class="rp-section">
-      <h2 class="rp-title">Monthly Score</h2>
-      <div class="ma-score-card">
-        <div class="ma-score-ring-wrap">
-          <svg viewBox="0 0 100 100" class="ma-score-ring">
-            <circle cx="50" cy="50" r="40" fill="none" stroke="#f0edf6" stroke-width="12"/>
-            <circle cx="50" cy="50" r="40" fill="none" stroke="#5e5ce6" stroke-width="12"
-              stroke-dasharray="{{ monthly_score.ring_dash }} {{ monthly_score.ring_gap }}" stroke-dashoffset="0" stroke-linecap="round"
-              transform="rotate(-90 50 50)"/>
-          </svg>
-          <div class="ma-score-center">
-            <span class="ma-score-num">{{ monthly_score.value }}</span>
-            <span class="ma-score-label">/ 100</span>
-          </div>
-        </div>
-        <div class="ma-score-info">
-          <p class="ma-score-title">{{ monthly_score.title }}</p>
-          <p class="ma-score-desc">{{ monthly_score.description }}</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Top spending days -->
-    <section class="rp-section">
-      <div class="rp-row">
-        <span class="rp-sub-title">Top Spending Days</span>
-      </div>
-      <ul class="txn-list">
-        {% for day in top_spending_days %}
-          <li class="txn-item">
-            <div class="txn-icon {{ day.badge_class }}">{{ day.day_number }}</div>
-            <div class="txn-info">
-              <span class="txn-name">{{ day.label }}</span>
-              <span class="txn-time">{{ day.summary }}</span>
-            </div>
-            <span class="txn-amt neg">₹{{ day.amount|floatformat:2 }}</span>
-          </li>
-        {% empty %}
-          <li class="txn-empty">No high-spend days recorded for this month yet.</li>
-        {% endfor %}
-      </ul>
-    </section>
-
-  </aside>
 
 </div>
 </body>
