@@ -62,6 +62,14 @@ def database_config() -> dict:
             },
         }
 
+    db_engine = os.getenv('DB_ENGINE', 'postgresql').lower()
+    
+    if db_engine in {'sqlite3', 'sqlite'}:
+        return {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, os.getenv('DB_NAME', 'db.sqlite3')),
+        }
+    
     return {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('DB_NAME', os.getenv('POSTGRES_DB', 'spendwise')),
