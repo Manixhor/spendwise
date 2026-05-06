@@ -141,7 +141,6 @@ UNFOLD = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DATABASES': { 'default': mysql_database_config() },
         'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
