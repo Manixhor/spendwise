@@ -1,0 +1,271 @@
+/* ── Profile Page ────────────────────────────────────────── */
+.pf-main { 
+  gap: 18px;
+}
+
+/* Gap between profile header and dashboard/actions */
+.pf-main .main-header {
+  gap: 16px;
+}
+
+.pf-main .header-actions {
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* Mobile back arrow — always visible on profile page */
+.mobile-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(255,255,255,0.95);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  flex-shrink: 0;
+}
+
+.mobile-back-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mobile-back-btn:hover {
+  background: rgba(255,255,255,0.95);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+
+body[data-theme="dark"] .mobile-back-btn {
+  background: rgba(30,30,35,0.85);
+  border: 1px solid rgba(60,60,70,0.95);
+  color: #fff;
+}
+
+body[data-theme="dark"] .mobile-back-btn:hover {
+  background: rgba(40,40,45,0.95);
+}
+
+/* Profile header row — arrow + text always side by side */
+.pf-header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: nowrap;
+}
+
+/* Header content wrapper */
+.pf-header-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.pf-back-btn { display: none; }
+
+.pf-success {
+  background: rgba(48,209,88,0.12);
+  border: 1px solid rgba(48,209,88,0.30);
+  color: #1a7a4a;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+body[data-theme="dark"] .pf-success {
+  background: linear-gradient(135deg, rgba(20,83,45,0.62) 0%, rgba(21,128,61,0.34) 100%);
+  border-color: rgba(74,222,128,0.24);
+  color: #bbf7d0;
+  box-shadow: 0 12px 22px rgba(2,6,23,0.18);
+}
+
+.pf-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Avatar card ────────────────────────────────────────── */
+.pf-avatar-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 26px;
+}
+
+.pf-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pf-avatar-img,
+.pf-avatar-initials {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pf-avatar-img {
+  object-fit: cover;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.pf-avatar-initials {
+  background: linear-gradient(135deg, #6e6cf0 0%, #a78bfa 100%);
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  box-shadow: 0 4px 16px rgba(94,92,230,0.30);
+}
+
+body[data-theme="dark"] .pf-avatar-initials {
+  background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 56%, #ec4899 100%);
+  box-shadow: 0 16px 28px rgba(76,29,149,0.24);
+}
+
+.pf-avatar-edit {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 0.72rem;
+  box-shadow: 0 2px 8px rgba(94,92,230,0.40);
+  transition: transform 0.15s;
+}
+.pf-avatar-edit:hover { transform: scale(1.1); }
+
+.pf-avatar-file { display: none; }
+
+.pf-avatar-info { display: flex; flex-direction: column; gap: 4px; }
+
+.pf-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.04em;
+}
+
+.pf-email-display {
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.pf-hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* ── Fields card ────────────────────────────────────────── */
+.pf-fields-card { padding: 24px 26px; }
+
+.pf-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+  margin-bottom: 18px;
+}
+
+.pf-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.pf-field { display: flex; flex-direction: column; }
+
+@media (max-width: 640px) {
+  .pf-avatar-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .pf-avatar-info {
+    align-items: center;
+  }
+  .pf-field-row { grid-template-columns: 1fr; }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .pf-header-row {
+    gap: 10px;
+  }
+
+  /* Edit Salary button — fixed size, never stretches */
+  .pf-salary-section .set-salary-btn {
+    width: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-back-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+
+  .mobile-back-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ── Salary section ────────────────────────────────────── */
+.pf-salary-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.pf-salary-info {
+  flex: 1;
+}
+
+.pf-salary-display {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 6px 0 4px 0;
+}
+
+@media (max-width: 640px) {
+  .pf-salary-section {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .pf-salary-section .set-salary-btn {
+    width: auto;
+    flex-shrink: 0;
+  }
+}
