@@ -18,13 +18,6 @@ from urllib.parse import parse_qs, urlparse, unquote
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-try:
-    import pymysql
-    pymysql.install_as_MySQLdb()
-except ImportError:
-    pymysql = None
-
-
 def env_bool(name: str, default: bool = False) -> bool:
     value = os.getenv(name)
     if value is None:
@@ -36,34 +29,57 @@ def env_list(name: str) -> list[str]:
     return [item.strip() for item in os.getenv(name, '').split(',') if item.strip()]
 
 
-def mysql_database_config() -> dict:
+def database_config() -> dict:
     database_url = os.getenv('DATABASE_URL', '').strip()
     if database_url:
         parsed = urlparse(database_url)
         query = parse_qs(parsed.query)
+        scheme = (parsed.scheme or '').lower()
+        if scheme in {'postgres', 'postgresql', 'pgsql'}:
+            return {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': unquote((parsed.path or '/').lstrip('/')),
+                'USER': unquote(parsed.username or ''),
+                'PASSWORD': unquote(parsed.password or ''),
+                'HOST': parsed.hostname or 'localhost',
+                'PORT': str(parsed.port or '5432'),
+                'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '600')),
+                'OPTIONS': {
+                    **({'sslmode': query.get('sslmode', ['require'])[0]} if parsed.hostname and parsed.hostname != 'localhost' else {}),
+                },
+            }
+
         return {
-            'ENGINE': 'django.db.backends.mysql',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': unquote((parsed.path or '/').lstrip('/')),
             'USER': unquote(parsed.username or ''),
             'PASSWORD': unquote(parsed.password or ''),
             'HOST': parsed.hostname or 'localhost',
-            'PORT': str(parsed.port or '3306'),
+            'PORT': str(parsed.port or '5432'),
             'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '600')),
             'OPTIONS': {
-                'charset': query.get('charset', ['utf8mb4'])[0],
+                **({'sslmode': query.get('sslmode', ['require'])[0]} if parsed.hostname and parsed.hostname != 'localhost' else {}),
             },
         }
 
+    db_engine = os.getenv('DB_ENGINE', 'postgresql').lower()
+    
+    if db_engine in {'sqlite3', 'sqlite'}:
+        return {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, os.getenv('DB_NAME', 'db.sqlite3')),
+        }
+    
     return {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('DB_NAME', 'sys'),
-        'USER': os.getenv('DB_USER', 'root'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'root1234'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '3306'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', os.getenv('POSTGRES_DB', 'spendwise')),
+        'USER': os.getenv('DB_USER', os.getenv('POSTGRES_USER', 'postgres')),
+        'PASSWORD': os.getenv('DB_PASSWORD', os.getenv('POSTGRES_PASSWORD', 'postgres')),
+        'HOST': os.getenv('DB_HOST', os.getenv('POSTGRES_HOST', 'localhost')),
+        'PORT': os.getenv('DB_PORT', os.getenv('POSTGRES_PORT', '5432')),
         'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '600')),
         'OPTIONS': {
-            'charset': 'utf8mb4',
+            **({'sslmode': os.getenv('DB_SSLMODE', 'prefer')} if os.getenv('DB_HOST', os.getenv('POSTGRES_HOST', 'localhost')) not in {'localhost', '127.0.0.1'} else {}),
         },
     }
 
@@ -160,7 +176,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': mysql_database_config()
+    'default': database_config()
 }
 
 # Password validation

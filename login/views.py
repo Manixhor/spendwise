@@ -1395,25 +1395,34 @@ def savings(request: HttpRequest) -> HttpResponse:
 
     # Calculate allocation breakdown
     goals_list = list(goals)
-    allocation_dict = _calculate_goal_allocations(available_for_goals, goals_list)
+    for g in goals_list:
+        if g.last_allocated_month != current_month_str:
+            base_saved = float(g.saved_amount)
+            g.saved_amount = Decimal("0")
+            g.current_month_auto_allocation = Decimal(str(round(base_saved, 2)))
+            g.save(update_fields=["saved_amount", "current_month_auto_allocation"])
 
-    # Apply allocations — update saved_amount on each goal, once per month
+    available_after_prior = available_for_goals
+    for g in goals_list:
+        available_after_prior -= float(g.current_month_auto_allocation)
+    available_after_prior = max(available_after_prior, 0)
+
+    allocation_dict = _calculate_goal_allocations(available_after_prior, goals_list)
+
     for g in goals_list:
         allocated = allocation_dict.get(g.id, 0)
-        # Only allocate if not already done this month
-        if allocated > 0 and g.last_allocated_month != current_month_str:
-            new_saved = min(
-                float(g.saved_amount) + allocated,
-                float(g.target_amount),
-            )
-            from decimal import Decimal
-            g.saved_amount = Decimal(str(round(new_saved, 2)))
+        if allocated > 0:
+            effective_saved = float(g.saved_amount) + float(g.current_month_auto_allocation)
+            new_effective = min(effective_saved + allocated, float(g.target_amount))
+            new_auto = new_effective - float(g.saved_amount)
+            g.current_month_auto_allocation = Decimal(str(round(new_auto, 2)))
             g.last_allocated_month = current_month_str
-            g.save(update_fields=["saved_amount", "last_allocated_month"])
+            g.save(update_fields=["current_month_auto_allocation", "last_allocated_month"])
 
     allocation_breakdown = []
     for g in goals_list:
-        if g.is_active_goal:
+        effective_saved = float(g.saved_amount) + float(g.current_month_auto_allocation)
+        if g.is_active:
             allocation_breakdown.append(
                 {
                     "name": g.name,
@@ -1423,15 +1432,18 @@ def savings(request: HttpRequest) -> HttpResponse:
                 }
             )
 
-    # For each goal, progress = saved_amount / target_amount * 100
-    # Use goals_list (already updated in memory) so ring reflects latest saved_amount
+    # For each goal, progress = effective_saved / target_amount * 100
     CIRC = 263.9
     goals_data = []
+    
     for g in goals_list:
+        effective_saved = float(g.saved_amount) + float(g.current_month_auto_allocation)
+        max_from_available = available_for_goals
+        effective_saved = min(effective_saved, float(g.saved_amount) + max_from_available)
+        remaining = max(float(g.target_amount) - effective_saved, 0)
+        is_complete = effective_saved >= float(g.target_amount)
         if float(g.target_amount) > 0:
-            pct = min(
-                round(float(g.saved_amount) / float(g.target_amount) * 100, 1), 100
-            )
+            pct = min(round(effective_saved / float(g.target_amount) * 100, 1), 100)
         else:
             pct = 0
         pct = max(pct, 0)
@@ -1440,13 +1452,13 @@ def savings(request: HttpRequest) -> HttpResponse:
                 "id": g.id,
                 "name": g.name,
                 "target_amount": g.target_amount,
-                "saved_amount": float(g.saved_amount),
+                "saved_amount": effective_saved,
                 "progress_pct": pct,
                 "ring_dash": round(pct / 100 * CIRC, 1),
                 "ring_gap": round(CIRC - pct / 100 * CIRC, 1),
-                "is_complete": g.is_complete,
-                "is_active": g.is_active,
-                "remaining": float(g.remaining),
+                "is_complete": is_complete,
+                "is_active": g.is_active and not is_complete,
+                "remaining": remaining,
                 "priority": g.priority,
                 "allocation_percentage": g.allocation_percentage,
             }
@@ -1634,36 +1646,53 @@ def api_goal_allocations(request: HttpRequest) -> JsonResponse:
             available = max(monthly_income - monthly_expenses, 0)
 
         goals = list(SavingsGoal.objects.filter(user=request.user))
-        allocations = _calculate_goal_allocations(available, goals)
 
-        # Apply allocations — once per month per goal
+        for g in goals:
+            if g.last_allocated_month != current_month_str:
+                target = float(g.target_amount)
+                base_saved = float(g.saved_amount)
+                if base_saved > 0:
+                    g.saved_amount = Decimal("0")
+                    g.current_month_auto_allocation = Decimal(str(round(min(base_saved, target), 2)))
+                    g.save(update_fields=["saved_amount", "current_month_auto_allocation"])
+                else:
+                    g.current_month_auto_allocation = Decimal("0")
+                    g.save(update_fields=["current_month_auto_allocation"])
+
+        available_after_prior = available
+        for g in goals:
+            available_after_prior -= float(g.current_month_auto_allocation)
+        available_after_prior = max(available_after_prior, 0)
+
+        allocations = _calculate_goal_allocations(available_after_prior, goals)
+
         for g in goals:
             allocated = allocations.get(g.id, 0)
-            if allocated > 0 and g.last_allocated_month != current_month_str:
-                new_saved = min(
-                    float(g.saved_amount) + allocated,
-                    float(g.target_amount),
-                )
-                g.saved_amount = Decimal(str(round(new_saved, 2)))
+            if allocated > 0:
+                effective_saved = float(g.saved_amount) + float(g.current_month_auto_allocation)
+                new_effective = min(effective_saved + allocated, float(g.target_amount))
+                new_auto = new_effective - float(g.saved_amount)
+                g.current_month_auto_allocation = Decimal(str(round(new_auto, 2)))
                 g.last_allocated_month = current_month_str
-                g.save(update_fields=["saved_amount", "last_allocated_month"])
+                g.save(update_fields=["current_month_auto_allocation", "last_allocated_month"])
 
         allocation_data = []
         for goal in goals:
-            if goal.is_active_goal:
-                allocation_data.append(
-                    {
-                        "id": goal.id,
-                        "name": goal.name,
-                        "target_amount": float(goal.target_amount),
-                        "saved_amount": float(goal.saved_amount),
-                        "remaining": float(goal.remaining),
-                        "priority": goal.priority,
-                        "allocation_percentage": goal.allocation_percentage,
-                        "allocated_this_month": allocations.get(goal.id, 0),
-                        "is_complete": goal.is_complete,
-                    }
-                )
+            effective_saved = float(goal.saved_amount) + float(goal.current_month_auto_allocation)
+            effective_saved = min(effective_saved, float(goal.saved_amount) + available)
+            allocation_data.append(
+                {
+                    "id": goal.id,
+                    "name": goal.name,
+                    "target_amount": float(goal.target_amount),
+                    "saved_amount": effective_saved,
+                    "remaining": max(float(goal.target_amount) - effective_saved, 0),
+                    "priority": goal.priority,
+                    "allocation_percentage": goal.allocation_percentage,
+                    "allocated_this_month": allocations.get(goal.id, 0),
+                    "is_complete": effective_saved >= float(goal.target_amount),
+                }
+            )
 
         return JsonResponse(
             {
@@ -1710,16 +1739,28 @@ def _calculate_goal_allocations(available_amount: float, goals: list) -> dict:
     if not goals or available_amount <= 0:
         return {}
 
-    # Filter to only active, incomplete goals
-    active_goals = [g for g in goals if g.is_active_goal]
+    from datetime import date
+    current_month_str = date.today().replace(day=1).strftime("%Y-%m")
+
+    def base_saved_amount(goal):
+        saved_value = float(goal.saved_amount or 0)
+        if goal.last_allocated_month == current_month_str:
+            saved_value = max(
+                saved_value - float(getattr(goal, "current_month_auto_allocation", 0) or 0),
+                0,
+            )
+        return saved_value
+
+    def base_remaining_amount(goal):
+        return max(float(goal.target_amount) - base_saved_amount(goal), 0)
+
+    active_goals = [g for g in goals if g.is_active and base_remaining_amount(g) > 0]
 
     if not active_goals:
         return {}
 
-    # Priority weights: high=3, medium=2, low=1
     priority_weights = {"high": 3, "medium": 2, "low": 1}
 
-    # Sort by priority (high first) so high-priority goals get filled first
     sorted_goals = sorted(
         active_goals,
         key=lambda g: priority_weights.get(g.priority, 2),
@@ -1740,19 +1781,17 @@ def _calculate_goal_allocations(available_amount: float, goals: list) -> dict:
         weight = priority_weights.get(goal.priority, 2)
         share = weight / total_weight
         allocation = available_amount * share
-        # Cap at what the goal still needs and what's left in the pool
-        remaining_needed = float(goal.remaining)
+        remaining_needed = base_remaining_amount(goal)
         allocation = min(allocation, remaining_needed, remaining_pool)
         allocation = max(allocation, 0.0)
         allocations[goal.id] = round(allocation, 2)
         remaining_pool -= allocation
 
-    # If there's still money left, give it to goals that aren't complete yet
     if remaining_pool > 0.01:
         for goal in sorted_goals:
             if remaining_pool <= 0:
                 break
-            still_needed = float(goal.remaining) - allocations.get(goal.id, 0)
+            still_needed = base_remaining_amount(goal) - allocations.get(goal.id, 0)
             if still_needed > 0:
                 extra = min(still_needed, remaining_pool)
                 allocations[goal.id] = round(allocations.get(goal.id, 0) + extra, 2)
