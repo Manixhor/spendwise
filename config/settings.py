@@ -56,10 +56,10 @@ def mysql_database_config() -> dict:
 
     return {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('DB_NAME', 'sys'),
-        'USER': os.getenv('DB_USER', 'root'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'root1234'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'NAME': os.getenv('DB_NAME', 'Spendwise_deathdried'),
+        'USER': os.getenv('DB_USER', 'Spendwise_deathdried'),
+        'PASSWORD': os.getenv('DB_PASSWORD', '0c830a3db789fa5e64f774ad2f47a1e7a2ef3'),
+        'HOST': os.getenv('DB_HOST', '25b9je.h.filess.io'),
         'PORT': os.getenv('DB_PORT', '3306'),
         'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '600')),
         'OPTIONS': {
@@ -141,6 +141,7 @@ UNFOLD = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DATABASES' = { 'default': mysql_database_config() }
         'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
