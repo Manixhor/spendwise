@@ -11,22 +11,87 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+import importlib.util
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse, unquote
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+except ImportError:
+    pymysql = None
+
+
+def env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def env_list(name: str) -> list[str]:
+    return [item.strip() for item in os.getenv(name, '').split(',') if item.strip()]
+
+
+def mysql_database_config() -> dict:
+    database_url = os.getenv('DATABASE_URL', '').strip()
+    if database_url:
+        parsed = urlparse(database_url)
+        query = parse_qs(parsed.query)
+        return {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': unquote((parsed.path or '/').lstrip('/')),
+            'USER': unquote(parsed.username or ''),
+            'PASSWORD': unquote(parsed.password or ''),
+            'HOST': parsed.hostname or 'localhost',
+            'PORT': str(parsed.port or '3306'),
+            'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '600')),
+            'OPTIONS': {
+                'charset': query.get('charset', ['utf8mb4'])[0],
+            },
+        }
+
+    return {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('DB_NAME', 'sys'),
+        'USER': os.getenv('DB_USER', 'root'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'root1234'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '3306'),
+        'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '600')),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
+    }
+
+
+WHITENOISE_ENABLED = os.getenv('USE_WHITENOISE', '1') == '1' and importlib.util.find_spec('whitenoise') is not None
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-dbr@s354m68v)cd&tsl0z5u-r$35dg)t*uc5*#t9)p%a=gvj0g'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dbr@s354m68v)cd&tsl0z5u-r$35dg)t*uc5*#t9)p%a=gvj0g')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool('DEBUG', True)
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver", ".ngrok-free.app", ".ngrok.io", ".ngrok-free.dev", "dispersed-stump-retype.ngrok-free.dev", "0.0.0.0"]
+ALLOWED_HOSTS = list(dict.fromkeys([
+    "127.0.0.1",
+    "localhost",
+    "testserver",
+    ".ngrok-free.app",
+    ".ngrok.io",
+    ".ngrok-free.dev",
+    "dispersed-stump-retype.ngrok-free.dev",
+    "0.0.0.0",
+    ".onrender.com",
+    *env_list('ALLOWED_HOSTS'),
+]))
 
 # Allow ngrok forwarded headers
 CSRF_TRUSTED_ORIGINS = [
@@ -35,6 +100,10 @@ CSRF_TRUSTED_ORIGINS = [
     "https://*.ngrok-free.dev",
     "https://dispersed-stump-retype.ngrok-free.dev",
 ]
+render_external_hostname = os.getenv('RENDER_EXTERNAL_HOSTNAME', '').strip()
+if render_external_hostname:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{render_external_hostname}')
+CSRF_TRUSTED_ORIGINS.extend(env_list('CSRF_TRUSTED_ORIGINS'))
 
 
 # Application definition
@@ -52,6 +121,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    *(['whitenoise.middleware.WhiteNoiseMiddleware'] if WHITENOISE_ENABLED else []),
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -90,31 +160,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'sys',
-        #new line added 
-        'USER': 'root',
-        'PASSWORD': 'root1234',
-        #for local server 
-        'HOST':'localhost',
-        'PORT':'3306',
-        'OPTIONS': {
-            'auth_plugin': 'caching_sha2_password',
-        },
-    }
+    'default': mysql_database_config()
 }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'Spendwise_gaveflator',
-#         'USER': 'Spendwise_gaveflator',
-#         'PASSWORD': '87450563d418d3af2a8bdfd4c003ccdd993eb14f',
-#         'HOST': 'kk7ddz.h.filess.io',
-#         'PORT': '3306',
-#     }
-# }
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -151,11 +198,28 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+if WHITENOISE_ENABLED:
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        },
+    }
 
 MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', True)
 
 MAILTRAP_SMTP_HOST = os.getenv('MAILTRAP_SMTP_HOST', 'live.smtp.mailtrap.io').strip()
 MAILTRAP_SMTP_PORT = int(os.getenv('MAILTRAP_SMTP_PORT', '587'))
