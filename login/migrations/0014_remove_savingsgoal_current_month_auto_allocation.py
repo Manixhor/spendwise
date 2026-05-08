@@ -9,9 +9,4 @@ class Migration(migrations.Migration):
         ('login', '0013_add_current_month_auto_allocation'),
     ]
 
-    operations = [
-        migrations.RemoveField(
-            model_name='savingsgoal',
-            name='current_month_auto_allocation',
-        ),
-    ]
+    operations = []
