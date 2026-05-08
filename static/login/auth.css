@@ -31,6 +31,10 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
   font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -44,6 +48,14 @@ body {
     radial-gradient(ellipse at 20% 10%, rgba(120,100,255,0.12) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 90%, rgba(100,180,255,0.10) 0%, transparent 50%),
     linear-gradient(160deg, #dfe0ea 0%, #e8e8ed 50%, #dde4f0 100%);
+}
+
+.desktop-layout {
+  padding:
+    var(--safe-area-top)
+    var(--safe-area-right)
+    var(--safe-area-bottom)
+    var(--safe-area-left);
 }
 
 button,
