@@ -1,8 +1,14 @@
 {
+  "id": "/",
   "name": "SpendWise",
   "short_name": "SpendWise",
+  "description": "Track expenses, savings, and monthly analysis with SpendWise.",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "start_url": "/",
+  "scope": "/",
   "background_color": "#0b1020",
-  "theme_color": "#0b1020"
+  "theme_color": "#0b1020",
+  "orientation": "portrait-primary",
+  "lang": "en"
 }
