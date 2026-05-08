@@ -62,17 +62,23 @@ def database_config() -> dict:
             },
         }
 
+    if os.getenv('DB_NAME') and os.getenv('DB_HOST'):
+        return {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', os.getenv('POSTGRES_DB', 'spendwise')),
+            'USER': os.getenv('DB_USER', os.getenv('POSTGRES_USER', 'postgres')),
+            'PASSWORD': os.getenv('DB_PASSWORD', os.getenv('POSTGRES_PASSWORD', 'postgres')),
+            'HOST': os.getenv('DB_HOST', os.getenv('POSTGRES_HOST', 'localhost')),
+            'PORT': os.getenv('DB_PORT', os.getenv('POSTGRES_PORT', '5432')),
+            'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '600')),
+            'OPTIONS': {
+                **({'sslmode': os.getenv('DB_SSLMODE', 'prefer')} if os.getenv('DB_HOST', os.getenv('POSTGRES_HOST', 'localhost')) not in {'localhost', '127.0.0.1'} else {}),
+            },
+        }
+
     return {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', os.getenv('POSTGRES_DB', 'spendwise')),
-        'USER': os.getenv('DB_USER', os.getenv('POSTGRES_USER', 'postgres')),
-        'PASSWORD': os.getenv('DB_PASSWORD', os.getenv('POSTGRES_PASSWORD', 'postgres')),
-        'HOST': os.getenv('DB_HOST', os.getenv('POSTGRES_HOST', 'localhost')),
-        'PORT': os.getenv('DB_PORT', os.getenv('POSTGRES_PORT', '5432')),
-        'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '600')),
-        'OPTIONS': {
-            **({'sslmode': os.getenv('DB_SSLMODE', 'prefer')} if os.getenv('DB_HOST', os.getenv('POSTGRES_HOST', 'localhost')) not in {'localhost', '127.0.0.1'} else {}),
-        },
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 
 
