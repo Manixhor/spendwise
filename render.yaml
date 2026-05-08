@@ -1,0 +1,60 @@
+services:
+  - type: web
+    name: spendwise-web
+    runtime: python
+    buildCommand: ./build.sh
+    preDeployCommand: python manage.py migrate --noinput
+    startCommand: gunicorn config.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+      - key: USE_WHITENOISE
+        value: "1"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DB_NAME
+        fromService:
+          type: pserv
+          name: spendwise-mysql
+          envVarKey: MYSQL_DATABASE
+      - key: DB_USER
+        fromService:
+          type: pserv
+          name: spendwise-mysql
+          envVarKey: MYSQL_USER
+      - key: DB_PASSWORD
+        fromService:
+          type: pserv
+          name: spendwise-mysql
+          envVarKey: MYSQL_PASSWORD
+      - key: DB_HOST
+        fromService:
+          type: pserv
+          name: spendwise-mysql
+          property: host
+      - key: DB_PORT
+        fromService:
+          type: pserv
+          name: spendwise-mysql
+          property: port
+
+  - type: pserv
+    name: spendwise-mysql
+    runtime: image
+    image:
+      url: mysql:8.0
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 10
+    envVars:
+      - key: MYSQL_DATABASE
+        value: spendwise
+      - key: MYSQL_USER
+        value: spendwise
+      - key: MYSQL_PASSWORD
+        generateValue: true
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true

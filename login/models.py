@@ -107,6 +107,10 @@ class SavingsGoal(models.Model):
         max_length=7, blank=True, default="",
         help_text="YYYY-MM of the last month allocation was applied, e.g. '2025-05'"
     )
+    current_month_auto_allocation = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Auto-allocation for current month (reversible)"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -126,12 +130,15 @@ class SavingsGoal(models.Model):
 
     @property
     def is_complete(self):
-        return self.saved_amount >= self.target_amount
+        effective_saved = min(self.saved_amount + self.current_month_auto_allocation, self.target_amount)
+        return effective_saved >= self.target_amount
 
     @property
     def remaining(self):
-        return max(self.target_amount - self.saved_amount, 0)
+        effective_saved = min(self.saved_amount + self.current_month_auto_allocation, self.target_amount)
+        return max(self.target_amount - effective_saved, 0)
 
     @property
     def is_active_goal(self):
-        return self.is_active and not self.is_complete
+        effective_saved = min(self.saved_amount + self.current_month_auto_allocation, self.target_amount)
+        return self.is_active and effective_saved < self.target_amount
