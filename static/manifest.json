@@ -5,10 +5,33 @@
   "description": "Track expenses, savings, and monthly analysis with SpendWise.",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "background_color": "#0b1020",
   "theme_color": "#0b1020",
   "orientation": "portrait-primary",
-  "lang": "en"
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["finance", "productivity", "lifestyle"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Open your SpendWise dashboard.",
+      "url": "/dashboard/?source=pwa"
+    },
+    {
+      "name": "Monthly Analysis",
+      "short_name": "Monthly",
+      "description": "View your monthly analysis.",
+      "url": "/monthly/?source=pwa"
+    },
+    {
+      "name": "Savings Goals",
+      "short_name": "Savings",
+      "description": "Open your savings goals.",
+      "url": "/savings/?source=pwa"
+    }
+  ]
 }
