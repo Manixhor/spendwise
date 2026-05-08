@@ -222,17 +222,17 @@
     <label class="modal-field-label" for="txnAmount">Amount</label>
     <div class="modal-field-wrap">
       <span class="modal-currency">₹</span>
-      <input type="number" id="txnAmount" class="modal-input" placeholder="0.00" min="1" step="0.01" />
+      <input type="number" id="txnAmount" class="modal-input" placeholder="0.00" min="1" step="0.01" enterkeyhint="next" />
     </div>
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px;">
+    <div class="txn-modal-grid">
       <div>
         <label class="modal-field-label" for="txnTitle">Title</label>
-        <input type="text" id="txnTitle" class="modal-select modal-select--transparent" placeholder="e.g. Rent" autocomplete="off" />
+        <input type="text" id="txnTitle" class="modal-select modal-select--transparent" placeholder="e.g. Rent" autocomplete="off" enterkeyhint="next" />
       </div>
       <div>
         <label class="modal-field-label" for="txnDate">Date</label>
-        <input type="date" id="txnDate" class="modal-select modal-select--transparent" value="{{ today }}" />
+        <input type="date" id="txnDate" class="modal-select modal-select--transparent" value="{{ today }}" enterkeyhint="done" />
       </div>
     </div>
 
@@ -895,6 +895,9 @@ try {
   const txnClose    = document.getElementById('txnModalClose');
   const txnSaveBtn  = document.getElementById('txnSave');
   const txnError    = document.getElementById('txnError');
+  const txnAmountInput = document.getElementById('txnAmount');
+  const txnTitleInput = document.getElementById('txnTitle');
+  const txnDateInput = document.getElementById('txnDate');
   const activeType  = 'expense'; // always expense
 
   // Assign to globals so onclick handlers can access them
@@ -912,7 +915,7 @@ try {
       document.getElementById('txnDate').value = new Date().toISOString().split('T')[0];
     }
     txnModal.classList.add('active');
-    document.getElementById('txnTitle')?.focus();
+    requestAnimationFrame(() => txnAmountInput?.focus());
   }
   _openTxnModal = openTxnModal;
 
@@ -941,6 +944,24 @@ try {
   }
   if (txnModal) {
     txnModal.addEventListener('click', e => { if (e.target === txnModal) closeTxnModal(); });
+  }
+
+  if (txnAmountInput) {
+    txnAmountInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        txnTitleInput?.focus();
+      }
+    });
+  }
+
+  if (txnTitleInput) {
+    txnTitleInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        txnDateInput?.focus();
+      }
+    });
   }
 
   if (txnSaveBtn && txnError) {
