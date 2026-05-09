@@ -8,12 +8,12 @@ from decimal import Decimal
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Sum
 from django.db.models.functions import TruncDate, TruncMonth
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 
-from .models import Transaction, UserProfile
+from .models import PageView, Transaction, UserProfile
 
 
 @staff_member_required
@@ -114,6 +114,25 @@ def admin_dashboard(request):
     # ── Recent signups ─────────────────────────────────────
     recent_users = User.objects.filter(is_staff=False).order_by('-date_joined')[:8]
 
+    page_views = PageView.objects.all()[:20]
+    total_page_views = sum(pv.view_count for pv in PageView.objects.all())
+
+    # ── Page views per day (last 30 days) ─────────────────
+    pv_qs = (
+        PageView.objects
+        .filter(last_viewed__date__gte=today - timedelta(days=29))
+        .extra(select={'day': "date(last_viewed)"})
+        .values('day')
+        .annotate(count=Sum('view_count'))
+        .order_by('day')
+    )
+    pv_map = {str(r['day']): r['count'] for r in pv_qs}
+    pv_labels, pv_data = [], []
+    for i in range(29, -1, -1):
+        d = today - timedelta(days=i)
+        pv_labels.append(d.strftime('%b %d'))
+        pv_data.append(pv_map.get(str(d), 0))
+
     context = {
         # Stats
         'total_users':        total_users,
@@ -123,7 +142,12 @@ def admin_dashboard(request):
         'total_txns':         total_txns,
         'total_income':       float(total_income),
         'total_expense':      float(total_expense),
+        # Page views
+        'page_views':         page_views,
+        'total_page_views':   total_page_views,
         # Chart data (JSON)
+        'pv_labels':          json.dumps(pv_labels),
+        'pv_data':            json.dumps(pv_data),
         'enroll_labels':      json.dumps(enroll_labels),
         'enroll_data':        json.dumps(enroll_data),
         'txn_labels':         json.dumps(txn_labels),

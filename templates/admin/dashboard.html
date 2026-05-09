@@ -158,6 +158,11 @@
       <span class="sw-stat-value">{{ users_with_salary }}</span>
       <span class="sw-stat-sub">Users with salary configured</span>
     </div>
+    <div class="sw-stat-card blue">
+      <span class="sw-stat-label">Total Page Views</span>
+      <span class="sw-stat-value">{{ total_page_views }}</span>
+      <span class="sw-stat-sub">All time across pages</span>
+    </div>
   </div>
 
   <!-- ── Charts row 1 ────────────────────────────────── -->
@@ -168,6 +173,14 @@
       <p class="sw-chart-title">👥 Users Enrolled — Last 30 Days</p>
       <div class="sw-chart-wrap">
         <canvas id="enrollChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Page views per day -->
+    <div class="sw-chart-card">
+      <p class="sw-chart-title">🌐 Page Views — Last 30 Days</p>
+      <div class="sw-chart-wrap">
+        <canvas id="pageViewChart"></canvas>
       </div>
     </div>
 
@@ -207,6 +220,32 @@
 
   <!-- ── Tables ──────────────────────────────────────── -->
   <div class="sw-table-grid">
+
+    <!-- Page views -->
+    <div class="sw-table-card">
+      <p class="sw-chart-title">👁️ Page Views</p>
+      <table class="sw-table">
+        <thead>
+          <tr>
+            <th>Page</th>
+            <th>Views</th>
+            <th>Last Viewed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pv in page_views %}
+          <tr>
+            <td>{{ pv.path }}</td>
+            <td><span class="sw-badge green">{{ pv.view_count }}</span></td>
+            <td style="color:#8e8e93;">{{ pv.last_viewed|date:"M d, Y H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="color:#8e8e93;text-align:center;padding:20px;">No data yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p style="margin-top:12px;font-size:0.78rem;color:#8e8e93;">Total views: <strong>{{ total_page_views }}</strong></p>
+    </div>
 
     <!-- Top spenders -->
     <div class="sw-table-card">
@@ -265,6 +304,8 @@
 <script>
 const ENROLL_LABELS  = {{ enroll_labels|safe }};
 const ENROLL_DATA    = {{ enroll_data|safe }};
+const PV_LABELS      = {{ pv_labels|safe }};
+const PV_DATA        = {{ pv_data|safe }};
 const TXN_LABELS     = {{ txn_labels|safe }};
 const TXN_DATA       = {{ txn_data|safe }};
 const MONTHLY_LABELS = {{ monthly_labels|safe }};
@@ -294,6 +335,31 @@ new Chart(document.getElementById('enrollChart'), {
       tension: 0.4,
       pointRadius: 3,
       pointBackgroundColor: '#5e5ce6',
+      borderWidth: 2,
+    }]
+  },
+  options: {
+    ...DEFAULTS,
+    scales: {
+      x: { ticks: { maxTicksLimit: 8, font: { size: 10 } }, grid: { display: false } },
+      y: { ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' }, beginAtZero: true },
+    }
+  }
+});
+
+// ── Page views line chart ─────────────────────────────
+new Chart(document.getElementById('pageViewChart'), {
+  type: 'line',
+  data: {
+    labels: PV_LABELS,
+    datasets: [{
+      data: PV_DATA,
+      borderColor: '#0a84ff',
+      backgroundColor: 'rgba(10,132,255,0.10)',
+      fill: true,
+      tension: 0.4,
+      pointRadius: 3,
+      pointBackgroundColor: '#0a84ff',
       borderWidth: 2,
     }]
   },
