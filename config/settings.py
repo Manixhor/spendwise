@@ -234,6 +234,8 @@ USE_X_FORWARDED_HOST = True
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Lax'
     SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', True)
 
 MAILTRAP_SMTP_HOST = os.getenv('MAILTRAP_SMTP_HOST', 'live.smtp.mailtrap.io').strip()
