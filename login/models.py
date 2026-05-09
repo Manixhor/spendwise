@@ -142,3 +142,15 @@ class SavingsGoal(models.Model):
     def is_active_goal(self):
         effective_saved = min(self.saved_amount + self.current_month_auto_allocation, self.target_amount)
         return self.is_active and effective_saved < self.target_amount
+
+
+class PageView(models.Model):
+    path = models.CharField(max_length=255)
+    view_count = models.PositiveIntegerField(default=0)
+    last_viewed = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-last_viewed"]
+
+    def __str__(self):
+        return f"{self.path} — {self.view_count} views"
