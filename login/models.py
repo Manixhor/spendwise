@@ -145,6 +145,7 @@ class SavingsGoal(models.Model):
 
 
 class PageView(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="page_views")
     path = models.CharField(max_length=255)
     view_count = models.PositiveIntegerField(default=0)
     last_viewed = models.DateTimeField(auto_now=True)
@@ -153,4 +154,5 @@ class PageView(models.Model):
         ordering = ["-last_viewed"]
 
     def __str__(self):
-        return f"{self.path} — {self.view_count} views"
+        user_str = self.user.username if self.user else "Anonymous"
+        return f"{user_str} | {self.path} — {self.view_count} views"

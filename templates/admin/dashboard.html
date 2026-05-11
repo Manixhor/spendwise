@@ -279,7 +279,7 @@
           <thead>
           <tr>
             <th>Name</th>
-            <th>Email</th>
+            <th>Last Page</th>
             <th>Joined</th>
             <th>Last Active (hrs)</th>
           </tr>
@@ -288,12 +288,12 @@
           {% for u in recent_users %}
           <tr>
             <td>{{ u.full_name }}</td>
-            <td style="color:#8e8e93;">{{ u.email }}</td>
+            <td style="color:#8e8e93;">{{ u.last_page|default:"—" }}</td>
             <td><span class="sw-badge purple">{{ u.date_joined|date:"M d, Y" }}</span></td>
             <td style="color:#8e8e93;">{{ u.last_active_hrs|default:"—" }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="3" style="color:#8e8e93;text-align:center;padding:20px;">No users yet</td></tr>
+          <tr><td colspan="4" style="color:#8e8e93;text-align:center;padding:20px;">No users yet</td></tr>
           {% endfor %}
         </tbody>
       </table>
