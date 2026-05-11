@@ -113,7 +113,7 @@ def admin_dashboard(request):
     )
 
     # ── Recent signups ─────────────────────────────────────
-    recent_users_qs = User.objects.filter(is_staff=False).order_by('-date_joined')[:8]
+    recent_users_qs = User.objects.filter(is_staff=False).order_by('-date_joined')
     recent_users = []
     for u in recent_users_qs:
         if u.last_login:
