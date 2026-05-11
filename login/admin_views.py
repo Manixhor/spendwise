@@ -113,11 +113,26 @@ def admin_dashboard(request):
     )
 
     # ── Recent signups ─────────────────────────────────────
+    from django.db.models import Max, OuterRef, Subquery
     recent_users_qs = User.objects.filter(is_staff=False).order_by('-date_joined')
+    user_ids = list(recent_users_qs.values_list('id', flat=True))
+    last_visit_map = dict(
+        PageView.objects.filter(user__isnull=False)
+        .values('user')
+        .annotate(last=Max('last_viewed'))
+        .values_list('user', 'last')
+    )
+    last_pv = PageView.objects.filter(user__isnull=False).order_by('-last_viewed')
+    last_page_by_user = {}
+    for pv in last_pv:
+        if pv.user_id not in last_page_by_user:
+            last_page_by_user[pv.user_id] = pv.path
     recent_users = []
     for u in recent_users_qs:
-        if u.last_login:
-            delta = now() - u.last_login
+        last_viewed = last_visit_map.get(u.id)
+        last_page = last_page_by_user.get(u.id, '')
+        if last_viewed:
+            delta = now() - last_viewed
             last_active_hrs = round(delta.total_seconds() / 3600, 1)
         else:
             last_active_hrs = None
@@ -127,6 +142,7 @@ def admin_dashboard(request):
             'email': u.email,
             'date_joined': u.date_joined,
             'last_active_hrs': last_active_hrs,
+            'last_page': last_page,
         })
 
     page_views = PageView.objects.all()[:20]
