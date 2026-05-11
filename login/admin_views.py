@@ -12,6 +12,7 @@ from django.db.models import Count, Sum
 from django.db.models.functions import TruncDate, TruncMonth
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.timezone import now
 
 from .models import PageView, Transaction, UserProfile
 
@@ -112,7 +113,21 @@ def admin_dashboard(request):
     )
 
     # ── Recent signups ─────────────────────────────────────
-    recent_users = User.objects.filter(is_staff=False).order_by('-date_joined')[:8]
+    recent_users_qs = User.objects.filter(is_staff=False).order_by('-date_joined')[:8]
+    recent_users = []
+    for u in recent_users_qs:
+        if u.last_login:
+            delta = now() - u.last_login
+            last_active_hrs = round(delta.total_seconds() / 3600, 1)
+        else:
+            last_active_hrs = None
+        recent_users.append({
+            'username': u.username,
+            'full_name': u.get_full_name() or u.username,
+            'email': u.email,
+            'date_joined': u.date_joined,
+            'last_active_hrs': last_active_hrs,
+        })
 
     page_views = PageView.objects.all()[:20]
     total_page_views = sum(pv.view_count for pv in PageView.objects.all())
