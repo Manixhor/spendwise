@@ -123,6 +123,7 @@
         </button>
         {% endif %}
       </div>
+      <p class="offline-sync-banner" id="offlineSyncBanner" hidden></p>
 
       <!-- Date filter strip -->
       <div class="txn-date-strip" id="txnDateStrip"></div>
@@ -275,6 +276,7 @@
   let _txnSaveBtn = null;
   let _txnModal   = null;
   let _openTxnModal = null;
+  window.spendwiseOffline = window.spendwiseOffline || {};
 
   // ── Edit transaction (global for onclick access) ───────
   async function editTransaction(id, title, amount, category, txnDate, txnType) {
@@ -300,6 +302,13 @@
   // ── Delete transaction (global for onclick access) ─────
   async function deleteTransaction(id) {
     try {
+      if (!navigator.onLine && window.spendwiseOffline.queueMutation) {
+        window.spendwiseOffline.queueMutation({ op: 'delete', txnId: id });
+        document.getElementById('txn-' + id)?.remove();
+        window.spendwiseOffline.updateBanner?.();
+        return;
+      }
+
       const res = await fetch(`/api/transactions/${id}/delete/`, {
         method: 'DELETE',
         headers: { 'X-CSRFToken': '{{ csrf_token }}' },
@@ -319,13 +328,38 @@
         renderInsightStockSummary(data.insight_stock);
         renderCategoryTiles(data.cat_tiles || []);
       }
-    } catch (e) { console.error('Delete error:', e); }
+    } catch (e) {
+      if (window.spendwiseOffline.queueMutation && (!navigator.onLine || e instanceof TypeError)) {
+        window.spendwiseOffline.queueMutation({ op: 'delete', txnId: id });
+        document.getElementById('txn-' + id)?.remove();
+        window.spendwiseOffline.updateBanner?.();
+        return;
+      }
+      console.error('Delete error:', e);
+    }
+  }
+
+  function markTransactionPending(item) {
+    if (!item) return;
+    item.classList.add('offline-pending');
+    if (!item.querySelector('.txn-sync-pill')) {
+      const pill = document.createElement('span');
+      pill.className = 'txn-sync-pill';
+      pill.textContent = 'Saved offline';
+      item.appendChild(pill);
+    }
   }
 
   function formatCurrency(value, { showPlus = false } = {}) {
     const number = Number(value || 0);
     const prefix = number < 0 ? '-' : (showPlus && number > 0 ? '+' : '');
     return `${prefix}₹${Math.abs(number).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
   }
 </script>
 
@@ -899,10 +933,200 @@ try {
   const txnTitleInput = document.getElementById('txnTitle');
   const txnDateInput = document.getElementById('txnDate');
   const activeType  = 'expense'; // always expense
+  const offlineQueueKey = 'spendwise-offline-mutations';
+  const legacyOfflineQueueKey = 'spendwise-offline-transactions';
+  const offlineBanner = document.getElementById('offlineSyncBanner');
 
   // Assign to globals so onclick handlers can access them
   _txnSaveBtn   = txnSaveBtn;
   _txnModal     = txnModal;
+
+  function getOfflineQueue() {
+    try {
+      const queue = JSON.parse(localStorage.getItem(offlineQueueKey) || '[]');
+      const legacyQueue = JSON.parse(localStorage.getItem(legacyOfflineQueueKey) || '[]');
+      if (!legacyQueue.length) return queue;
+
+      localStorage.removeItem(legacyOfflineQueueKey);
+      return [
+        ...queue,
+        ...legacyQueue.map((item) => ({
+          id: item.id || `legacy-${Date.now()}`,
+          op: 'add',
+          payload: item.payload || item,
+          createdAt: item.createdAt || new Date().toISOString(),
+        })),
+      ];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function setOfflineQueue(queue) {
+    localStorage.setItem(offlineQueueKey, JSON.stringify(queue));
+    updateOfflineBanner();
+  }
+
+  function updateOfflineBanner(message = '') {
+    if (!offlineBanner) return;
+    const queueCount = getOfflineQueue().length;
+    const offline = !navigator.onLine;
+    if (!queueCount && !offline && !message) {
+      offlineBanner.hidden = true;
+      offlineBanner.textContent = '';
+      offlineBanner.classList.remove('is-error', 'is-success');
+      return;
+    }
+
+    offlineBanner.hidden = false;
+    offlineBanner.classList.toggle('is-error', Boolean(message));
+    offlineBanner.classList.toggle('is-success', !queueCount && Boolean(message));
+    if (message) {
+      offlineBanner.textContent = message;
+    } else if (queueCount) {
+      offlineBanner.textContent = offline
+        ? `You're offline, but your expenses are safe. ${queueCount} change${queueCount === 1 ? '' : 's'} will sync automatically when you're back online.`
+        : `Welcome back. Syncing ${queueCount} saved change${queueCount === 1 ? '' : 's'} now...`;
+    } else {
+      offlineBanner.textContent = "You're offline, but you can still add expenses. We'll save them here and sync when you're back online.";
+    }
+  }
+
+  function queueOfflineMutation(mutation) {
+    const queue = getOfflineQueue();
+    queue.push({
+      id: `mutation-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      ...mutation,
+      createdAt: new Date().toISOString(),
+    });
+    setOfflineQueue(queue);
+  }
+  window.spendwiseOffline.queueMutation = queueOfflineMutation;
+  window.spendwiseOffline.updateBanner = updateOfflineBanner;
+
+  function renderOfflineTransaction(payload) {
+    const list = document.getElementById('txnList');
+    if (!list) return;
+    document.getElementById('txnEmpty')?.remove();
+
+    const safeCategories = new Set(['rent', 'transport', 'health', 'groceries', 'entertainment', 'shopping', 'food', 'utilities', 'other']);
+    const categoryClass = safeCategories.has(payload.category) ? payload.category : 'other';
+    const item = document.createElement('li');
+    item.className = 'txn-item offline-pending';
+
+    const icon = document.createElement('div');
+    icon.className = `txn-icon ${categoryClass}`;
+    icon.style.fontSize = '1rem';
+    icon.textContent = '📦';
+
+    const info = document.createElement('div');
+    info.className = 'txn-info';
+
+    const name = document.createElement('span');
+    name.className = 'txn-name';
+    name.textContent = payload.title;
+
+    const time = document.createElement('span');
+    time.className = 'txn-time';
+    time.dataset.date = payload.date;
+    time.textContent = `${payload.date} · Pending sync`;
+
+    const amount = document.createElement('span');
+    amount.className = 'txn-amt neg';
+    amount.textContent = `−${formatCurrency(payload.amount)}`;
+
+    const pill = document.createElement('span');
+    pill.className = 'txn-sync-pill';
+    pill.textContent = 'Saved offline';
+
+    info.append(name, time);
+    item.append(icon, info, amount, pill);
+    list.prepend(item);
+  }
+
+  function renderOfflineUpdate(txnId, payload) {
+    const item = document.getElementById('txn-' + txnId);
+    if (!item) return;
+    const safeCategories = new Set(['rent', 'transport', 'health', 'groceries', 'entertainment', 'shopping', 'food', 'utilities', 'other']);
+    const categoryClass = safeCategories.has(payload.category) ? payload.category : 'other';
+    const name = item.querySelector('.txn-name');
+    const time = item.querySelector('.txn-time');
+    const amount = item.querySelector('.txn-amt');
+    const icon = item.querySelector('.txn-icon');
+
+    if (name) name.textContent = payload.title;
+    if (time) {
+      time.dataset.date = payload.date;
+      time.textContent = `${payload.date} · Pending sync`;
+    }
+    if (amount) amount.textContent = `−${formatCurrency(payload.amount)}`;
+    if (icon) icon.className = `txn-icon ${categoryClass}`;
+    markTransactionPending(item);
+  }
+
+  async function sendOfflineMutation(item) {
+    const csrfHeaders = { 'X-CSRFToken': '{{ csrf_token }}' };
+    let url = '/api/transactions/';
+    let options = {
+      method: 'POST',
+      headers: { ...csrfHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify(item.payload),
+    };
+
+    if (item.op === 'update') {
+      url = `/api/transactions/${item.txnId}/update/`;
+      options = {
+        method: 'PUT',
+        headers: { ...csrfHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify(item.payload),
+      };
+    } else if (item.op === 'delete') {
+      url = `/api/transactions/${item.txnId}/delete/`;
+      options = { method: 'DELETE', headers: csrfHeaders };
+    }
+
+    const res = await fetch(url, options);
+    if (item.op === 'delete' && res.status === 404) return { success: true };
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to sync offline change.');
+    }
+    return data;
+  }
+
+  async function syncOfflineTransactions() {
+    if (!navigator.onLine) {
+      updateOfflineBanner();
+      return;
+    }
+
+    let queue = getOfflineQueue();
+    if (!queue.length) {
+      updateOfflineBanner();
+      return;
+    }
+
+    updateOfflineBanner();
+    const remaining = [];
+    let synced = 0;
+
+    for (const item of queue) {
+      try {
+        await sendOfflineMutation(item);
+        synced += 1;
+      } catch (error) {
+        remaining.push(item);
+      }
+    }
+
+    setOfflineQueue(remaining);
+    if (synced && !remaining.length) {
+      updateOfflineBanner(`${synced} saved change${synced === 1 ? '' : 's'} synced successfully. Thanks for your patience.`);
+      setTimeout(() => location.reload(), 700);
+    } else if (remaining.length) {
+      updateOfflineBanner(`${remaining.length} saved change${remaining.length === 1 ? '' : 's'} still waiting. We'll keep trying automatically.`);
+    }
+  }
 
   function openTxnModal()  {
     if (!txnModal) return;
@@ -982,13 +1206,33 @@ try {
     txnError.textContent = '';
 
     try {
+      const payload = { title, amount: +amount, txn_type: activeType, category, date: txnDate };
+
+      if (!editingId && !navigator.onLine) {
+        queueOfflineMutation({ op: 'add', payload });
+        renderOfflineTransaction(payload);
+        closeTxnModal();
+        txnSaveBtn.disabled = false;
+        txnSaveBtn.textContent = 'Add Transaction';
+        return;
+      }
+
+      if (editingId && !navigator.onLine) {
+        queueOfflineMutation({ op: 'update', txnId: editingId, payload });
+        renderOfflineUpdate(editingId, payload);
+        closeTxnModal();
+        txnSaveBtn.disabled = false;
+        txnSaveBtn.textContent = 'Update Transaction';
+        return;
+      }
+
       const url    = editingId ? `/api/transactions/${editingId}/update/` : '/api/transactions/';
       const method = editingId ? 'PUT' : 'POST';
 
       const res  = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-        body: JSON.stringify({ title, amount: +amount, txn_type: activeType, category, date: txnDate }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
 
@@ -1017,12 +1261,29 @@ try {
         txnSaveBtn.textContent = editingId ? 'Update Transaction' : 'Add Transaction';
       }
     } catch (err) {
-      txnError.textContent = 'Network error.';
-      txnSaveBtn.disabled = false;
-      txnSaveBtn.textContent = editingId ? 'Update Transaction' : 'Add Transaction';
+      if (!editingId) {
+        const payload = { title, amount: +amount, txn_type: activeType, category, date: txnDate };
+        queueOfflineMutation({ op: 'add', payload });
+        renderOfflineTransaction(payload);
+        closeTxnModal();
+        txnSaveBtn.disabled = false;
+        txnSaveBtn.textContent = 'Add Transaction';
+      } else {
+        const payload = { title, amount: +amount, txn_type: activeType, category, date: txnDate };
+        queueOfflineMutation({ op: 'update', txnId: editingId, payload });
+        renderOfflineUpdate(editingId, payload);
+        closeTxnModal();
+        txnSaveBtn.disabled = false;
+        txnSaveBtn.textContent = 'Update Transaction';
+      }
     }
     });
   }
+
+  window.addEventListener('online', syncOfflineTransactions);
+  window.addEventListener('offline', () => updateOfflineBanner());
+  updateOfflineBanner();
+  syncOfflineTransactions();
 
   // ── Transaction category filter ────────────────────────
   (function() {
