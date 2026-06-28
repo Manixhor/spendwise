@@ -123,7 +123,7 @@
         </button>
         {% endif %}
       </div>
-      <p class="offline-sync-banner" id="offlineSyncBanner" hidden></p>
+      <div class="network-toast" id="networkToast" role="status" aria-live="polite" hidden></div>
 
       <!-- Date filter strip -->
       <div class="txn-date-strip" id="txnDateStrip"></div>
@@ -345,7 +345,7 @@
     if (!item.querySelector('.txn-sync-pill')) {
       const pill = document.createElement('span');
       pill.className = 'txn-sync-pill';
-      pill.textContent = 'Saved offline';
+      pill.hidden = true;
       item.appendChild(pill);
     }
   }
@@ -935,7 +935,10 @@ try {
   const activeType  = 'expense'; // always expense
   const offlineQueueKey = 'spendwise-offline-mutations';
   const legacyOfflineQueueKey = 'spendwise-offline-transactions';
-  const offlineBanner = document.getElementById('offlineSyncBanner');
+  const networkToast = document.getElementById('networkToast');
+  const networkToastDuration = 3600;
+  const networkToastFadeMs = 260;
+  let networkToastTimer = null;
 
   // Assign to globals so onclick handlers can access them
   _txnSaveBtn   = txnSaveBtn;
@@ -964,32 +967,40 @@ try {
 
   function setOfflineQueue(queue) {
     localStorage.setItem(offlineQueueKey, JSON.stringify(queue));
-    updateOfflineBanner();
   }
 
-  function updateOfflineBanner(message = '') {
-    if (!offlineBanner) return;
-    const queueCount = getOfflineQueue().length;
-    const offline = !navigator.onLine;
-    if (!queueCount && !offline && !message) {
-      offlineBanner.hidden = true;
-      offlineBanner.textContent = '';
-      offlineBanner.classList.remove('is-error', 'is-success');
-      return;
-    }
+  function nextNetworkMessage(type) {
+    const messages = {
+      offline: [
+        "Your internet took a break. SpendWise didn't.",
+        "You're offline, but your budget brain is still awake.",
+      ],
+      online: [
+        'Signal restored. SpendWise finished the paperwork.',
+        'Your internet is back. SpendWise already caught up.',
+      ],
+    };
+    const storageKey = `spendwise-${type}-message-index`;
+    const current = Number(localStorage.getItem(storageKey) || 0);
+    const picked = messages[type][current % messages[type].length];
+    localStorage.setItem(storageKey, String(current + 1));
+    return picked;
+  }
 
-    offlineBanner.hidden = false;
-    offlineBanner.classList.toggle('is-error', Boolean(message));
-    offlineBanner.classList.toggle('is-success', !queueCount && Boolean(message));
-    if (message) {
-      offlineBanner.textContent = message;
-    } else if (queueCount) {
-      offlineBanner.textContent = offline
-        ? `You're offline, but your expenses are safe. ${queueCount} change${queueCount === 1 ? '' : 's'} will sync automatically when you're back online.`
-        : `Welcome back. Syncing ${queueCount} saved change${queueCount === 1 ? '' : 's'} now...`;
-    } else {
-      offlineBanner.textContent = "You're offline, but you can still add expenses. We'll save them here and sync when you're back online.";
-    }
+  function showNetworkToast(message, type = 'neutral') {
+    if (!networkToast || !message) return;
+    clearTimeout(networkToastTimer);
+    networkToast.textContent = message;
+    networkToast.hidden = false;
+    networkToast.classList.remove('is-offline', 'is-online', 'is-neutral');
+    networkToast.classList.add(type === 'offline' ? 'is-offline' : type === 'online' ? 'is-online' : 'is-neutral');
+    requestAnimationFrame(() => networkToast.classList.add('is-visible'));
+    networkToastTimer = setTimeout(() => {
+      networkToast.classList.remove('is-visible');
+      setTimeout(() => {
+        networkToast.hidden = true;
+      }, networkToastFadeMs);
+    }, networkToastDuration);
   }
 
   function queueOfflineMutation(mutation) {
@@ -1000,9 +1011,12 @@ try {
       createdAt: new Date().toISOString(),
     });
     setOfflineQueue(queue);
+    if (!navigator.onLine) {
+      showNetworkToast(nextNetworkMessage('offline'), 'offline');
+    }
   }
   window.spendwiseOffline.queueMutation = queueOfflineMutation;
-  window.spendwiseOffline.updateBanner = updateOfflineBanner;
+  window.spendwiseOffline.updateBanner = () => showNetworkToast(nextNetworkMessage(navigator.onLine ? 'online' : 'offline'), navigator.onLine ? 'online' : 'offline');
 
   function renderOfflineTransaction(payload) {
     const list = document.getElementById('txnList');
@@ -1037,7 +1051,7 @@ try {
 
     const pill = document.createElement('span');
     pill.className = 'txn-sync-pill';
-    pill.textContent = 'Saved offline';
+    pill.hidden = true;
 
     info.append(name, time);
     item.append(icon, info, amount, pill);
@@ -1096,17 +1110,13 @@ try {
 
   async function syncOfflineTransactions() {
     if (!navigator.onLine) {
-      updateOfflineBanner();
       return;
     }
 
     let queue = getOfflineQueue();
     if (!queue.length) {
-      updateOfflineBanner();
       return;
     }
-
-    updateOfflineBanner();
     const remaining = [];
     let synced = 0;
 
@@ -1121,10 +1131,10 @@ try {
 
     setOfflineQueue(remaining);
     if (synced && !remaining.length) {
-      updateOfflineBanner(`${synced} saved change${synced === 1 ? '' : 's'} synced successfully. Thanks for your patience.`);
+      showNetworkToast(nextNetworkMessage('online'), 'online');
       setTimeout(() => location.reload(), 700);
     } else if (remaining.length) {
-      updateOfflineBanner(`${remaining.length} saved change${remaining.length === 1 ? '' : 's'} still waiting. We'll keep trying automatically.`);
+      showNetworkToast("Connection is back, but a few changes still need a second pass.", 'neutral');
     }
   }
 
@@ -1280,9 +1290,13 @@ try {
     });
   }
 
-  window.addEventListener('online', syncOfflineTransactions);
-  window.addEventListener('offline', () => updateOfflineBanner());
-  updateOfflineBanner();
+  window.addEventListener('online', () => {
+    showNetworkToast(nextNetworkMessage('online'), 'online');
+    syncOfflineTransactions();
+  });
+  window.addEventListener('offline', () => {
+    showNetworkToast(nextNetworkMessage('offline'), 'offline');
+  });
   syncOfflineTransactions();
 
   // ── Transaction category filter ────────────────────────
