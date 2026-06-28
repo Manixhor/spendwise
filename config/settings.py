@@ -130,6 +130,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'login',
 ]
 
@@ -140,6 +145,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'login.middleware.PageViewMiddleware',
@@ -169,6 +175,35 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+
+SITE_ID = int(os.getenv('SITE_ID', '1'))
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+LOGIN_REDIRECT_URL = '/dashboard/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*']
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_ADAPTER = 'login.adapters.SpendWiseSocialAccountAdapter'
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': os.getenv('GOOGLE_OAUTH_CLIENT_ID', '').strip(),
+            'secret': os.getenv('GOOGLE_OAUTH_CLIENT_SECRET', '').strip(),
+            'key': '',
+        },
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+    }
+}
 
 
 # Database
@@ -238,29 +273,26 @@ if not DEBUG:
     SESSION_COOKIE_SAMESITE = 'Lax'
     SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', True)
 
-MAILTRAP_SMTP_HOST = os.getenv('MAILTRAP_SMTP_HOST', 'live.smtp.mailtrap.io').strip()
-MAILTRAP_SMTP_PORT = int(os.getenv('MAILTRAP_SMTP_PORT', '587'))
-MAILTRAP_SMTP_USER = os.getenv('MAILTRAP_SMTP_USER', '').strip()
-MAILTRAP_SMTP_PASSWORD = os.getenv('MAILTRAP_SMTP_PASSWORD', '').strip()
-MAILTRAP_FROM_EMAIL = os.getenv('MAILTRAP_FROM_EMAIL', '').strip()
+SMTP_HOST = os.getenv('SMTP_HOST', os.getenv('MAILTRAP_SMTP_HOST', '')).strip()
+SMTP_PORT = int(os.getenv('SMTP_PORT', os.getenv('MAILTRAP_SMTP_PORT', '587')))
+SMTP_USERNAME = os.getenv('SMTP_USERNAME', os.getenv('MAILTRAP_SMTP_USER', '')).strip()
+SMTP_PASSWORD = os.getenv('SMTP_PASSWORD', os.getenv('MAILTRAP_SMTP_PASSWORD', '')).strip()
+SMTP_FROM_EMAIL = os.getenv('SMTP_FROM_EMAIL', os.getenv('MAILTRAP_FROM_EMAIL', '')).strip()
 
 EMAIL_BACKEND = (
     'django.core.mail.backends.smtp.EmailBackend'
-    if MAILTRAP_SMTP_USER and MAILTRAP_SMTP_PASSWORD
+    if SMTP_HOST and SMTP_USERNAME and SMTP_PASSWORD
     else 'django.core.mail.backends.console.EmailBackend'
 )
-EMAIL_HOST = MAILTRAP_SMTP_HOST
-EMAIL_PORT = MAILTRAP_SMTP_PORT
-EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
-EMAIL_HOST_USER = MAILTRAP_SMTP_USER
-EMAIL_HOST_PASSWORD = MAILTRAP_SMTP_PASSWORD
-EMAIL_TIMEOUT = 20
-DEFAULT_FROM_EMAIL = (
-    MAILTRAP_FROM_EMAIL
-    if MAILTRAP_FROM_EMAIL else
-    'SpendWise <no-reply@spendwise.local>'
-)
+EMAIL_HOST = SMTP_HOST or 'localhost'
+EMAIL_PORT = SMTP_PORT
+EMAIL_USE_TLS = env_bool('SMTP_USE_TLS', True)
+EMAIL_USE_SSL = env_bool('SMTP_USE_SSL', False)
+EMAIL_HOST_USER = SMTP_USERNAME
+EMAIL_HOST_PASSWORD = SMTP_PASSWORD
+EMAIL_TIMEOUT = int(os.getenv('SMTP_TIMEOUT', '20'))
+DEFAULT_FROM_EMAIL = SMTP_FROM_EMAIL or 'SpendWise <no-reply@spendwise.local>'
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES = 10
 
 # OpenAI (optional): used for dashboard savings motivation message generation.
