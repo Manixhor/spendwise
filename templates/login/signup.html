@@ -1,6 +1,5 @@
 {% extends "login/base_auth.html" %}
 {% load static %}
-{% load socialaccount %}
 
 {% block title %}SpendWise – Sign Up{% endblock %}
 {% block left_tagline %}Start your journey.<br/>Simple signup, instant access.{% endblock %}
@@ -13,12 +12,6 @@
   {% if errors.general %}
     <div class="alert alert-error">{{ errors.general }}</div>
   {% endif %}
-
-  <a href="{% provider_login_url 'google' %}" class="social-auth-btn">
-    <span class="google-mark" aria-hidden="true">G</span>
-    Continue with Google
-  </a>
-  <div class="auth-choice"><span>or create with email</span></div>
 
   <form method="post" action="{% url 'signup' %}" class="auth-form" novalidate>
     {% csrf_token %}

@@ -117,6 +117,27 @@
 
 .download-option:hover svg { opacity: 1; }
 
+.ma-email-btn {
+  min-height: 44px;
+}
+
+.ma-email-status {
+  min-height: 18px;
+  margin: -8px 0 0;
+  padding: 0 2px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ma-email-status.success {
+  color: #15803d;
+}
+
+.ma-email-status.error {
+  color: #dc2626;
+}
+
 body[data-theme="dark"] .download-btn {
   background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
   box-shadow: 0 4px 12px rgba(76,29,149,0.30), 0 1px 0 rgba(255,255,255,0.10) inset;
@@ -741,6 +762,10 @@ body[data-theme="dark"] .ma-reminder-btn:hover {
   .ma-bottom-row { grid-template-columns: 1fr; }
   .ma-donut-card { grid-column: span 1; }
   .month-selector { padding: 4px 10px; }
+  .main-header .header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
 }
 
 /* ── Mobile (≤640px) ────────────────────────────────────── */
@@ -760,6 +785,7 @@ body[data-theme="dark"] .ma-reminder-btn:hover {
 
   .month-selector { padding: 4px 8px; }
   .month-label    { font-size: 0.80rem; min-width: 90px; }
+  .ma-email-btn   { width: 100%; justify-content: center; }
 
   .ma-reminder-card { flex-direction: column; align-items: flex-start; gap: 10px; }
   .ma-reminder-btn  { width: 100%; text-align: center; }

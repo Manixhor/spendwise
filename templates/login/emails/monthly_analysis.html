@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SpendWise Monthly Analysis</title>
+</head>
+<body style="margin:0;background:#f6f4fb;color:#1f2937;font-family:Arial,sans-serif;">
+  <div style="max-width:720px;margin:0 auto;padding:28px 18px;">
+    <div style="background:#ffffff;border:1px solid #e7e2f3;border-radius:14px;padding:24px;">
+      <p style="margin:0 0 6px;color:#7c6bb0;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Monthly Analysis</p>
+      <h1 style="margin:0;color:#191724;font-size:28px;line-height:1.15;">{{ selected_month_label }}</h1>
+      <p style="margin:8px 0 22px;color:#6b7280;">{{ month_period_label }} · {{ account_subtitle }}</p>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:22px;">
+        <tr>
+          <td style="padding:14px;border:1px solid #ede9f7;border-radius:10px;">
+            <p style="margin:0;color:#6b7280;font-size:12px;font-weight:700;">Total Balance</p>
+            <p style="margin:6px 0 0;font-size:24px;font-weight:800;">{{ total_balance }}</p>
+            <p style="margin:4px 0 0;color:{% if balance_change_positive %}#15803d{% else %}#dc2626{% endif %};font-size:13px;font-weight:700;">
+              {% if balance_change_positive %}+{% endif %}{{ balance_change_pct|floatformat:1 }}% vs previous month
+            </p>
+          </td>
+        </tr>
+      </table>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:22px;">
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #eee;color:#6b7280;">Salary</td>
+          <td style="padding:12px;border-bottom:1px solid #eee;text-align:right;font-weight:700;">{{ salary }}</td>
+        </tr>
+        {% if has_excess_income %}
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #eee;color:#6b7280;">Excess Income</td>
+          <td style="padding:12px;border-bottom:1px solid #eee;text-align:right;font-weight:700;color:#15803d;">{{ excess_income }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #eee;color:#6b7280;">Income Transactions</td>
+          <td style="padding:12px;border-bottom:1px solid #eee;text-align:right;font-weight:700;color:#15803d;">{{ total_income }}</td>
+        </tr>
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #eee;color:#6b7280;">Expenses</td>
+          <td style="padding:12px;border-bottom:1px solid #eee;text-align:right;font-weight:700;color:#dc2626;">{{ total_expense }}</td>
+        </tr>
+        <tr>
+          <td style="padding:12px;color:#6b7280;">Saved</td>
+          <td style="padding:12px;text-align:right;font-weight:800;">{{ total_saved }}</td>
+        </tr>
+      </table>
+
+      <div style="background:#faf9ff;border:1px solid #ede9f7;border-radius:12px;padding:16px;margin-bottom:22px;">
+        <p style="margin:0 0 8px;font-size:15px;font-weight:800;">{{ reminder_title }}</p>
+        <p style="margin:0;color:#6b7280;font-size:13px;text-transform:uppercase;letter-spacing:.04em;">{{ reminder_sub }}</p>
+      </div>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:22px;">
+        <tr>
+          <td style="padding:14px;border:1px solid #ede9f7;border-radius:10px;">
+            <p style="margin:0;color:#6b7280;font-size:12px;font-weight:700;">Monthly Score</p>
+            <p style="margin:6px 0 0;font-size:22px;font-weight:800;">{{ monthly_score.value }}/100</p>
+            <p style="margin:4px 0 0;color:#6b7280;font-size:13px;">{{ monthly_score.title }}</p>
+          </td>
+        </tr>
+      </table>
+
+      <h2 style="margin:0 0 10px;font-size:18px;">Category Breakdown</h2>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:22px;">
+        {% for category in categories %}
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #eee;">{{ category.label }}</td>
+          <td style="padding:10px 0;border-bottom:1px solid #eee;text-align:right;color:#6b7280;">{{ category.share_pct|floatformat:1 }}%</td>
+          <td style="padding:10px 0;border-bottom:1px solid #eee;text-align:right;font-weight:700;">{{ category.amount }}</td>
+        </tr>
+        {% empty %}
+        <tr><td style="padding:10px 0;color:#6b7280;">No expense categories recorded for this month.</td></tr>
+        {% endfor %}
+      </table>
+
+      <h2 style="margin:0 0 10px;font-size:18px;">Spending by Week</h2>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:22px;">
+        {% for week in weekly_rows %}
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #eee;color:#6b7280;">{{ week.label }}</td>
+          <td style="padding:10px 0;border-bottom:1px solid #eee;text-align:right;font-weight:700;">{{ week.expense }}</td>
+        </tr>
+        {% empty %}
+        <tr><td style="padding:10px 0;color:#6b7280;">No weekly spending recorded for this month.</td></tr>
+        {% endfor %}
+      </table>
+
+      <h2 style="margin:0 0 10px;font-size:18px;">Top Spending Days</h2>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:22px;">
+        {% for day in top_days %}
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #eee;">{{ day.label }}</td>
+          <td style="padding:10px 0;border-bottom:1px solid #eee;color:#6b7280;">{{ day.summary }}</td>
+          <td style="padding:10px 0;border-bottom:1px solid #eee;text-align:right;font-weight:700;">{{ day.amount }}</td>
+        </tr>
+        {% empty %}
+        <tr><td style="padding:10px 0;color:#6b7280;">No top spending days recorded for this month.</td></tr>
+        {% endfor %}
+      </table>
+
+      <h2 style="margin:0 0 10px;font-size:18px;">Goal Snapshot</h2>
+      <div style="border:1px solid #ede9f7;border-radius:12px;padding:16px;">
+        <p style="margin:0 0 4px;font-weight:800;">{{ wealth_title }} · {{ wealth_badge }}</p>
+        <p style="margin:0 0 8px;color:#6b7280;">{{ wealth_amount_label }}</p>
+        <p style="margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;">{{ wealth_cta }}</p>
+        <p style="margin:0;color:#6b7280;">{{ wealth_progress_pct|floatformat:1 }}% · {{ wealth_sub }}</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

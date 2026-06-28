@@ -9,6 +9,7 @@ from .views import (
     monthly,
     savings,
     profile_view,
+    api_email_monthly_analysis,
     api_add_transaction,
     api_delete_transaction,
     api_update_transaction,
@@ -34,6 +35,11 @@ urlpatterns = [
     path("logout/", logout_view, name="logout"),
     path("dashboard/", dashboard, name="dashboard"),
     path("monthly/", monthly, name="monthly"),
+    path(
+        "monthly/email/",
+        api_email_monthly_analysis,
+        name="api_email_monthly_analysis",
+    ),
     path("savings/", savings, name="savings"),
     path("profile/", profile_view, name="profile"),
     # Transaction APIs
