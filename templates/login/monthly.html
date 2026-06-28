@@ -32,6 +32,10 @@
         </p>
       </div>
       <div class="header-actions">
+        <button type="button" class="download-btn ma-email-btn" id="emailAnalysisBtn">
+          <i class="fa-regular fa-envelope" aria-hidden="true"></i>
+          <span>Send Email</span>
+        </button>
         <div class="month-selector">
           <a class="month-btn" href="?month={{ prev_month_param }}" aria-label="Previous month">&#8249;</a>
           <span class="month-label" id="monthLabel">{{ selected_month_label }}</span>
@@ -43,6 +47,7 @@
         </div>
       </div>
     </header>
+    <p class="ma-email-status" id="emailAnalysisStatus" role="status" aria-live="polite"></p>
 
     <!-- Account + Balance row -->
     <div class="ma-top-row">
@@ -301,7 +306,44 @@
 
 <script>
 const CSRF = '{{ csrf_token }}';
-const SELECTED_MONTH = '{{ selected_month }}';
+const SELECTED_MONTH = '{{ selected_month_param }}';
+
+(function() {
+  const btn = document.getElementById('emailAnalysisBtn');
+  const status = document.getElementById('emailAnalysisStatus');
+  if (!btn || !status) return;
+
+  btn.addEventListener('click', async () => {
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Sending</span>';
+    status.textContent = '';
+    status.className = 'ma-email-status';
+
+    try {
+      const res = await fetch(`/monthly/email/?month=${encodeURIComponent(SELECTED_MONTH)}`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': CSRF,
+          'Content-Type': 'application/json',
+        },
+        body: '{}',
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Unable to send monthly analysis right now.');
+      }
+      status.textContent = data.message || 'Monthly analysis sent.';
+      status.classList.add('success');
+    } catch (err) {
+      status.textContent = err.message || 'Unable to send monthly analysis right now.';
+      status.classList.add('error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  });
+})();
 </script>
 </body>
 </html>

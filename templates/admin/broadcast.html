@@ -1,0 +1,205 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Send Broadcast Message{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+  .sw-broadcast {
+    max-width: 860px;
+    padding: 28px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  }
+
+  .sw-broadcast-card {
+    background: #fff;
+    border: 1px solid #e8e3f2;
+    border-radius: 18px;
+    box-shadow: 0 16px 40px rgba(40, 34, 72, 0.08);
+    padding: 28px;
+  }
+
+  .sw-broadcast-kicker {
+    color: #5e5ce6;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+  }
+
+  .sw-broadcast-title {
+    color: #1c1c1e;
+    font-size: 2rem;
+    font-weight: 850;
+    letter-spacing: -0.05em;
+    margin: 0;
+  }
+
+  .sw-broadcast-copy {
+    color: #6b7280;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 10px 0 24px;
+  }
+
+  .sw-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .sw-pill {
+    background: #f4f2ff;
+    border: 1px solid #e2ddff;
+    border-radius: 999px;
+    color: #4f46e5;
+    font-size: 0.82rem;
+    font-weight: 750;
+    padding: 8px 12px;
+  }
+
+  .sw-form-group {
+    margin-bottom: 18px;
+  }
+
+  .sw-form-label {
+    color: #2c2c2e;
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .sw-input,
+  .sw-textarea {
+    background: #fbfbff;
+    border: 1px solid #dad5ea;
+    border-radius: 14px;
+    box-sizing: border-box;
+    color: #1c1c1e;
+    font: inherit;
+    outline: none;
+    padding: 13px 15px;
+    transition: border 0.16s ease, box-shadow 0.16s ease;
+    width: 100%;
+  }
+
+  .sw-textarea {
+    min-height: 190px;
+    resize: vertical;
+  }
+
+  .sw-input:focus,
+  .sw-textarea:focus {
+    border-color: #5e5ce6;
+    box-shadow: 0 0 0 4px rgba(94, 92, 230, 0.12);
+  }
+
+  .sw-error {
+    color: #dc2626;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin: 7px 0 0;
+  }
+
+  .sw-alert {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 14px;
+    color: #be123c;
+    font-weight: 750;
+    margin-bottom: 18px;
+    padding: 12px 14px;
+  }
+
+  .sw-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  .sw-send-btn,
+  .sw-back-btn {
+    border-radius: 13px;
+    display: inline-flex;
+    font-size: 0.9rem;
+    font-weight: 850;
+    justify-content: center;
+    padding: 12px 18px;
+    text-decoration: none;
+  }
+
+  .sw-send-btn {
+    background: linear-gradient(135deg, #16a34a, #0ea5e9);
+    border: 0;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 14px 28px rgba(14, 165, 233, 0.18);
+  }
+
+  .sw-back-btn {
+    background: #f5f5f7;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sw-broadcast">
+  <div class="sw-broadcast-card">
+    <p class="sw-broadcast-kicker">Admin broadcast</p>
+    <h1 class="sw-broadcast-title">Send message to all users</h1>
+    <p class="sw-broadcast-copy">
+      This sends one email using BCC, so users cannot see each other's email addresses.
+      Active users with saved email addresses will receive it.
+    </p>
+
+    <div class="sw-meta-row">
+      <span class="sw-pill">{{ recipient_count }} recipient{{ recipient_count|pluralize }}</span>
+      <span class="sw-pill">{{ email_backend }}</span>
+    </div>
+
+    {% if errors.general %}
+      <div class="sw-alert">{{ errors.general }}</div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="sw-form-group">
+        <label class="sw-form-label" for="subject">Subject</label>
+        <input
+          class="sw-input"
+          id="subject"
+          name="subject"
+          placeholder="Example: New SpendWise update is live"
+          value="{{ form.subject|default:'' }}"
+          required
+        />
+        {% if errors.subject %}<p class="sw-error">{{ errors.subject }}</p>{% endif %}
+      </div>
+
+      <div class="sw-form-group">
+        <label class="sw-form-label" for="message">Message</label>
+        <textarea
+          class="sw-textarea"
+          id="message"
+          name="message"
+          placeholder="Write your announcement here..."
+          required
+        >{{ form.message|default:'' }}</textarea>
+        {% if errors.message %}<p class="sw-error">{{ errors.message }}</p>{% endif %}
+      </div>
+
+      <div class="sw-actions">
+        <button class="sw-send-btn" type="submit">Send to all users</button>
+        <a class="sw-back-btn" href="/admin/">Back to admin</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

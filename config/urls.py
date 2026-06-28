@@ -20,7 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
-from login.admin_views import admin_dashboard
+from login.admin_views import admin_broadcast, admin_dashboard
 
 urlpatterns = [
     path(
@@ -33,6 +33,7 @@ urlpatterns = [
     ),
     path('accounts/', include('allauth.urls')),
     path('admin/analytics/', admin_dashboard, name='admin_dashboard'),
+    path('admin/broadcast/', admin_broadcast, name='admin_broadcast'),
     path('admin/', admin.site.urls),
     path('', include('login.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

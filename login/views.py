@@ -14,14 +14,18 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.mail import EmailMultiAlternatives
 from django.core.validators import validate_email
 from django.db.models import Sum, Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from .models import Transaction, UserProfile, SavingsGoal
 from .spending_coach import fetch_dad_joke, fetch_motivation, get_spending_message
+from .templatetags.currency_filters import indian_currency
 
 
 # ── Smart Savings Motivation ──────────────────────────────
@@ -921,6 +925,63 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
         "wealth_badge": wealth_badge,
         "wealth_cta": wealth_cta,
         "spend_ratio_pct": spend_ratio,
+    }
+
+
+def _build_monthly_analysis_email_context(user, profile, analysis: dict) -> dict:
+    weekly_rows = [
+        {
+            "label": week["range_label"],
+            "expense": indian_currency(week["expense"]),
+        }
+        for week in analysis["weekly_chart"]["weeks"]
+        if float(week["expense"]) > 0
+    ]
+    top_days = [
+        {
+            "label": day["label"],
+            "summary": day["summary"],
+            "amount": indian_currency(day["amount"]),
+        }
+        for day in analysis["top_spending_days"]
+    ]
+    categories = [
+        {
+            "label": category["label"],
+            "amount": indian_currency(category["amount"]),
+            "share_pct": category["share_pct"],
+        }
+        for category in analysis["categories"]
+    ]
+
+    return {
+        "user": user,
+        "profile": profile,
+        "selected_month_label": analysis["selected_month_label"],
+        "month_period_label": analysis["month_period_label"],
+        "account_subtitle": analysis["account_subtitle"],
+        "total_income": indian_currency(analysis["total_income"]),
+        "salary": indian_currency(profile.salary) if profile.salary else "Not set",
+        "excess_income": indian_currency(analysis["excess_income"]),
+        "has_excess_income": analysis["has_excess_income"],
+        "total_expense": indian_currency(analysis["total_expense"]),
+        "total_saved": indian_currency(analysis["total_saved"], True),
+        "total_balance": indian_currency(analysis["total_balance"]),
+        "balance_change_pct": analysis["balance_change_pct"],
+        "balance_change_positive": analysis["balance_change_positive"],
+        "spend_ratio_pct": analysis["spend_ratio_pct"],
+        "monthly_score": analysis["monthly_score"],
+        "reminder_title": analysis["reminder_title"],
+        "reminder_sub": analysis["reminder_sub"],
+        "wealth_title": analysis["wealth_title"],
+        "wealth_amount_label": analysis["wealth_amount_label"],
+        "wealth_badge": analysis["wealth_badge"],
+        "wealth_cta": analysis["wealth_cta"],
+        "wealth_progress_pct": analysis["wealth_progress_pct"],
+        "wealth_sub": analysis["wealth_sub"],
+        "categories": categories,
+        "weekly_rows": weekly_rows,
+        "top_days": top_days,
     }
 
 
@@ -1858,6 +1919,53 @@ def monthly(request: HttpRequest) -> HttpResponse:
             "active_nav": "monthly",
             **monthly_analysis,
         },
+    )
+
+
+# ── API: Email Monthly Analysis ───────────────────────────
+@login_required(login_url="/login/")
+@require_POST
+def api_email_monthly_analysis(request: HttpRequest) -> JsonResponse:
+    recipient = (request.user.email or "").strip()
+    if not recipient:
+        return JsonResponse(
+            {"error": "Add an email address in your profile before sending reports."},
+            status=400,
+        )
+
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    analysis = _build_monthly_analysis(
+        request.user,
+        profile,
+        _parse_month_param(request.GET.get("month")),
+    )
+    email_context = _build_monthly_analysis_email_context(
+        request.user, profile, analysis
+    )
+    subject = f"SpendWise Monthly Analysis - {analysis['selected_month_label']}"
+    html_body = render_to_string("login/emails/monthly_analysis.html", email_context)
+    text_body = strip_tags(html_body)
+
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[recipient],
+    )
+    email.attach_alternative(html_body, "text/html")
+    try:
+        email.send(fail_silently=False)
+    except Exception:
+        return JsonResponse(
+            {"error": "Email could not be sent. Please check SMTP settings."},
+            status=502,
+        )
+
+    return JsonResponse(
+        {
+            "success": True,
+            "message": f"Monthly analysis sent to {recipient}.",
+        }
     )
 
 

@@ -2,6 +2,7 @@ import json
 from datetime import date
 from decimal import Decimal
 
+from django.core import mail
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -156,3 +157,35 @@ class MonthlyAnalysisTests(TestCase):
         self.assertGreaterEqual(len(response.context['weekly_chart']['weeks']), 4)
         self.assertEqual(response.context['top_spending_days'][0]['label'], 'May 03')
         self.assertGreater(response.context['monthly_score']['value'], 0)
+
+    def test_email_monthly_analysis_sends_same_month_summary(self):
+        Transaction.objects.bulk_create([
+            Transaction(
+                user=self.user,
+                title='Rent',
+                amount=Decimal('2500.00'),
+                txn_type='expense',
+                category='rent',
+                date=date(2026, 5, 3),
+            ),
+            Transaction(
+                user=self.user,
+                title='Groceries',
+                amount=Decimal('700.00'),
+                txn_type='expense',
+                category='groceries',
+                date=date(2026, 5, 10),
+            ),
+        ])
+
+        response = self.client.post(
+            f"{reverse('api_email_monthly_analysis')}?month=2026-05",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['monthly@example.com'])
+        self.assertIn('May 2026', mail.outbox[0].subject)
+        self.assertIn('Rent', mail.outbox[0].body)
+        self.assertIn('₹3,200.00', mail.outbox[0].body)

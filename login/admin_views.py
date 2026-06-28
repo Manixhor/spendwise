@@ -6,11 +6,14 @@ import json
 from datetime import date, timedelta
 from decimal import Decimal
 
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
+from django.core.mail import EmailMessage
 from django.db.models import Count, Sum
 from django.db.models.functions import TruncDate, TruncMonth
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 
@@ -196,3 +199,70 @@ def admin_dashboard(request):
         'has_permission':     True,
     }
     return render(request, 'admin/dashboard.html', context)
+
+
+@staff_member_required
+def admin_broadcast(request):
+    recipient_count = (
+        User.objects
+        .filter(is_active=True, email__gt='')
+        .exclude(email__isnull=True)
+        .values('email')
+        .distinct()
+        .count()
+    )
+
+    if request.method == 'POST':
+        subject = request.POST.get('subject', '').strip()
+        body = request.POST.get('message', '').strip()
+        errors = {}
+
+        if not subject:
+            errors['subject'] = 'Subject is required.'
+        if not body:
+            errors['message'] = 'Message is required.'
+
+        recipients = list(
+            User.objects
+            .filter(is_active=True, email__gt='')
+            .exclude(email__isnull=True)
+            .values_list('email', flat=True)
+            .distinct()
+        )
+
+        if not recipients:
+            errors['general'] = 'No active users with email addresses were found.'
+
+        if errors:
+            return render(request, 'admin/broadcast.html', {
+                'title': 'Send Broadcast Message',
+                'errors': errors,
+                'form': {'subject': subject, 'message': body},
+                'recipient_count': recipient_count,
+                'email_backend': settings.EMAIL_BACKEND,
+            })
+
+        email = EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[settings.DEFAULT_FROM_EMAIL],
+            bcc=recipients,
+            reply_to=[settings.DEFAULT_FROM_EMAIL],
+        )
+        sent_count = email.send(fail_silently=False)
+
+        if sent_count:
+            messages.success(
+                request,
+                f'Broadcast queued for {len(recipients)} user email address(es).'
+            )
+        else:
+            messages.error(request, 'Email backend did not send the broadcast.')
+        return redirect('admin_broadcast')
+
+    return render(request, 'admin/broadcast.html', {
+        'title': 'Send Broadcast Message',
+        'recipient_count': recipient_count,
+        'email_backend': settings.EMAIL_BACKEND,
+    })
