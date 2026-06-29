@@ -20,6 +20,7 @@ from django.db.models import Sum, Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.html import strip_tags
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
@@ -1154,6 +1155,39 @@ def onboarding(request: HttpRequest) -> HttpResponse:
     return render(request, "login/onboarding.html")
 
 
+def _issue_signup_otp(profile: UserProfile) -> str:
+    code = f"{random.randint(100000, 999999)}"
+    profile.email_verification_code = code
+    profile.email_verification_sent_at = timezone.now()
+    profile.email_is_verified = False
+    profile.save(
+        update_fields=[
+            "email_verification_code",
+            "email_verification_sent_at",
+            "email_is_verified",
+        ]
+    )
+    return code
+
+
+def _send_signup_otp_email(user: User, code: str) -> None:
+    expiry_minutes = getattr(settings, "EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES", 10)
+    name = user.first_name or user.username or "there"
+    body = (
+        f"Hi {name},\n\n"
+        f"Use this 6-digit OTP to verify your SpendWise account: {code}\n\n"
+        f"This OTP expires in {expiry_minutes} minutes.\n\n"
+        "If you did not create this account, you can ignore this email."
+    )
+    email = EmailMultiAlternatives(
+        subject="Verify your SpendWise account",
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user.email],
+    )
+    email.send(fail_silently=False)
+
+
 # ── Sign Up ───────────────────────────────────────────────
 def signup(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
@@ -1203,7 +1237,7 @@ def signup(request: HttpRequest) -> HttpResponse:
             user.first_name = name.split()[0]
             user.last_name = " ".join(name.split()[1:]) if len(name.split()) > 1 else ""
             user.set_password(password)
-            user.is_active = True
+            user.is_active = False
             user.save(
                 update_fields=[
                     "username",
@@ -1223,18 +1257,99 @@ def signup(request: HttpRequest) -> HttpResponse:
                 password=password,
                 first_name=name.split()[0],
                 last_name=" ".join(name.split()[1:]) if len(name.split()) > 1 else "",
-                is_active=True,
+                is_active=False,
             )
             profile = UserProfile.objects.create(user=user)
 
-        login(request, user)
-        messages.success(
-            request,
-            f"Welcome to SpendWise, {user.first_name}! Your account is ready.",
-        )
-        return redirect("dashboard")
+        code = _issue_signup_otp(profile)
+        try:
+            _send_signup_otp_email(user, code)
+        except Exception:
+            return render(
+                request,
+                "login/signup.html",
+                {
+                    "errors": {
+                        "general": (
+                            "We could not send your OTP right now. "
+                            "Please check SMTP settings and try again."
+                        )
+                    },
+                    "form": request.POST,
+                },
+            )
+
+        request.session["pending_signup_user_id"] = user.id
+        messages.success(request, f"We sent a 6-digit OTP to {user.email}.")
+        return redirect("signup_verify")
 
     return render(request, "login/signup.html")
+
+
+def signup_verify(request: HttpRequest) -> HttpResponse:
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    pending_user_id = request.session.get("pending_signup_user_id")
+    user = User.objects.filter(id=pending_user_id, is_active=False).first()
+    if not user:
+        messages.error(request, "Your verification session expired. Please sign up again.")
+        return redirect("signup")
+
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    errors = {}
+
+    if request.method == "POST":
+        action = request.POST.get("action", "verify")
+
+        if action == "resend":
+            code = _issue_signup_otp(profile)
+            try:
+                _send_signup_otp_email(user, code)
+                messages.success(request, f"A fresh OTP was sent to {user.email}.")
+            except Exception:
+                errors["general"] = "We could not resend the OTP. Please check SMTP settings."
+            return render(
+                request,
+                "login/signup_verify.html",
+                {"errors": errors, "email": user.email},
+            )
+
+        code = request.POST.get("otp", "").strip()
+        expiry_minutes = getattr(settings, "EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES", 10)
+        sent_at = profile.email_verification_sent_at
+
+        if not code:
+            errors["otp"] = "Enter the 6-digit OTP."
+        elif code != profile.email_verification_code:
+            errors["otp"] = "That OTP is incorrect."
+        elif not sent_at or timezone.now() > sent_at + timedelta(minutes=expiry_minutes):
+            errors["otp"] = "That OTP expired. Please resend a new one."
+
+        if not errors:
+            profile.email_is_verified = True
+            profile.email_verification_code = ""
+            profile.save(
+                update_fields=[
+                    "email_is_verified",
+                    "email_verification_code",
+                ]
+            )
+            user.is_active = True
+            user.save(update_fields=["is_active"])
+            request.session.pop("pending_signup_user_id", None)
+            login(request, user)
+            messages.success(
+                request,
+                f"Welcome to SpendWise, {user.first_name}! Your account is verified.",
+            )
+            return redirect("dashboard")
+
+    return render(
+        request,
+        "login/signup_verify.html",
+        {"errors": errors, "email": user.email},
+    )
 
 
 

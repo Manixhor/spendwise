@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     onboarding,
     signup,
+    signup_verify,
     login_view,
     logout_view,
     dashboard,
@@ -31,6 +32,7 @@ from .views import (
 urlpatterns = [
     path("", onboarding, name="onboarding"),
     path("signup/", signup, name="signup"),
+    path("signup/verify/", signup_verify, name="signup_verify"),
     path("login/", login_view, name="login"),
     path("logout/", logout_view, name="logout"),
     path("dashboard/", dashboard, name="dashboard"),
