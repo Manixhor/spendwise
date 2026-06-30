@@ -1261,27 +1261,18 @@ def signup(request: HttpRequest) -> HttpResponse:
             )
             profile = UserProfile.objects.create(user=user)
 
-        code = _issue_signup_otp(profile)
-        try:
-            _send_signup_otp_email(user, code)
-        except Exception:
-            return render(
-                request,
-                "login/signup.html",
-                {
-                    "errors": {
-                        "general": (
-                            "We could not send your OTP right now. "
-                            "Please check SMTP settings and try again."
-                        )
-                    },
-                    "form": request.POST,
-                },
-            )
-
-        request.session["pending_signup_user_id"] = user.id
-        messages.success(request, f"We sent a 6-digit OTP to {user.email}.")
-        return redirect("signup_verify")
+        # OTP signup is paused for now. To re-enable it, make users inactive,
+        # call _issue_signup_otp(profile), send _send_signup_otp_email(...),
+        # store pending_signup_user_id in session, then redirect to signup_verify.
+        profile.email_is_verified = True
+        profile.email_verification_code = ""
+        profile.save(update_fields=["email_is_verified", "email_verification_code"])
+        login(request, user)
+        messages.success(
+            request,
+            f"Welcome to SpendWise, {user.first_name}! Your account is ready.",
+        )
+        return redirect("dashboard")
 
     return render(request, "login/signup.html")
 
@@ -1345,11 +1336,7 @@ def signup_verify(request: HttpRequest) -> HttpResponse:
             )
             return redirect("dashboard")
 
-    return render(
-        request,
-        "login/signup_verify.html",
-        {"errors": errors, "email": user.email},
-    )
+    return render(request, "login/signup.html")
 
 
 

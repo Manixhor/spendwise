@@ -32,7 +32,8 @@ from .views import (
 urlpatterns = [
     path("", onboarding, name="onboarding"),
     path("signup/", signup, name="signup"),
-    path("signup/verify/", signup_verify, name="signup_verify"),
+    # OTP verification is paused for now.
+    # path("signup/verify/", signup_verify, name="signup_verify"),
     path("login/", login_view, name="login"),
     path("logout/", logout_view, name="logout"),
     path("dashboard/", dashboard, name="dashboard"),
