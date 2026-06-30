@@ -32,10 +32,40 @@
         </p>
       </div>
       <div class="header-actions">
-        <button type="button" class="download-btn ma-email-btn" id="emailAnalysisBtn">
-          <i class="fa-regular fa-envelope" aria-hidden="true"></i>
-          <span>Send Email</span>
-        </button>
+        <div class="download-dropdown">
+          <button type="button" class="download-btn" id="exportBtn" aria-haspopup="true" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export
+            <svg class="download-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="download-menu" id="exportMenu" role="menu">
+            <button class="download-option" role="menuitem" data-export="pdf">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              Export as PDF
+            </button>
+            <button class="download-option" role="menuitem" data-export="csv">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              Export as CSV
+            </button>
+          </div>
+        </div>
         <div class="month-selector">
           <a class="month-btn" href="?month={{ prev_month_param }}" aria-label="Previous month">&#8249;</a>
           <span class="month-label" id="monthLabel">{{ selected_month_label }}</span>
@@ -47,8 +77,6 @@
         </div>
       </div>
     </header>
-    <p class="ma-email-status" id="emailAnalysisStatus" role="status" aria-live="polite"></p>
-
     <!-- Account + Balance row -->
     <div class="ma-top-row">
 
@@ -309,40 +337,33 @@ const CSRF = '{{ csrf_token }}';
 const SELECTED_MONTH = '{{ selected_month_param }}';
 
 (function() {
-  const btn = document.getElementById('emailAnalysisBtn');
-  const status = document.getElementById('emailAnalysisStatus');
-  if (!btn || !status) return;
+  const exportBtn = document.getElementById('exportBtn');
+  const exportMenu = document.getElementById('exportMenu');
 
-  btn.addEventListener('click', async () => {
-    const original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Sending</span>';
-    status.textContent = '';
-    status.className = 'ma-email-status';
+  if (exportBtn && exportMenu) {
+    exportBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = exportMenu.classList.toggle('show');
+      exportBtn.setAttribute('aria-expanded', isOpen);
+    });
 
-    try {
-      const res = await fetch(`/monthly/email/?month=${encodeURIComponent(SELECTED_MONTH)}`, {
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': CSRF,
-          'Content-Type': 'application/json',
-        },
-        body: '{}',
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Unable to send monthly analysis right now.');
-      }
-      status.textContent = data.message || 'Monthly analysis sent.';
-      status.classList.add('success');
-    } catch (err) {
-      status.textContent = err.message || 'Unable to send monthly analysis right now.';
-      status.classList.add('error');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = original;
-    }
-  });
+    document.addEventListener('click', () => {
+      exportMenu.classList.remove('show');
+      exportBtn.setAttribute('aria-expanded', 'false');
+    });
+
+    exportMenu.addEventListener('click', (e) => {
+      const option = e.target.closest('[data-export]');
+      if (!option) return;
+      const format = option.dataset.export;
+      const url = format === 'pdf'
+        ? `/monthly/export/pdf/?month=${encodeURIComponent(SELECTED_MONTH)}`
+        : `/monthly/export/csv/?month=${encodeURIComponent(SELECTED_MONTH)}`;
+      window.open(url, '_blank');
+      exportMenu.classList.remove('show');
+      exportBtn.setAttribute('aria-expanded', 'false');
+    });
+  }
 })();
 </script>
 </body>
