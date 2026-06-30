@@ -141,6 +141,186 @@ body[data-theme="dark"] .download-option:hover {
   color: #e0e7ff;
 }
 
+/* ── Export Modal ─────────────────────────────────────────── */
+.export-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.export-modal.show {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.export-modal-open {
+  overflow: hidden;
+}
+
+.export-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(126, 87, 255, 0.22), transparent 32%),
+    radial-gradient(circle at 88% 78%, rgba(45, 212, 191, 0.16), transparent 34%),
+    rgba(2, 6, 23, 0.68);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+}
+
+.export-modal__card {
+  position: relative;
+  width: min(540px, 100%);
+  border-radius: 32px;
+  padding: 34px;
+  color: #f8fafc;
+  background:
+    linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(8, 13, 28, 0.98)),
+    radial-gradient(circle at 75% 20%, rgba(139, 92, 246, 0.24), transparent 34%);
+  border: 1px solid rgba(226, 232, 240, 0.30);
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.45),
+    0 1px 0 rgba(255, 255, 255, 0.16) inset;
+  transform: translateY(14px) scale(0.98);
+  transition: transform 0.24s ease;
+}
+
+.export-modal.show .export-modal__card {
+  transform: translateY(0) scale(1);
+}
+
+.export-modal__close {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(135deg, #7c2dd5, #9333ea);
+  box-shadow: 0 12px 28px rgba(124, 45, 213, 0.34), 0 1px 0 rgba(255,255,255,0.25) inset;
+  cursor: pointer;
+}
+
+.export-modal__eyebrow {
+  margin: 0 0 8px;
+  color: #aab8d6;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.export-modal__card h2 {
+  margin: 0 56px 10px 0;
+  font-size: clamp(1.7rem, 6vw, 2.35rem);
+  letter-spacing: -0.04em;
+}
+
+.export-modal__copy {
+  margin: 0 0 24px;
+  max-width: 420px;
+  color: #aab8d6;
+  line-height: 1.55;
+}
+
+.export-modal__formats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.export-format {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 86px;
+  padding: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 22px;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.62);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.export-format:hover,
+.export-format.is-selected {
+  transform: translateY(-1px);
+  border-color: rgba(168, 85, 247, 0.74);
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.72), rgba(49, 46, 129, 0.64));
+}
+
+.export-format__icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  color: #fdf4ff;
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.16) inset;
+  flex: 0 0 auto;
+}
+
+.export-format strong,
+.export-format small {
+  display: block;
+}
+
+.export-format strong {
+  font-size: 0.98rem;
+}
+
+.export-format small {
+  margin-top: 3px;
+  color: #b6c2dd;
+  font-size: 0.76rem;
+}
+
+.export-modal__actions {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 12px;
+}
+
+.export-cancel-btn,
+.export-download-btn {
+  min-height: 54px;
+  border-radius: 20px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.export-cancel-btn {
+  color: #dbeafe;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.export-download-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: #fff;
+  background: linear-gradient(135deg, #6d28d9, #9333ea);
+  border: 1px solid rgba(255,255,255,0.20);
+  box-shadow: 0 18px 36px rgba(109, 40, 217, 0.32), 0 1px 0 rgba(255,255,255,0.20) inset;
+}
+
 /* ── Month selector ─────────────────────────────────────── */
 .month-selector {
   display: flex;
@@ -750,6 +930,70 @@ body[data-theme="dark"] .ma-reminder-btn:hover {
 /* ── Mobile (≤640px) ────────────────────────────────────── */
 @media (max-width: 640px) {
   .monthly-main { gap: 12px; }
+
+  .monthly-main .main-header {
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .monthly-main .header-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .download-dropdown,
+  .download-btn,
+  .month-selector {
+    width: 100%;
+  }
+
+  .download-btn {
+    justify-content: center;
+    min-height: 46px;
+    border-radius: 16px;
+  }
+
+  .download-menu {
+    left: 0;
+    right: 0;
+    min-width: 100%;
+    border-radius: 18px;
+  }
+
+  .download-option {
+    min-height: 48px;
+    justify-content: center;
+    font-weight: 700;
+  }
+
+  .export-modal {
+    align-items: end;
+    padding: 14px;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  .export-modal__card {
+    border-radius: 28px;
+    padding: 28px 22px 22px;
+  }
+
+  .export-modal__close {
+    top: 18px;
+    right: 18px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .export-modal__formats,
+  .export-modal__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .export-format {
+    min-height: 76px;
+  }
 
   .ma-top-row    { grid-template-columns: 1fr; }
   .ma-stats-card { grid-column: span 1; }

@@ -31,7 +31,6 @@ urlpatterns = [
         )),
         name='service_worker',
     ),
-    path('accounts/', include('allauth.urls')),
     path('admin/analytics/', admin_dashboard, name='admin_dashboard'),
     path('admin/broadcast/', admin_broadcast, name='admin_broadcast'),
     path('admin/', admin.site.urls),

@@ -1237,7 +1237,7 @@ def signup(request: HttpRequest) -> HttpResponse:
             user.first_name = name.split()[0]
             user.last_name = " ".join(name.split()[1:]) if len(name.split()) > 1 else ""
             user.set_password(password)
-            user.is_active = False
+            user.is_active = True
             user.save(
                 update_fields=[
                     "username",
@@ -1257,7 +1257,7 @@ def signup(request: HttpRequest) -> HttpResponse:
                 password=password,
                 first_name=name.split()[0],
                 last_name=" ".join(name.split()[1:]) if len(name.split()) > 1 else "",
-                is_active=False,
+                is_active=True,
             )
             profile = UserProfile.objects.create(user=user)
 
@@ -2099,15 +2099,24 @@ def api_export_monthly_pdf(request: HttpRequest) -> HttpResponse:
         user=request.user, date__gte=start_date, date__lte=end_date
     ).order_by("-date")
 
-    # Calculate totals
-    total_income = sum(t.amount for t in transactions.filter(txn_type="income"))
-    total_expense = sum(t.amount for t in transactions.filter(txn_type="expense"))
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    analysis = _build_monthly_analysis(request.user, profile, month_date)
+    total_expense = analysis["total_expense"]
+    if profile.salary:
+        total_income = Decimal(str(profile.salary)) + analysis["excess_income"]
+    else:
+        total_income = analysis["total_income"]
+    total_saved = total_income - total_expense
 
-    # Simple HTML to PDF response
+    def money_html(value):
+        return f"Rs. {value:,.2f}"
+
+    # Simple printable HTML response for PDF export.
     html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
+        <meta charset="utf-8">
         <title>Monthly Report - {month_date.strftime("%B %Y")}</title>
         <style>
             body {{ font-family: Arial, sans-serif; padding: 40px; }}
@@ -2124,20 +2133,24 @@ def api_export_monthly_pdf(request: HttpRequest) -> HttpResponse:
         <h1>Monthly Analysis Report</h1>
         <p>Month: {month_date.strftime("%B %Y")}</p>
         <div class="summary">
-            <p><strong>Total Income:</strong> <span class="positive">₹{total_income:,.2f}</span></p>
-            <p><strong>Total Expenses:</strong> <span class="negative">₹{total_expense:,.2f}</span></p>
-            <p><strong>Net Savings:</strong> <span class="{"positive" if total_income - total_expense >= 0 else "negative"}">₹{total_income - total_expense:,.2f}</span></p>
+            <p><strong>Total Income:</strong> <span class="positive">{money_html(total_income)}</span></p>
+            <p><strong>Total Expenses:</strong> <span class="negative">{money_html(total_expense)}</span></p>
+            <p><strong>Net Savings:</strong> <span class="{"positive" if total_saved >= 0 else "negative"}">{money_html(total_saved)}</span></p>
         </div>
         <h2>Transactions</h2>
         <table>
             <tr><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th>Amount</th></tr>
-            {"".join(f"<tr><td>{t.date}</td><td>{t.txn_type}</td><td>{t.category}</td><td>{t.title}</td><td class={'positive' if t.txn_type == 'income' else 'negative'}>{'+' if t.txn_type == 'income' else '-'}₹{t.amount:,.2f}</td></tr>" for t in transactions)}
+            {"".join(f"<tr><td>{t.date}</td><td>{t.txn_type}</td><td>{t.category}</td><td>{t.title}</td><td class={'positive' if t.txn_type == 'income' else 'negative'}>{'+' if t.txn_type == 'income' else '-'}{money_html(t.amount)}</td></tr>" for t in transactions)}
         </table>
     </body>
     </html>
     """
 
-    return HttpResponse(html_content, content_type="text/html")
+    response = HttpResponse(html_content, content_type="text/html; charset=utf-8")
+    response["Content-Disposition"] = (
+        f"inline; filename=Monthly_Analysis_{month_date.strftime('%Y-%m')}.html"
+    )
+    return response
 
 
 @login_required(login_url="/login/")
@@ -2172,8 +2185,14 @@ def api_export_monthly_xlsx(request: HttpRequest) -> HttpResponse:
     ws.title = "Monthly Report"
 
     # Summary section
-    total_income = sum(t.amount for t in transactions.filter(txn_type="income"))
-    total_expense = sum(t.amount for t in transactions.filter(txn_type="expense"))
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    analysis = _build_monthly_analysis(request.user, profile, month_date)
+    total_expense = analysis["total_expense"]
+    if profile.salary:
+        total_income = Decimal(str(profile.salary)) + analysis["excess_income"]
+    else:
+        total_income = analysis["total_income"]
+    total_saved = total_income - total_expense
 
     ws["A1"] = f"Monthly Analysis Report - {month_date.strftime('%B %Y')}"
     ws["A1"].font = openpyxl.styles.Font(bold=True, size=14)
@@ -2243,8 +2262,14 @@ def api_export_monthly_csv(request: HttpRequest) -> HttpResponse:
         user=request.user, date__gte=start_date, date__lte=end_date
     ).order_by("-date")
 
-    total_income = sum(t.amount for t in transactions.filter(txn_type="income"))
-    total_expense = sum(t.amount for t in transactions.filter(txn_type="expense"))
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    analysis = _build_monthly_analysis(request.user, profile, month_date)
+    total_expense = analysis["total_expense"]
+    if profile.salary:
+        total_income = Decimal(str(profile.salary)) + analysis["excess_income"]
+    else:
+        total_income = analysis["total_income"]
+    total_saved = total_income - total_expense
 
     buffer = io.StringIO()
     writer = csv.writer(buffer)
@@ -2254,7 +2279,7 @@ def api_export_monthly_csv(request: HttpRequest) -> HttpResponse:
     writer.writerow(["Summary"])
     writer.writerow(["Total Income", float(total_income)])
     writer.writerow(["Total Expenses", float(total_expense)])
-    writer.writerow(["Net Savings", float(total_income - total_expense)])
+    writer.writerow(["Net Savings", float(total_saved)])
     writer.writerow([])
     writer.writerow(["Date", "Type", "Category", "Description", "Amount"])
 
@@ -2268,7 +2293,10 @@ def api_export_monthly_csv(request: HttpRequest) -> HttpResponse:
             f"{sign}{float(t.amount):,.2f}",
         ])
 
-    response = HttpResponse(buffer.getvalue(), content_type="text/csv")
+    response = HttpResponse(
+        "\ufeff" + buffer.getvalue(),
+        content_type="text/csv; charset=utf-8",
+    )
     response["Content-Disposition"] = (
         f"attachment; filename=Monthly_Analysis_{month_date.strftime('%Y-%m')}.csv"
     )

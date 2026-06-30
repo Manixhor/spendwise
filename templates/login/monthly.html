@@ -33,7 +33,7 @@
       </div>
       <div class="header-actions">
         <div class="download-dropdown">
-          <button type="button" class="download-btn" id="exportBtn" aria-haspopup="true" aria-expanded="false">
+	          <button type="button" class="download-btn" id="exportBtn" aria-haspopup="dialog" aria-expanded="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>
@@ -44,8 +44,8 @@
               <polyline points="6 9 12 15 18 9"/>
             </svg>
           </button>
-          <div class="download-menu" id="exportMenu" role="menu">
-            <button class="download-option" role="menuitem" data-export="pdf">
+	          <div class="download-menu" id="exportMenu" role="menu">
+	            <button class="download-option" role="menuitem" data-export="pdf" type="button">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
@@ -54,7 +54,7 @@
               </svg>
               Export as PDF
             </button>
-            <button class="download-option" role="menuitem" data-export="csv">
+	            <button class="download-option" role="menuitem" data-export="csv" type="button">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
@@ -332,6 +332,44 @@
 
 </div>
 
+<div class="export-modal" id="exportModal" aria-hidden="true">
+  <div class="export-modal__backdrop" data-export-cancel></div>
+  <section class="export-modal__card" role="dialog" aria-modal="true" aria-labelledby="exportModalTitle">
+    <button class="export-modal__close" type="button" data-export-cancel aria-label="Close export dialog">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <p class="export-modal__eyebrow">Monthly report</p>
+    <h2 id="exportModalTitle">Export Analysis</h2>
+    <p class="export-modal__copy">Choose a format for {{ selected_month_label }}. We’ll prepare the file with your income, expenses, and savings summary.</p>
+
+    <div class="export-modal__formats" role="radiogroup" aria-label="Export format">
+      <button class="export-format is-selected" type="button" data-export-choice="pdf" role="radio" aria-checked="true">
+        <span class="export-format__icon"><i class="fa-regular fa-file-pdf"></i></span>
+        <span>
+          <strong>PDF</strong>
+          <small>Clean printable report</small>
+        </span>
+      </button>
+      <button class="export-format" type="button" data-export-choice="csv" role="radio" aria-checked="false">
+        <span class="export-format__icon"><i class="fa-solid fa-table"></i></span>
+        <span>
+          <strong>CSV</strong>
+          <small>Spreadsheet-friendly data</small>
+        </span>
+      </button>
+    </div>
+
+    <div class="export-modal__actions">
+      <button class="export-cancel-btn" type="button" data-export-cancel>Cancel</button>
+      <button class="export-download-btn" type="button" id="exportDownloadBtn">
+        <i class="fa-solid fa-download"></i>
+        Download PDF
+      </button>
+    </div>
+  </section>
+</div>
+
 <script>
 const CSRF = '{{ csrf_token }}';
 const SELECTED_MONTH = '{{ selected_month_param }}';
@@ -339,31 +377,86 @@ const SELECTED_MONTH = '{{ selected_month_param }}';
 (function() {
   const exportBtn = document.getElementById('exportBtn');
   const exportMenu = document.getElementById('exportMenu');
+  const exportModal = document.getElementById('exportModal');
+  const exportDownloadBtn = document.getElementById('exportDownloadBtn');
+  const exportChoices = document.querySelectorAll('[data-export-choice]');
+  const exportCancelButtons = document.querySelectorAll('[data-export-cancel]');
+  let selectedExportFormat = 'pdf';
 
-  if (exportBtn && exportMenu) {
+  const getExportUrl = (format) => {
+    return format === 'pdf'
+      ? `/monthly/export/pdf/?month=${encodeURIComponent(SELECTED_MONTH)}`
+      : `/monthly/export/csv/?month=${encodeURIComponent(SELECTED_MONTH)}`;
+  };
+
+  const setExportFormat = (format) => {
+    selectedExportFormat = format;
+    exportChoices.forEach((choice) => {
+      const isSelected = choice.dataset.exportChoice === format;
+      choice.classList.toggle('is-selected', isSelected);
+      choice.setAttribute('aria-checked', String(isSelected));
+    });
+    if (exportDownloadBtn) {
+      exportDownloadBtn.innerHTML = `<i class="fa-solid fa-download"></i> Download ${format.toUpperCase()}`;
+    }
+  };
+
+  const openExportModal = (format = 'pdf') => {
+    if (!exportModal) return;
+    setExportFormat(format);
+    exportModal.classList.add('show');
+    exportModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('export-modal-open');
+    setTimeout(() => exportDownloadBtn?.focus(), 80);
+  };
+
+  const closeExportModal = () => {
+    if (!exportModal) return;
+    exportModal.classList.remove('show');
+    exportModal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('export-modal-open');
+    exportBtn?.focus();
+  };
+
+  if (exportBtn) {
     exportBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const isOpen = exportMenu.classList.toggle('show');
-      exportBtn.setAttribute('aria-expanded', isOpen);
+      openExportModal('pdf');
+      exportBtn.setAttribute('aria-expanded', 'true');
     });
+  }
 
-    document.addEventListener('click', () => {
-      exportMenu.classList.remove('show');
-      exportBtn.setAttribute('aria-expanded', 'false');
-    });
-
+  if (exportMenu) {
     exportMenu.addEventListener('click', (e) => {
       const option = e.target.closest('[data-export]');
       if (!option) return;
-      const format = option.dataset.export;
-      const url = format === 'pdf'
-        ? `/monthly/export/pdf/?month=${encodeURIComponent(SELECTED_MONTH)}`
-        : `/monthly/export/csv/?month=${encodeURIComponent(SELECTED_MONTH)}`;
-      window.open(url, '_blank');
-      exportMenu.classList.remove('show');
-      exportBtn.setAttribute('aria-expanded', 'false');
+      openExportModal(option.dataset.export);
     });
   }
+
+  exportChoices.forEach((choice) => {
+    choice.addEventListener('click', () => setExportFormat(choice.dataset.exportChoice));
+  });
+
+  exportCancelButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      closeExportModal();
+      exportBtn?.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  exportDownloadBtn?.addEventListener('click', () => {
+    window.location.href = getExportUrl(selectedExportFormat);
+    closeExportModal();
+    exportBtn?.setAttribute('aria-expanded', 'false');
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && exportModal?.classList.contains('show')) {
+      closeExportModal();
+      exportBtn?.setAttribute('aria-expanded', 'false');
+    }
+  });
 })();
 </script>
 </body>
