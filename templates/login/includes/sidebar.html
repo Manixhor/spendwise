@@ -64,9 +64,17 @@
       });
     }
 
+    function updateThemeColor(theme) {
+      const color = theme === 'dark' ? '#0b1020' : '#e8e8ed';
+      document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+        meta.setAttribute('content', color);
+      });
+    }
+
     function applyTheme(theme, persist = true) {
       body.setAttribute('data-theme', theme);
       updateButtons(theme);
+      updateThemeColor(theme);
       if (persist) {
         window.localStorage.setItem(storageKey, theme);
       }

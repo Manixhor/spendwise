@@ -51,6 +51,10 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html {
+  background: #0b1020;
+}
+
 body {
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-right: env(safe-area-inset-right, 0px);
@@ -63,6 +67,7 @@ body {
   background-image: var(--body-bg-image);
   color: var(--ink);
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
 }
 
@@ -205,6 +210,7 @@ body[data-theme="dark"] {
   display: grid;
   grid-template-columns: 68px 1fr;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -1686,6 +1692,7 @@ body[data-theme="dark"] .txn-amt.neg {
     overflow: auto;
     height: auto;
     min-height: 100vh;
+    min-height: 100dvh;
   }
 
   body { overflow: auto; }
