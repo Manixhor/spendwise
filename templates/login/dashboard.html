@@ -997,7 +997,11 @@ try {
   function showNetworkToast(message, type = 'neutral') {
     if (!networkToast || !message) return;
     clearTimeout(networkToastTimer);
-    networkToast.textContent = message;
+    const icon = type === 'offline' ? '☁' : type === 'online' ? '✓' : '•';
+    networkToast.innerHTML = `
+      <span class="network-toast-icon" aria-hidden="true">${icon}</span>
+      <span class="network-toast-message">${message}</span>
+    `;
     networkToast.hidden = false;
     networkToast.classList.remove('is-offline', 'is-online', 'is-neutral');
     networkToast.classList.add(type === 'offline' ? 'is-offline' : type === 'online' ? 'is-online' : 'is-neutral');

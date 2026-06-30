@@ -1378,10 +1378,15 @@ body[data-theme="dark"] .txn-date-btn:nth-child(even):not(.active):not(.today) {
   z-index: 9999;
   width: max-content;
   max-width: min(430px, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
-  padding: 11px 15px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.42);
-  background: rgba(20, 25, 38, 0.88);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 10px 10px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.46);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(255,255,255,0.18), transparent 34%),
+    rgba(20, 25, 38, 0.88);
   color: #fff;
   font-size: 0.84rem;
   font-weight: 800;
@@ -1397,17 +1402,38 @@ body[data-theme="dark"] .txn-date-btn:nth-child(even):not(.active):not(.today) {
   transition: opacity 0.26s ease, transform 0.26s ease;
 }
 
+.network-toast-icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.14) inset;
+}
+
+.network-toast-message {
+  display: block;
+  min-width: 0;
+}
+
 .network-toast.is-visible {
   opacity: 1;
   transform: translate(-50%, 0) scale(1);
 }
 
 .network-toast.is-offline {
-  background: rgba(120, 53, 15, 0.90);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(251,191,36,0.24), transparent 38%),
+    linear-gradient(135deg, rgba(120, 53, 15, 0.94), rgba(154, 52, 18, 0.90));
 }
 
 .network-toast.is-online {
-  background: rgba(6, 95, 70, 0.90);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(134,239,172,0.24), transparent 38%),
+    linear-gradient(135deg, rgba(6, 95, 70, 0.94), rgba(8, 145, 178, 0.90));
 }
 
 @media (max-width: 480px) {
