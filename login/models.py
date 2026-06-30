@@ -109,7 +109,11 @@ class SavingsGoal(models.Model):
     )
     current_month_auto_allocation = models.DecimalField(
         max_digits=12, decimal_places=2, default=0,
+<<<<<<< HEAD
         help_text="Auto-allocation currently applied for the active month"
+=======
+        help_text="Auto-allocation for current month (reversible)"
+>>>>>>> 8a34a59 (updated the code)
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
