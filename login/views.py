@@ -2072,6 +2072,7 @@ def api_email_monthly_analysis(request: HttpRequest) -> JsonResponse:
 
 
 # ── API: Export Monthly Report ─────────────────────────────
+import csv
 import io
 from django.http import HttpResponse
 from django.db.models import Sum
@@ -2219,6 +2220,57 @@ def api_export_monthly_xlsx(request: HttpRequest) -> HttpResponse:
     )
     response["Content-Disposition"] = (
         f"attachment; filename=Monthly_Analysis_{month_date.strftime('%Y-%m')}.xlsx"
+    )
+    return response
+
+
+@login_required(login_url="/login/")
+def api_export_monthly_csv(request: HttpRequest) -> HttpResponse:
+    month_param = request.GET.get("month")
+    month_date = _parse_month_param(month_param)
+
+    start_date = month_date.replace(day=1)
+    if month_date.month == 12:
+        end_date = month_date.replace(
+            year=month_date.year + 1, month=1, day=1
+        ) - timedelta(days=1)
+    else:
+        end_date = month_date.replace(month=month_date.month + 1, day=1) - timedelta(
+            days=1
+        )
+
+    transactions = Transaction.objects.filter(
+        user=request.user, date__gte=start_date, date__lte=end_date
+    ).order_by("-date")
+
+    total_income = sum(t.amount for t in transactions.filter(txn_type="income"))
+    total_expense = sum(t.amount for t in transactions.filter(txn_type="expense"))
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+
+    writer.writerow([f"Monthly Analysis Report - {month_date.strftime('%B %Y')}"])
+    writer.writerow([])
+    writer.writerow(["Summary"])
+    writer.writerow(["Total Income", float(total_income)])
+    writer.writerow(["Total Expenses", float(total_expense)])
+    writer.writerow(["Net Savings", float(total_income - total_expense)])
+    writer.writerow([])
+    writer.writerow(["Date", "Type", "Category", "Description", "Amount"])
+
+    for t in transactions:
+        sign = "+" if t.txn_type == "income" else "-"
+        writer.writerow([
+            t.date.strftime("%Y-%m-%d"),
+            t.txn_type,
+            t.category,
+            t.title,
+            f"{sign}{float(t.amount):,.2f}",
+        ])
+
+    response = HttpResponse(buffer.getvalue(), content_type="text/csv")
+    response["Content-Disposition"] = (
+        f"attachment; filename=Monthly_Analysis_{month_date.strftime('%Y-%m')}.csv"
     )
     return response
 

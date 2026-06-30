@@ -11,6 +11,8 @@ from .views import (
     savings,
     profile_view,
     api_email_monthly_analysis,
+    api_export_monthly_pdf,
+    api_export_monthly_csv,
     api_add_transaction,
     api_delete_transaction,
     api_update_transaction,
@@ -43,6 +45,8 @@ urlpatterns = [
         api_email_monthly_analysis,
         name="api_email_monthly_analysis",
     ),
+    path("monthly/export/pdf/", api_export_monthly_pdf, name="api_export_monthly_pdf"),
+    path("monthly/export/csv/", api_export_monthly_csv, name="api_export_monthly_csv"),
     path("savings/", savings, name="savings"),
     path("profile/", profile_view, name="profile"),
     # Transaction APIs
