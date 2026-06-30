@@ -76,6 +76,14 @@ def database_config() -> dict:
             },
         }
 
+    db_engine = os.getenv('DB_ENGINE', 'postgresql').lower()
+    
+    if db_engine in {'sqlite3', 'sqlite'}:
+        return {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, os.getenv('DB_NAME', 'db.sqlite3')),
+        }
+    
     return {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
@@ -273,32 +281,36 @@ if not DEBUG:
     SESSION_COOKIE_SAMESITE = 'Lax'
     SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', True)
 
-SMTP_HOST = os.getenv('SMTP_HOST', os.getenv('MAILTRAP_SMTP_HOST', '')).strip()
-SMTP_PORT = int(os.getenv('SMTP_PORT', os.getenv('MAILTRAP_SMTP_PORT', '587')))
-SMTP_USERNAME = os.getenv('SMTP_USERNAME', os.getenv('MAILTRAP_SMTP_USER', '')).strip()
-SMTP_PASSWORD = os.getenv('SMTP_PASSWORD', os.getenv('MAILTRAP_SMTP_PASSWORD', '')).strip()
-SMTP_FROM_EMAIL = os.getenv('SMTP_FROM_EMAIL', os.getenv('MAILTRAP_FROM_EMAIL', '')).strip()
-
-EMAIL_BACKEND = (
-    'django.core.mail.backends.smtp.EmailBackend'
-    if SMTP_HOST and SMTP_USERNAME and SMTP_PASSWORD
-    else 'django.core.mail.backends.console.EmailBackend'
-)
-EMAIL_HOST = SMTP_HOST or 'localhost'
-EMAIL_PORT = SMTP_PORT
-EMAIL_USE_TLS = env_bool('SMTP_USE_TLS', True)
-EMAIL_USE_SSL = env_bool('SMTP_USE_SSL', False)
-EMAIL_HOST_USER = SMTP_USERNAME
-EMAIL_HOST_PASSWORD = SMTP_PASSWORD
-EMAIL_TIMEOUT = int(os.getenv('SMTP_TIMEOUT', '20'))
-if SMTP_FROM_EMAIL and 'example.com' not in SMTP_FROM_EMAIL:
-    DEFAULT_FROM_EMAIL = SMTP_FROM_EMAIL
-elif SMTP_USERNAME:
-    DEFAULT_FROM_EMAIL = f'SpendWise <{SMTP_USERNAME}>'
-else:
-    DEFAULT_FROM_EMAIL = 'SpendWise <no-reply@spendwise.local>'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'SpendWise <no-reply@spendwise.local>'
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES = 10
+
+# SMTP is paused for now. To re-enable real email delivery, restore this block:
+# SMTP_HOST = os.getenv('SMTP_HOST', os.getenv('MAILTRAP_SMTP_HOST', '')).strip()
+# SMTP_PORT = int(os.getenv('SMTP_PORT', os.getenv('MAILTRAP_SMTP_PORT', '587')))
+# SMTP_USERNAME = os.getenv('SMTP_USERNAME', os.getenv('MAILTRAP_SMTP_USER', '')).strip()
+# SMTP_PASSWORD = os.getenv('SMTP_PASSWORD', os.getenv('MAILTRAP_SMTP_PASSWORD', '')).strip()
+# SMTP_FROM_EMAIL = os.getenv('SMTP_FROM_EMAIL', os.getenv('MAILTRAP_FROM_EMAIL', '')).strip()
+# EMAIL_BACKEND = (
+#     'django.core.mail.backends.smtp.EmailBackend'
+#     if SMTP_HOST and SMTP_USERNAME and SMTP_PASSWORD
+#     else 'django.core.mail.backends.console.EmailBackend'
+# )
+# EMAIL_HOST = SMTP_HOST or 'localhost'
+# EMAIL_PORT = SMTP_PORT
+# EMAIL_USE_TLS = env_bool('SMTP_USE_TLS', True)
+# EMAIL_USE_SSL = env_bool('SMTP_USE_SSL', False)
+# EMAIL_HOST_USER = SMTP_USERNAME
+# EMAIL_HOST_PASSWORD = SMTP_PASSWORD
+# EMAIL_TIMEOUT = int(os.getenv('SMTP_TIMEOUT', '20'))
+# if SMTP_FROM_EMAIL and 'example.com' not in SMTP_FROM_EMAIL:
+#     DEFAULT_FROM_EMAIL = SMTP_FROM_EMAIL
+# elif SMTP_USERNAME:
+#     DEFAULT_FROM_EMAIL = f'SpendWise <{SMTP_USERNAME}>'
+# else:
+#     DEFAULT_FROM_EMAIL = 'SpendWise <no-reply@spendwise.local>'
+# SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # OpenAI (optional): used for dashboard savings motivation message generation.
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '').strip()

@@ -1412,11 +1412,19 @@ body[data-theme="dark"] .txn-date-btn:nth-child(even):not(.active):not(.today) {
 
 @media (max-width: 480px) {
   .network-toast {
-    bottom: max(14px, calc(12px + env(safe-area-inset-bottom, 0px)));
-    max-width: calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
-    padding: 10px 13px;
-    border-radius: 13px;
-    font-size: 0.78rem;
+    top: max(12px, calc(10px + env(safe-area-inset-top, 0px)));
+    bottom: auto;
+    width: calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+    max-width: 420px;
+    padding: 11px 14px;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    text-align: left;
+    transform: translate(-50%, -12px) scale(0.985);
+  }
+
+  .network-toast.is-visible {
+    transform: translate(-50%, 0) scale(1);
   }
 }
 
@@ -3562,8 +3570,16 @@ body[data-theme="dark"] .modal-select--transparent:focus {
 }
 
 @media (max-width: 640px) {
+  .modal-overlay {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: max(16px, env(safe-area-inset-top, 0px)) 0 max(18px, env(safe-area-inset-bottom, 0px));
+  }
+
   .modal-card {
     width: min(92vw, 420px);
+    max-height: calc(100dvh - 34px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
     padding: 24px 18px 20px;
     border-radius: 22px;
   }
