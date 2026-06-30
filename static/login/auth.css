@@ -30,6 +30,10 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html {
+  background: #0b1020;
+}
+
 body {
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-right: env(safe-area-inset-right, 0px);
@@ -41,6 +45,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: stretch;
   /* Subtle noise-like gradient background */
@@ -84,6 +89,7 @@ textarea {
   grid-template-columns: 1fr 480px;
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* ════════════════════════════════════════════════════════════
