@@ -1,9 +1,8 @@
 .venv/
 .env
 .DS_Store
-db.sqlite3
-node_modules/
-staticfiles/
 __pycache__/
 *.pyc
 db.sqlite3
+node_modules/
+staticfiles/
