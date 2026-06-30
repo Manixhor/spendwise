@@ -1166,12 +1166,80 @@ def signup(request: HttpRequest) -> HttpResponse:
             )
             profile = UserProfile.objects.create(user=user)
 
+        # OTP signup is paused for now. To re-enable it, make users inactive,
+        # call _issue_signup_otp(profile), send _send_signup_otp_email(...),
+        # store pending_signup_user_id in session, then redirect to signup_verify.
+        profile.email_is_verified = True
+        profile.email_verification_code = ""
+        profile.save(update_fields=["email_is_verified", "email_verification_code"])
         login(request, user)
         messages.success(
             request,
             f"Welcome to SpendWise, {user.first_name}! Your account is ready.",
         )
         return redirect("dashboard")
+
+    return render(request, "login/signup.html")
+
+
+def signup_verify(request: HttpRequest) -> HttpResponse:
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    pending_user_id = request.session.get("pending_signup_user_id")
+    user = User.objects.filter(id=pending_user_id, is_active=False).first()
+    if not user:
+        messages.error(request, "Your verification session expired. Please sign up again.")
+        return redirect("signup")
+
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    errors = {}
+
+    if request.method == "POST":
+        action = request.POST.get("action", "verify")
+
+        if action == "resend":
+            code = _issue_signup_otp(profile)
+            try:
+                _send_signup_otp_email(user, code)
+                messages.success(request, f"A fresh OTP was sent to {user.email}.")
+            except Exception:
+                errors["general"] = "We could not resend the OTP. Please check SMTP settings."
+            return render(
+                request,
+                "login/signup_verify.html",
+                {"errors": errors, "email": user.email},
+            )
+
+        code = request.POST.get("otp", "").strip()
+        expiry_minutes = getattr(settings, "EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES", 10)
+        sent_at = profile.email_verification_sent_at
+
+        if not code:
+            errors["otp"] = "Enter the 6-digit OTP."
+        elif code != profile.email_verification_code:
+            errors["otp"] = "That OTP is incorrect."
+        elif not sent_at or timezone.now() > sent_at + timedelta(minutes=expiry_minutes):
+            errors["otp"] = "That OTP expired. Please resend a new one."
+
+        if not errors:
+            profile.email_is_verified = True
+            profile.email_verification_code = ""
+            profile.save(
+                update_fields=[
+                    "email_is_verified",
+                    "email_verification_code",
+                ]
+            )
+            user.is_active = True
+            user.save(update_fields=["is_active"])
+            request.session.pop("pending_signup_user_id", None)
+            login(request, user)
+            messages.success(
+                request,
+                f"Welcome to SpendWise, {user.first_name}! Your account is verified.",
+            )
+            return redirect("dashboard")
 
     return render(request, "login/signup.html")
 
