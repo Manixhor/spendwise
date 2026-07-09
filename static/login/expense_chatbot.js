@@ -246,6 +246,7 @@
     backdrop.classList.remove('is-open');
     document.body.classList.remove('expense-chatbot-open');
     document.body.classList.remove('expense-chatbot-keyboard-open');
+    document.body.classList.remove('expense-chatbot-input-active');
     fab.setAttribute('aria-expanded', 'false');
     closeTimer = window.setTimeout(() => {
       panel.hidden = true;
@@ -276,6 +277,12 @@
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     handleAnswer(input.value);
+  });
+  input.addEventListener('focus', () => {
+    document.body.classList.add('expense-chatbot-input-active');
+  });
+  input.addEventListener('blur', () => {
+    document.body.classList.remove('expense-chatbot-input-active');
   });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !panel.hidden) closeChat();
