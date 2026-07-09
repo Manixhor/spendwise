@@ -945,6 +945,7 @@ try {
   const txnClose    = document.getElementById('txnModalClose');
   const txnSaveBtn  = document.getElementById('txnSave');
   const txnError    = document.getElementById('txnError');
+  const txnCategoryInput = document.getElementById('txnCategory');
   const txnAmountInput = document.getElementById('txnAmount');
   const txnTitleInput = document.getElementById('txnTitle');
   const txnDateInput = document.getElementById('txnDate');
@@ -1169,7 +1170,7 @@ try {
       document.getElementById('txnDate').value = getLocalDateInputValue();
     }
     txnModal.classList.add('active');
-    requestAnimationFrame(() => txnAmountInput?.focus());
+    requestAnimationFrame(() => txnCategoryInput?.focus());
   }
   _openTxnModal = openTxnModal;
 
@@ -1200,6 +1201,12 @@ try {
     txnModal.addEventListener('click', e => { if (e.target === txnModal) closeTxnModal(); });
   }
 
+  if (txnCategoryInput) {
+    txnCategoryInput.addEventListener('change', () => {
+      txnAmountInput?.focus();
+    });
+  }
+
   if (txnAmountInput) {
     txnAmountInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
@@ -1214,6 +1221,15 @@ try {
       if (e.key === 'Enter') {
         e.preventDefault();
         txnDateInput?.focus();
+      }
+    });
+  }
+
+  if (txnDateInput) {
+    txnDateInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        txnSaveBtn?.click();
       }
     });
   }
