@@ -4453,25 +4453,23 @@ body[data-theme="dark"] .modal-select--transparent:focus {
   }
 
   body.expense-chatbot-keyboard-open .expense-chatbot-orb-stage {
-    height: 72px;
-    flex-basis: 72px;
-  }
-
-  body.expense-chatbot-keyboard-open .expense-chatbot-orb {
-    width: 62px;
-    height: 62px;
+    height: 0;
+    flex-basis: 0;
+    opacity: 0;
+    transform: scale(.7);
+    pointer-events: none;
   }
 
   body.expense-chatbot-keyboard-open .expense-chatbot-messages {
-    min-height: 112px;
-    max-height: min(180px, 30dvh);
+    min-height: 0;
+    max-height: min(210px, 34dvh);
     flex: 0 1 auto;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    gap: 7px;
+    padding: 9px 14px 6px;
   }
 
   body.expense-chatbot-keyboard-open .expense-chatbot-composer {
-    margin-top: 0;
+    margin: 2px 10px 8px;
   }
 
   body.expense-chatbot-keyboard-open .expense-chatbot-note {
