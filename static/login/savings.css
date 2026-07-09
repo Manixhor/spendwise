@@ -96,8 +96,16 @@
 }
 
 .alloc-value.available {
-  color: var(--positive);
+  color: var(--muted);
   font-size: 1rem;
+}
+
+.alloc-value.available.is-negative {
+  color: var(--negative);
+}
+
+.alloc-value.available.is-positive {
+  color: var(--positive);
 }
 
 .allocation-breakdown {

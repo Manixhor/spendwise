@@ -73,7 +73,7 @@
         </div>
         <div class="allocation-row total">
           <span>Available</span>
-          <span class="alloc-value available">{{ available_for_goals|indian_currency }}</span>
+          <span class="alloc-value available{% if available_for_goals < 0 %} is-negative{% elif available_for_goals > 0 %} is-positive{% endif %}">{{ available_for_goals|indian_currency }}</span>
         </div>
       </div>
       <!-- <div class="allocation-breakdown" id="allocationBreakdown">
@@ -367,6 +367,8 @@ if (refreshBtn) {
 function updateAllocationDisplay(data) {
   const summary = document.getElementById('allocationSummary');
   if (summary) {
+    const available = Number(data.available || 0);
+    const availableSign = available < 0 ? '−' : '';
     summary.innerHTML = `
       <div class="allocation-row">
         <span>Salary</span>
@@ -378,7 +380,7 @@ function updateAllocationDisplay(data) {
       </div>
       <div class="allocation-row total">
         <span>Available</span>
-        <span class="alloc-value available">₹${data.available.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+        <span class="alloc-value available${available < 0 ? ' is-negative' : available > 0 ? ' is-positive' : ''}">${availableSign}₹${Math.abs(available).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
       </div>
     `;
   }
@@ -421,5 +423,6 @@ if (refreshMotivationBtn) {
   });
 }
 </script>
+{% include "login/includes/expense_chatbot.html" %}
 </body>
 </html>
