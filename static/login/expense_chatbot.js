@@ -280,6 +280,7 @@
   });
   input.addEventListener('focus', () => {
     document.body.classList.add('expense-chatbot-input-active');
+    syncVisualViewport();
   });
   input.addEventListener('blur', () => {
     document.body.classList.remove('expense-chatbot-input-active');
