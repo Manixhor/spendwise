@@ -22,6 +22,22 @@
   let finishTimer = null;
   let swipeStart = null;
 
+  const syncVisualViewport = () => {
+    if (!window.visualViewport) return;
+    const viewport = window.visualViewport;
+    const layoutHeight = document.documentElement.clientHeight;
+    const keyboardOffset = Math.max(
+      0,
+      layoutHeight - viewport.height - viewport.offsetTop,
+    );
+    root.style.setProperty('--chat-visual-height', `${viewport.height}px`);
+    root.style.setProperty('--chat-keyboard-offset', `${keyboardOffset}px`);
+    document.body.classList.toggle(
+      'expense-chatbot-keyboard-open',
+      !panel.hidden && keyboardOffset > 120,
+    );
+  };
+
   const localDate = () => {
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
@@ -221,6 +237,7 @@
     backdrop.classList.add('is-open');
     if (!messages.children.length) startConversation();
     input.focus({ preventScroll: true });
+    window.setTimeout(syncVisualViewport, 80);
   }
 
   function closeChat() {
@@ -228,6 +245,7 @@
     panel.classList.remove('is-open');
     backdrop.classList.remove('is-open');
     document.body.classList.remove('expense-chatbot-open');
+    document.body.classList.remove('expense-chatbot-keyboard-open');
     fab.setAttribute('aria-expanded', 'false');
     closeTimer = window.setTimeout(() => {
       panel.hidden = true;
@@ -272,6 +290,9 @@
     const startsNearBottom = touch.clientY >= window.innerHeight - 150;
     swipeStart = startsNearBottom ? { x: touch.clientX, y: touch.clientY } : null;
   }, { passive: true });
+
+  window.visualViewport?.addEventListener('resize', syncVisualViewport);
+  window.visualViewport?.addEventListener('scroll', syncVisualViewport);
 
   document.addEventListener('touchend', (event) => {
     if (!swipeStart || window.innerWidth > 600 || !panel.hidden) {
