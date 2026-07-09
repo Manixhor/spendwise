@@ -4438,6 +4438,45 @@ body[data-theme="dark"] .modal-select--transparent:focus {
   }
 
   .expense-chatbot-note { margin: 8px 0 11px; }
+
+  body.expense-chatbot-keyboard-open .expense-chatbot-panel {
+    bottom: var(--chat-keyboard-offset, 0px);
+    height: auto;
+    max-height: calc(var(--chat-visual-height, 100dvh) - 8px);
+    border-radius: 24px 24px 0 0;
+    transition: opacity .18s ease, transform .18s ease, bottom .18s ease;
+  }
+
+  body.expense-chatbot-keyboard-open .expense-chatbot-header {
+    padding-top: 8px;
+    padding-bottom: 10px;
+  }
+
+  body.expense-chatbot-keyboard-open .expense-chatbot-orb-stage {
+    height: 72px;
+    flex-basis: 72px;
+  }
+
+  body.expense-chatbot-keyboard-open .expense-chatbot-orb {
+    width: 62px;
+    height: 62px;
+  }
+
+  body.expense-chatbot-keyboard-open .expense-chatbot-messages {
+    min-height: 112px;
+    max-height: min(180px, 30dvh);
+    flex: 0 1 auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  body.expense-chatbot-keyboard-open .expense-chatbot-composer {
+    margin-top: 0;
+  }
+
+  body.expense-chatbot-keyboard-open .expense-chatbot-note {
+    display: none;
+  }
 }
 
 @media (max-width: 380px), (max-height: 650px) {
