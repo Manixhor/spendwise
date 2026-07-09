@@ -1,0 +1,49 @@
+{% load static %}
+<div class="expense-chatbot" id="expenseChatbot" data-dashboard="{% if active_nav == 'dashboard' %}true{% else %}false{% endif %}">
+  <button class="expense-chatbot-fab" id="expenseChatbotFab" type="button"
+          aria-label="Open expense assistant" aria-controls="expenseChatbotPanel" aria-expanded="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 11.5a7.5 7.5 0 0 1-8 7.48 8.7 8.7 0 0 1-3.45-.78L4 20l1.35-3.6A7.5 7.5 0 1 1 20 11.5Z"/>
+      <path d="M8.5 11.5h7M12 8v7"/>
+    </svg>
+    <span>Quick add</span>
+  </button>
+
+  <div class="expense-chatbot-backdrop" id="expenseChatbotBackdrop" hidden></div>
+  <section class="expense-chatbot-panel" id="expenseChatbotPanel" role="dialog"
+           aria-modal="true" aria-labelledby="expenseChatbotTitle" hidden>
+    <header class="expense-chatbot-header">
+      <div class="expense-chatbot-brand">
+        <span class="expense-chatbot-avatar" aria-hidden="true">S</span>
+        <div>
+          <h2 id="expenseChatbotTitle">SpendWise Assistant</h2>
+          <p><span></span> Ready to track</p>
+        </div>
+      </div>
+      <button class="expense-chatbot-close" id="expenseChatbotClose" type="button" aria-label="Close assistant">×</button>
+    </header>
+
+    <div class="expense-chatbot-orb-stage" id="expenseChatbotOrb" aria-hidden="true">
+      <div class="expense-chatbot-orb">
+        <span class="expense-chatbot-orb-wave wave-one"></span>
+        <span class="expense-chatbot-orb-wave wave-two"></span>
+        <span class="expense-chatbot-orb-core"></span>
+      </div>
+      <span class="expense-chatbot-orb-shadow"></span>
+    </div>
+
+    <div class="expense-chatbot-messages" id="expenseChatbotMessages" aria-live="polite"></div>
+    <div class="expense-chatbot-suggestions" id="expenseChatbotSuggestions"></div>
+
+    <form class="expense-chatbot-composer" id="expenseChatbotForm">
+      <span class="expense-chatbot-currency" id="expenseChatbotCurrency">₹</span>
+      <input id="expenseChatbotInput" type="text" inputmode="decimal" autocomplete="off"
+             aria-label="Your answer" placeholder="Enter amount" />
+      <button type="submit" aria-label="Send">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4.2 14-3-5.2L5 12Z"/><path d="m11.8 13.8 3.6-3.6"/></svg>
+      </button>
+    </form>
+    <p class="expense-chatbot-note">Expenses are saved to today’s date.</p>
+  </section>
+</div>
+<script src="{% static 'login/expense_chatbot.js' %}" defer></script>

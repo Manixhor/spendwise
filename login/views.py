@@ -476,6 +476,61 @@ def _dashboard_stats_payload(stats):
     }
 
 
+def _chatbot_savings_message(profile, stats, previous_variant=None):
+    """Return a short salary-aware nudge after an expense is recorded."""
+    salary = Decimal(str(profile.salary or 0))
+    spent = Decimal(str(stats["total_expense"]))
+    saved = Decimal(str(stats["total_saved"]))
+
+    if salary <= 0:
+        choices = [
+            "Tiny entries build sharp money habits. Your future wallet noticed.",
+            "Expense logged. Your budget brain just earned one experience point.",
+            "Tracked money behaves better than mystery money. Nice catch.",
+        ]
+    else:
+        spend_ratio = spent / salary
+        remaining_text = indian_currency(max(saved, Decimal("0")))
+
+        if saved < 0:
+            over_text = indian_currency(abs(saved))
+            choices = [
+                f"You are −{over_text} over budget. No judgement — noticing it gives you a way back.",
+                f"The balance is −{over_text}. Pause, reset, and let the next small choice help.",
+                f"You have crossed the budget by −{over_text}. Tracking it honestly is already progress.",
+            ]
+        elif spend_ratio >= Decimal("0.9"):
+            choices = [
+            f"You have {remaining_text} left from this month's salary. Wallet, enter stealth mode.",
+            f"Only {remaining_text} remains. Even your cart needs a quiet day.",
+            f"{remaining_text} is still standing. Protect it like the last slice of pizza.",
+            ]
+        elif spend_ratio >= Decimal("0.6"):
+            choices = [
+            f"{remaining_text} remains. The budget is bending, not breaking.",
+            f"You still have {remaining_text}. A no-spend evening would look excellent here.",
+            f"{remaining_text} left. Future you votes for keeping some of it.",
+            ]
+        elif spend_ratio >= Decimal("0.3"):
+            choices = [
+            f"{remaining_text} remains. Good tracking is doing the heavy lifting.",
+            f"You still have {remaining_text}. Your savings plan is very much alive.",
+            f"{remaining_text} left. SpendWise approves this level of awareness.",
+            ]
+        else:
+            choices = [
+            f"{remaining_text} remains. Strong start, keep the impulse buys guessing.",
+            f"You still have {remaining_text}. Your salary can breathe comfortably.",
+            f"{remaining_text} left. Future you just sent a tiny thank-you note.",
+            ]
+
+    available_variants = [
+        index for index in range(len(choices)) if index != previous_variant
+    ]
+    variant = random.choice(available_variants or list(range(len(choices))))
+    return choices[variant], variant
+
+
 def _serialize_txn(txn: Transaction) -> dict:
     return {
         "id": txn.id,
@@ -1545,7 +1600,7 @@ def savings(request: HttpRequest) -> HttpResponse:
     
     salary = float(profile.salary) if profile.salary else 0
     if salary > 0:
-        available_for_goals = max((salary + excess_income) - monthly_expenses, 0)
+        net_available = (salary + excess_income) - monthly_expenses
     else:
         # Fall back to actual income transactions this month
         monthly_income = (
@@ -1554,7 +1609,8 @@ def savings(request: HttpRequest) -> HttpResponse:
             ).aggregate(total=Sum("amount"))["total"]
             or 0
         )
-        available_for_goals = max(float(monthly_income) - monthly_expenses, 0)
+        net_available = float(monthly_income) - monthly_expenses
+    available_for_goals = max(net_available, 0)
 
     # Calculate allocation breakdown
     goals_list = list(goals)
@@ -1651,7 +1707,7 @@ def savings(request: HttpRequest) -> HttpResponse:
             "goal_count": goals.count(),
             "monthly_saved": monthly_saved,
             "monthly_expenses": monthly_expenses,
-            "available_for_goals": available_for_goals,
+            "available_for_goals": net_available,
             "allocation_breakdown": allocation_breakdown,
             "motivation": motivation,
             "active_nav": "savings",
@@ -1799,14 +1855,15 @@ def api_goal_allocations(request: HttpRequest) -> JsonResponse:
 
         # Same fallback logic as the savings view (including excess income)
         if salary > 0:
-            available = max((salary + excess_income) - monthly_expenses, 0)
+            available = (salary + excess_income) - monthly_expenses
         else:
             monthly_income = float(
                 Transaction.objects.filter(
                     user=request.user, txn_type="income", date__gte=first_of_month
                 ).aggregate(total=Sum("amount"))["total"] or 0
             )
-            available = max(monthly_income - monthly_expenses, 0)
+            available = monthly_income - monthly_expenses
+        allocatable = max(available, 0)
 
         goals = list(SavingsGoal.objects.filter(user=request.user))
 
@@ -1822,7 +1879,7 @@ def api_goal_allocations(request: HttpRequest) -> JsonResponse:
                     g.current_month_auto_allocation = Decimal("0")
                     g.save(update_fields=["current_month_auto_allocation"])
 
-        available_after_prior = available
+        available_after_prior = allocatable
         for g in goals:
             available_after_prior -= float(g.current_month_auto_allocation)
         available_after_prior = max(available_after_prior, 0)
@@ -1842,7 +1899,7 @@ def api_goal_allocations(request: HttpRequest) -> JsonResponse:
         allocation_data = []
         for goal in goals:
             effective_saved = float(goal.saved_amount) + float(goal.current_month_auto_allocation)
-            effective_saved = min(effective_saved, float(goal.saved_amount) + available)
+            effective_saved = min(effective_saved, float(goal.saved_amount) + allocatable)
             allocation_data.append(
                 {
                     "id": goal.id,
@@ -2336,12 +2393,19 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
 
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         stats = _dashboard_stats(request.user, profile)
+        saving_message, saving_message_variant = _chatbot_savings_message(
+            profile,
+            stats,
+            request.session.get("last_chatbot_saving_variant"),
+        )
+        request.session["last_chatbot_saving_variant"] = saving_message_variant
 
         return JsonResponse(
             {
                 "success": True,
                 "txn": _serialize_txn(txn),
                 "available_expense_dates": _available_expense_dates(request.user),
+                "saving_message": saving_message,
                 **_dashboard_stats_payload(stats),
             }
         )

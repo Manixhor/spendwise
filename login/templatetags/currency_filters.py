@@ -46,7 +46,7 @@ def indian_currency(value, show_plus=False):
         
         # Add sign
         if is_negative:
-            result = f"-₹{result}"
+            result = f"−₹{result}"
         elif show_plus and num > 0:
             result = f"+₹{result}"
         else:

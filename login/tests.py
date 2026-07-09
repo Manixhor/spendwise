@@ -92,6 +92,30 @@ class DashboardInsightsTests(TestCase):
         self.assertEqual(payload['cat_tiles'][1]['label'], 'Food')
         self.assertEqual(len(payload['insight_segments']), 2)
         self.assertIn('coach', payload)
+        self.assertIn('saving_message', payload)
+        self.assertTrue(payload['saving_message'])
+
+    def test_chatbot_style_expense_uses_today_and_updates_salary_based_savings(self):
+        response = self.client.post(
+            reverse('api_add_transaction'),
+            data=json.dumps({
+                'title': 'Lunch',
+                'amount': 250,
+                'txn_type': 'expense',
+                'category': 'food',
+                'date': str(date.today()),
+            }),
+            content_type='application/json',
+        )
+
+        payload = response.json()
+        transaction = Transaction.objects.get(title='Lunch')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(transaction.date, date.today())
+        self.assertEqual(transaction.amount, Decimal('250.00'))
+        self.assertEqual(payload['total_saved'], 9750.0)
+        self.assertIn('₹9,750', payload['saving_message'])
 
 
 class MonthlyAnalysisTests(TestCase):

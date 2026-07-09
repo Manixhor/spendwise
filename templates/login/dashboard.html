@@ -33,8 +33,8 @@
     <div class="card savings-card">
       <div class="savings-content">
         <span class="card-label">Savings</span>
-        <p class="savings-amount" id="savingsAmount">{{ total_saved|indian_currency:True }}</p>
-        <p class="savings-sub">{{ total_saved|indian_currency }}</p>
+        <p class="savings-amount{% if total_saved < 0 %} is-negative{% elif total_saved > 0 %} is-positive{% endif %}" id="savingsAmount">{{ total_saved|indian_currency:True }}</p>
+        <p class="savings-sub{% if total_saved < 0 %} is-negative{% elif total_saved > 0 %} is-positive{% endif %}" id="savingsSubAmount">{{ total_saved|indian_currency }}</p>
         <p class="savings-desc">
           {% if profile.salary %}
             {% if has_excess_income %}
@@ -324,7 +324,16 @@
       if (res.ok && data.success) {
         document.getElementById('txn-' + id)?.remove();
 
-        document.getElementById('savingsAmount').textContent = formatCurrency(data.total_saved, { showPlus: true });
+        const savingsAmount = document.getElementById('savingsAmount');
+        const savingsSubAmount = document.getElementById('savingsSubAmount');
+        savingsAmount.textContent = formatCurrency(data.total_saved, { showPlus: true });
+        savingsAmount.classList.toggle('is-negative', data.total_saved < 0);
+        savingsAmount.classList.toggle('is-positive', data.total_saved > 0);
+        if (savingsSubAmount) {
+          savingsSubAmount.textContent = formatCurrency(data.total_saved);
+          savingsSubAmount.classList.toggle('is-negative', data.total_saved < 0);
+          savingsSubAmount.classList.toggle('is-positive', data.total_saved > 0);
+        }
         updateMotivationCard(data.total_saved, data.total_expense);
         if (Array.isArray(data.chart_months)) {
           dashboardChartData = data.chart_months;
@@ -359,7 +368,7 @@
 
   function formatCurrency(value, { showPlus = false } = {}) {
     const number = Number(value || 0);
-    const prefix = number < 0 ? '-' : (showPlus && number > 0 ? '+' : '');
+    const prefix = number < 0 ? '−' : (showPlus && number > 0 ? '+' : '');
     return `${prefix}₹${Math.abs(number).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
@@ -1264,7 +1273,16 @@ try {
         if (totalBalanceEl) totalBalanceEl.textContent = formatCurrency(data.total_balance);
         if (totalExpenseEl) totalExpenseEl.textContent = '−₹' + data.total_expense.toLocaleString('en-IN', {minimumFractionDigits:2});
         if (totalSavedEl)   totalSavedEl.textContent   = formatCurrency(data.total_saved, { showPlus: true });
-        document.getElementById('savingsAmount').textContent = formatCurrency(data.total_saved, { showPlus: true });
+        const savingsAmount = document.getElementById('savingsAmount');
+        const savingsSubAmount = document.getElementById('savingsSubAmount');
+        savingsAmount.textContent = formatCurrency(data.total_saved, { showPlus: true });
+        savingsAmount.classList.toggle('is-negative', data.total_saved < 0);
+        savingsAmount.classList.toggle('is-positive', data.total_saved > 0);
+        if (savingsSubAmount) {
+          savingsSubAmount.textContent = formatCurrency(data.total_saved);
+          savingsSubAmount.classList.toggle('is-negative', data.total_saved < 0);
+          savingsSubAmount.classList.toggle('is-positive', data.total_saved > 0);
+        }
         updateMotivationCard(data.total_saved, data.total_expense);
         if (Array.isArray(data.chart_months)) {
           dashboardChartData = data.chart_months;
@@ -1591,6 +1609,7 @@ try {
   function renderCategoryTiles(tiles) { /* removed */ }
 
 } catch(e) { console.error('Dashboard init error:', e); }
-</script>
+ </script>
+{% include "login/includes/expense_chatbot.html" %}
 </body>
 </html>
