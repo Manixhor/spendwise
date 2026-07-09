@@ -4343,6 +4343,10 @@ body[data-theme="dark"] .modal-select--transparent:focus {
   display: grid;
   place-items: center;
   cursor: pointer;
+  position: relative;
+  z-index: 2;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .expense-chatbot-composer button svg {

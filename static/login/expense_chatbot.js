@@ -11,6 +11,7 @@
   const suggestions = document.getElementById('expenseChatbotSuggestions');
   const form = document.getElementById('expenseChatbotForm');
   const input = document.getElementById('expenseChatbotInput');
+  const sendButton = document.getElementById('expenseChatbotSend');
   const currency = document.getElementById('expenseChatbotCurrency');
   const orb = document.getElementById('expenseChatbotOrb');
 
@@ -20,6 +21,7 @@
   let isSaving = false;
   let closeTimer = null;
   let finishTimer = null;
+  let inputBlurTimer = null;
   let swipeStart = null;
 
   const syncVisualViewport = () => {
@@ -274,16 +276,35 @@
   fab.addEventListener('click', openChat);
   closeButton.addEventListener('click', closeChat);
   backdrop.addEventListener('click', closeChat);
+  const submitAnswer = () => {
+    handleAnswer(input.value);
+  };
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    handleAnswer(input.value);
+    submitAnswer();
+  });
+  sendButton?.addEventListener('pointerdown', (event) => {
+    if (event.pointerType !== 'touch') return;
+    event.preventDefault();
+    submitAnswer();
+    if (!input.disabled) {
+      input.focus({ preventScroll: true });
+      syncVisualViewport();
+    }
   });
   input.addEventListener('focus', () => {
+    window.clearTimeout(inputBlurTimer);
     document.body.classList.add('expense-chatbot-input-active');
     syncVisualViewport();
   });
   input.addEventListener('blur', () => {
-    document.body.classList.remove('expense-chatbot-input-active');
+    window.clearTimeout(inputBlurTimer);
+    inputBlurTimer = window.setTimeout(() => {
+      if (document.activeElement !== input && document.activeElement !== sendButton) {
+        document.body.classList.remove('expense-chatbot-input-active');
+      }
+    }, 140);
   });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !panel.hidden) closeChat();
