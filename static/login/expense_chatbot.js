@@ -217,12 +217,10 @@
     backdrop.hidden = false;
     document.body.classList.add('expense-chatbot-open');
     fab.setAttribute('aria-expanded', 'true');
-    requestAnimationFrame(() => {
-      panel.classList.add('is-open');
-      backdrop.classList.add('is-open');
-      input.focus();
-    });
+    panel.classList.add('is-open');
+    backdrop.classList.add('is-open');
     if (!messages.children.length) startConversation();
+    input.focus({ preventScroll: true });
   }
 
   function closeChat() {
