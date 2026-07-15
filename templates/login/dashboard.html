@@ -278,6 +278,39 @@
   let _openTxnModal = null;
   window.spendwiseOffline = window.spendwiseOffline || {};
 
+  function syncAppVisualViewport() {
+    const viewport = window.visualViewport;
+    const height = viewport ? viewport.height : window.innerHeight;
+    const layoutHeight = document.documentElement.clientHeight;
+    const keyboardOffset = viewport
+      ? Math.max(0, layoutHeight - viewport.height - viewport.offsetTop)
+      : 0;
+    document.documentElement.style.setProperty('--app-visual-height', `${height}px`);
+    document.documentElement.style.setProperty('--app-keyboard-offset', `${keyboardOffset}px`);
+    const hasActiveModal = Boolean(document.querySelector('.modal-overlay.active'));
+    document.body.classList.toggle('modal-keyboard-open', hasActiveModal && keyboardOffset > 120);
+  }
+
+  window.visualViewport?.addEventListener('resize', syncAppVisualViewport);
+  window.visualViewport?.addEventListener('scroll', syncAppVisualViewport);
+  window.addEventListener('resize', syncAppVisualViewport);
+  document.addEventListener('focusin', (event) => {
+    if (event.target.closest?.('.modal-overlay')) {
+      document.body.classList.add('modal-input-active');
+      setTimeout(syncAppVisualViewport, 80);
+      setTimeout(() => event.target.scrollIntoView?.({ block: 'center', behavior: 'smooth' }), 120);
+    }
+  });
+  document.addEventListener('focusout', () => {
+    setTimeout(() => {
+      if (!document.activeElement?.closest?.('.modal-overlay')) {
+        document.body.classList.remove('modal-input-active', 'modal-keyboard-open');
+      }
+      syncAppVisualViewport();
+    }, 120);
+  });
+  syncAppVisualViewport();
+
   function getLocalDateInputValue(date = new Date()) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -480,6 +513,7 @@ try {
   if (excessIncomeBtn && excessIncomeModal) {
     excessIncomeBtn.addEventListener('click', () => {
       excessIncomeModal.classList.add('active');
+      syncAppVisualViewport();
       if (excessIncomeAmount) excessIncomeAmount.focus();
     });
   }
@@ -487,6 +521,8 @@ try {
   if (excessIncomeClose && excessIncomeModal) {
     excessIncomeClose.addEventListener('click', () => {
       excessIncomeModal.classList.remove('active');
+      document.body.classList.remove('modal-input-active', 'modal-keyboard-open');
+      syncAppVisualViewport();
       if (excessIncomeError) excessIncomeError.textContent = '';
     });
   }
@@ -495,6 +531,8 @@ try {
     excessIncomeModal.addEventListener('click', (e) => {
       if (e.target === excessIncomeModal) {
         excessIncomeModal.classList.remove('active');
+        document.body.classList.remove('modal-input-active', 'modal-keyboard-open');
+        syncAppVisualViewport();
         if (excessIncomeError) excessIncomeError.textContent = '';
       }
     });
@@ -1198,6 +1236,7 @@ try {
       document.getElementById('txnDate').value = getLocalDateInputValue();
     }
     txnModal.classList.add('active');
+    syncAppVisualViewport();
     requestAnimationFrame(() => txnCategoryInput?.focus());
   }
   _openTxnModal = openTxnModal;
@@ -1213,6 +1252,8 @@ try {
   function closeTxnModal() {
     if (!txnModal) return;
     txnModal.classList.remove('active');
+    document.body.classList.remove('modal-input-active', 'modal-keyboard-open');
+    syncAppVisualViewport();
     if (txnError) txnError.textContent = '';
     // Always reset modal state on close
     document.getElementById('txnModalTitle').textContent = 'Add Transaction';
