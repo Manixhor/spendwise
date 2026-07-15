@@ -315,11 +315,15 @@ body[data-theme="dark"] {
 
 .nav-icon {
   width: 42px; height: 42px;
+  border: 0;
   display: grid;
   place-items: center;
   border-radius: var(--radius-sm);
+  background: transparent;
   color: var(--muted);
+  font: inherit;
   text-decoration: none;
+  cursor: pointer;
   transition: background 0.18s, color 0.18s, box-shadow 0.18s;
 }
 
@@ -2290,6 +2294,11 @@ body[data-theme="dark"] .txn-amt.neg {
   gap: 10px;
 }
 
+.logout-form {
+  display: contents;
+  margin: 0;
+}
+
 .salary-badge {
   font-size: 0.80rem;
   font-weight: 600;
@@ -2303,6 +2312,7 @@ body[data-theme="dark"] .txn-amt.neg {
 
 .logout-btn {
   width: 36px; height: 36px;
+  padding: 0;
   display: grid;
   place-items: center;
   border-radius: 10px;
@@ -4005,6 +4015,9 @@ body[data-theme="dark"] .modal-select--transparent:focus {
   right: max(20px, env(safe-area-inset-right));
   bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px));
   z-index: 1180;
+  box-sizing: border-box;
+  max-width: calc(100vw - 28px);
+  height: 52px;
   min-height: 52px;
   padding: 0 18px 0 14px;
   border: 1px solid rgba(255, 255, 255, 0.38);
@@ -4013,21 +4026,76 @@ body[data-theme="dark"] .modal-select--transparent:focus {
   color: #fff;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 9px;
   font: 750 0.88rem/1 -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  white-space: nowrap;
   box-shadow: 0 14px 34px rgba(62, 49, 176, 0.4), inset 0 1px rgba(255, 255, 255, 0.35);
   cursor: pointer;
   pointer-events: auto;
   touch-action: manipulation;
 }
 
+.expense-chatbot-hint {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(84px, calc(env(safe-area-inset-bottom) + 76px));
+  z-index: 1179;
+  max-width: min(280px, calc(100vw - 34px));
+  padding: 11px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 18px 18px 6px 18px;
+  background: rgba(13, 22, 40, 0.94);
+  color: #edf4ff;
+  font: 750 0.8rem/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  text-align: left;
+  box-shadow: 0 16px 42px rgba(1, 5, 17, 0.34);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px) scale(0.97);
+  transition: opacity .22s ease, transform .22s ease;
+  touch-action: manipulation;
+}
+
+.expense-chatbot-hint::after {
+  content: "";
+  position: absolute;
+  right: 22px;
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
+  border-right: 1px solid rgba(148, 163, 184, 0.24);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+.expense-chatbot-hint.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.expense-chatbot-hint[hidden] {
+  display: none !important;
+}
+
 .expense-chatbot-fab svg {
   width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.expense-chatbot-fab span {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .expense-chatbot-backdrop {
@@ -4371,12 +4439,18 @@ body[data-theme="dark"] .modal-select--transparent:focus {
   .expense-chatbot-fab {
     right: max(14px, env(safe-area-inset-right));
     bottom: max(82px, calc(env(safe-area-inset-bottom) + 70px));
-    min-width: 52px;
-    padding: 0;
-    justify-content: center;
+    min-width: 128px;
+    padding: 0 16px 0 14px;
+    gap: 8px;
   }
 
-  .expense-chatbot-fab span { display: none; }
+  .expense-chatbot-hint {
+    right: max(14px, env(safe-area-inset-right));
+    bottom: max(144px, calc(env(safe-area-inset-bottom) + 132px));
+    max-width: min(245px, calc(100vw - 76px));
+    border-radius: 17px 17px 6px 17px;
+    font-size: 0.76rem;
+  }
 
   .expense-chatbot-panel {
     right: 0;
@@ -4523,6 +4597,15 @@ body[data-theme="dark"] .modal-select--transparent:focus {
 
 }
 
+@media (max-width: 380px) {
+  .expense-chatbot-fab {
+    min-width: 52px;
+    padding: 0;
+  }
+
+  .expense-chatbot-fab span { display: none; }
+}
+
 @media (max-width: 380px), (max-height: 650px) {
   .expense-chatbot-panel {
     height: min(88dvh, 570px);
@@ -4551,6 +4634,12 @@ body[data-theme="light"] .expense-chatbot-panel {
   background:
     radial-gradient(circle at 90% 0%, rgba(104, 79, 255, .12), transparent 36%),
     #f8f9fd;
+  color: #182033;
+  border-color: rgba(78, 88, 116, .18);
+}
+
+body[data-theme="light"] .expense-chatbot-hint {
+  background: rgba(255, 255, 255, 0.96);
   color: #182033;
   border-color: rgba(78, 88, 116, .18);
 }

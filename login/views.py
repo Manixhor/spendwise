@@ -1433,6 +1433,8 @@ def login_view(request: HttpRequest) -> HttpResponse:
 
 # ── Logout ────────────────────────────────────────────────
 def logout_view(request: HttpRequest) -> HttpResponse:
+    if request.method != "POST":
+        return redirect("dashboard" if request.user.is_authenticated else "onboarding")
     logout(request)
     return redirect("onboarding")
 
