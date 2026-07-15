@@ -38,13 +38,18 @@
   const syncVisualViewport = () => {
     if (!window.visualViewport) return;
     const viewport = window.visualViewport;
-    const layoutHeight = document.documentElement.clientHeight;
+    const layoutHeight = Math.max(
+      document.documentElement.clientHeight,
+      window.innerHeight || 0,
+    );
     const keyboardOffset = Math.max(
       0,
       layoutHeight - viewport.height - viewport.offsetTop,
     );
     root.style.setProperty('--chat-visual-height', `${viewport.height}px`);
     root.style.setProperty('--chat-keyboard-offset', `${keyboardOffset}px`);
+    document.documentElement.style.setProperty('--app-visual-height', `${viewport.height}px`);
+    document.documentElement.style.setProperty('--app-keyboard-offset', `${keyboardOffset}px`);
     document.body.classList.toggle(
       'expense-chatbot-keyboard-open',
       !panel.hidden && keyboardOffset > 120,

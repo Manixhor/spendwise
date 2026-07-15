@@ -177,14 +177,53 @@
   const input      = document.getElementById('salaryInput');
   const errorEl    = document.getElementById('salaryError');
 
+  function syncProfileVisualViewport() {
+    const viewport = window.visualViewport;
+    const height = viewport ? viewport.height : window.innerHeight;
+    const layoutHeight = Math.max(
+      document.documentElement.clientHeight,
+      window.innerHeight || 0,
+    );
+    const keyboardOffset = viewport
+      ? Math.max(0, layoutHeight - viewport.height - viewport.offsetTop)
+      : 0;
+    document.documentElement.style.setProperty('--app-visual-height', `${height}px`);
+    document.documentElement.style.setProperty('--app-keyboard-offset', `${keyboardOffset}px`);
+    const hasActiveModal = Boolean(document.querySelector('.modal-overlay.active'));
+    document.body.classList.toggle('modal-keyboard-open', hasActiveModal && keyboardOffset > 120);
+  }
+
+  window.visualViewport?.addEventListener('resize', syncProfileVisualViewport);
+  window.visualViewport?.addEventListener('scroll', syncProfileVisualViewport);
+  window.addEventListener('resize', syncProfileVisualViewport);
+  document.addEventListener('focusin', (event) => {
+    if (event.target.closest?.('.modal-overlay')) {
+      document.body.classList.add('modal-input-active');
+      setTimeout(syncProfileVisualViewport, 80);
+      setTimeout(() => event.target.scrollIntoView?.({ block: 'center', behavior: 'smooth' }), 120);
+    }
+  });
+  document.addEventListener('focusout', () => {
+    setTimeout(() => {
+      if (!document.activeElement?.closest?.('.modal-overlay')) {
+        document.body.classList.remove('modal-input-active', 'modal-keyboard-open');
+      }
+      syncProfileVisualViewport();
+    }, 120);
+  });
+  syncProfileVisualViewport();
+
   function openModal()  {
     if (!modal || !input) return;
     modal.classList.add('active');
+    syncProfileVisualViewport();
     input.focus();
   }
   function closeModal() {
     if (!modal) return;
     modal.classList.remove('active');
+    document.body.classList.remove('modal-input-active', 'modal-keyboard-open');
+    syncProfileVisualViewport();
     if (errorEl) errorEl.textContent = '';
   }
 

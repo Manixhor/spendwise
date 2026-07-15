@@ -251,6 +251,42 @@ let selectedGoalPriority = 'medium';
 
 const PRIORITY_DEFAULTS = { high: 70, medium: 50, low: 30 };
 
+function syncSavingsVisualViewport() {
+  const viewport = window.visualViewport;
+  const height = viewport ? viewport.height : window.innerHeight;
+  const layoutHeight = Math.max(
+    document.documentElement.clientHeight,
+    window.innerHeight || 0,
+  );
+  const keyboardOffset = viewport
+    ? Math.max(0, layoutHeight - viewport.height - viewport.offsetTop)
+    : 0;
+  document.documentElement.style.setProperty('--app-visual-height', `${height}px`);
+  document.documentElement.style.setProperty('--app-keyboard-offset', `${keyboardOffset}px`);
+  const hasActiveModal = Boolean(document.querySelector('.modal-overlay.active'));
+  document.body.classList.toggle('modal-keyboard-open', hasActiveModal && keyboardOffset > 120);
+}
+
+window.visualViewport?.addEventListener('resize', syncSavingsVisualViewport);
+window.visualViewport?.addEventListener('scroll', syncSavingsVisualViewport);
+window.addEventListener('resize', syncSavingsVisualViewport);
+document.addEventListener('focusin', (event) => {
+  if (event.target.closest?.('.modal-overlay')) {
+    document.body.classList.add('modal-input-active');
+    setTimeout(syncSavingsVisualViewport, 80);
+    setTimeout(() => event.target.scrollIntoView?.({ block: 'center', behavior: 'smooth' }), 120);
+  }
+});
+document.addEventListener('focusout', () => {
+  setTimeout(() => {
+    if (!document.activeElement?.closest?.('.modal-overlay')) {
+      document.body.classList.remove('modal-input-active', 'modal-keyboard-open');
+    }
+    syncSavingsVisualViewport();
+  }, 120);
+});
+syncSavingsVisualViewport();
+
 // Goal priority selector — auto-updates allocation %
 goalPriorityBtns.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -280,6 +316,7 @@ function openAddGoal() {
   document.getElementById('goalAllocation').value = PRIORITY_DEFAULTS['medium'];
 
   goalModal.classList.add('active');
+  syncSavingsVisualViewport();
   document.getElementById('goalName').focus();
 }
 
@@ -299,9 +336,15 @@ function openEditGoal(id, name, target, priority = 'medium', allocation = 50) {
   selectedGoalPriority = priority;
 
   goalModal.classList.add('active');
+  syncSavingsVisualViewport();
 }
 
-function closeGoalModal() { goalModal.classList.remove('active'); goalError.textContent = ''; }
+function closeGoalModal() {
+  goalModal.classList.remove('active');
+  document.body.classList.remove('modal-input-active', 'modal-keyboard-open');
+  syncSavingsVisualViewport();
+  goalError.textContent = '';
+}
 
 addGoalBtn.addEventListener('click', openAddGoal);
 goalClose.addEventListener('click', closeGoalModal);
