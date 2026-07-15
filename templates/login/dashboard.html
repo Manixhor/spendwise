@@ -134,7 +134,7 @@
       <ul class="txn-list" id="txnList">
         {% for txn in recent_txns %}
         <li class="txn-item" id="txn-{{ txn.id }}">
-          <div class="txn-icon {{ txn.category }}" style="font-size:1rem;">
+          <div class="txn-icon {{ txn.category }}" style="font-size:1rem;" title="{{ txn.get_category_display }}" aria-label="{{ txn.get_category_display }}">
             {% if txn.category == 'rent' %}🏠
             {% elif txn.category == 'transport' %}🚗
             {% elif txn.category == 'health' %}❤️
@@ -1045,6 +1045,17 @@ try {
     document.getElementById('txnEmpty')?.remove();
 
     const safeCategories = new Set(['rent', 'transport', 'health', 'groceries', 'entertainment', 'shopping', 'food', 'utilities', 'other']);
+    const categoryLabels = {
+      rent: 'Rent',
+      transport: 'Transport',
+      health: 'Health',
+      groceries: 'Groceries',
+      entertainment: 'Entertainment',
+      shopping: 'Shopping',
+      food: 'Food',
+      utilities: 'Utilities',
+      other: 'Other',
+    };
     const categoryClass = safeCategories.has(payload.category) ? payload.category : 'other';
     const item = document.createElement('li');
     item.className = 'txn-item offline-pending';
@@ -1052,6 +1063,8 @@ try {
     const icon = document.createElement('div');
     icon.className = `txn-icon ${categoryClass}`;
     icon.style.fontSize = '1rem';
+    icon.title = categoryLabels[categoryClass] || 'Other';
+    icon.setAttribute('aria-label', icon.title);
     icon.textContent = '📦';
 
     const info = document.createElement('div');
@@ -1083,6 +1096,17 @@ try {
     const item = document.getElementById('txn-' + txnId);
     if (!item) return;
     const safeCategories = new Set(['rent', 'transport', 'health', 'groceries', 'entertainment', 'shopping', 'food', 'utilities', 'other']);
+    const categoryLabels = {
+      rent: 'Rent',
+      transport: 'Transport',
+      health: 'Health',
+      groceries: 'Groceries',
+      entertainment: 'Entertainment',
+      shopping: 'Shopping',
+      food: 'Food',
+      utilities: 'Utilities',
+      other: 'Other',
+    };
     const categoryClass = safeCategories.has(payload.category) ? payload.category : 'other';
     const name = item.querySelector('.txn-name');
     const time = item.querySelector('.txn-time');
@@ -1095,7 +1119,11 @@ try {
       time.textContent = `${payload.date} · Pending sync`;
     }
     if (amount) amount.textContent = `−${formatCurrency(payload.amount)}`;
-    if (icon) icon.className = `txn-icon ${categoryClass}`;
+    if (icon) {
+      icon.className = `txn-icon ${categoryClass}`;
+      icon.title = categoryLabels[categoryClass] || 'Other';
+      icon.setAttribute('aria-label', icon.title);
+    }
     markTransactionPending(item);
   }
 
@@ -1427,9 +1455,15 @@ try {
       const btn  = document.createElement('button');
       btn.className = 'txn-date-btn';
       btn.dataset.date = iso;
+      btn.type = 'button';
 
       const isToday = iso === toISO(today);
       if (isToday) btn.classList.add('today');
+      const title = isToday
+        ? 'Today · show today’s transactions'
+        : `Show transactions for ${d.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short' })}`;
+      btn.title = title;
+      btn.setAttribute('aria-label', title);
 
       btn.innerHTML =
         `<span class="tdb-num">${d.getDate()}</span>` +

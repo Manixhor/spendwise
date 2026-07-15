@@ -67,12 +67,12 @@
           </div>
         </div>
         <div class="month-selector">
-          <a class="month-btn" href="?month={{ prev_month_param }}" aria-label="Previous month">&#8249;</a>
-          <span class="month-label" id="monthLabel">{{ selected_month_label }}</span>
+          <a class="month-btn" href="?month={{ prev_month_param }}" aria-label="Previous month" title="Previous month">&#8249;</a>
+          <span class="month-label" id="monthLabel" title="Selected month: {{ selected_month_label }}">{{ selected_month_label }}</span>
           {% if is_current_month %}
-            <span class="month-btn is-disabled" aria-disabled="true">&#8250;</span>
+            <span class="month-btn is-disabled" aria-disabled="true" title="Already showing the current month">&#8250;</span>
           {% else %}
-            <a class="month-btn" href="?month={{ next_month_param }}" aria-label="Next month">&#8250;</a>
+            <a class="month-btn" href="?month={{ next_month_param }}" aria-label="Next month" title="Next month">&#8250;</a>
           {% endif %}
         </div>
       </div>
@@ -236,8 +236,8 @@
 
         <div class="ma-cat-list">
           {% for category in categories %}
-            <div class="ma-cat-item">
-              <div class="ma-cat-icon" style="background:{{ category.icon_bg }}; color:{{ category.icon_fg }};">
+            <div class="ma-cat-item" title="{{ category.label }} · {{ category.share_pct|floatformat:1 }}% · ₹{{ category.amount|floatformat:2 }}">
+              <div class="ma-cat-icon" style="background:{{ category.icon_bg }}; color:{{ category.icon_fg }};" title="{{ category.label }}" aria-label="{{ category.label }}">
                 {% if category.key == 'rent' %}
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
                 {% elif category.key == 'transport' %}

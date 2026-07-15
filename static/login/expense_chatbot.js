@@ -3,6 +3,7 @@
   if (!root || root.dataset.ready === 'true') return;
   root.dataset.ready = 'true';
 
+  const hint = document.getElementById('expenseChatbotHint');
   const fab = document.getElementById('expenseChatbotFab');
   const panel = document.getElementById('expenseChatbotPanel');
   const backdrop = document.getElementById('expenseChatbotBackdrop');
@@ -22,7 +23,17 @@
   let closeTimer = null;
   let finishTimer = null;
   let inputBlurTimer = null;
+  let hintTimer = null;
   let swipeStart = null;
+
+  const dismissHint = () => {
+    window.clearTimeout(hintTimer);
+    if (!hint) return;
+    hint.classList.remove('is-visible');
+    window.setTimeout(() => {
+      hint.hidden = true;
+    }, 220);
+  };
 
   const syncVisualViewport = () => {
     if (!window.visualViewport) return;
@@ -229,6 +240,12 @@
   function openChat() {
     window.clearTimeout(closeTimer);
     window.clearTimeout(finishTimer);
+    dismissHint();
+    try {
+      window.localStorage.setItem('spendwise-chatbot-hint-seen', 'true');
+    } catch (error) {
+      // Ignore private-mode storage failures; the hint is purely cosmetic.
+    }
     closeTimer = null;
     finishTimer = null;
     panel.hidden = false;
@@ -274,6 +291,7 @@
   }
 
   fab.addEventListener('click', openChat);
+  hint?.addEventListener('click', openChat);
   closeButton.addEventListener('click', closeChat);
   backdrop.addEventListener('click', closeChat);
   const submitAnswer = () => {
@@ -338,9 +356,17 @@
     }
   }, { passive: true });
 
-  if (root.dataset.dashboard === 'true') {
-    const skipOnce = window.sessionStorage.getItem('spendwise-skip-chatbot-once') === 'true';
-    window.sessionStorage.removeItem('spendwise-skip-chatbot-once');
-    if (!skipOnce) openChat();
+  try {
+    const hintSeen = window.localStorage.getItem('spendwise-chatbot-hint-seen') === 'true';
+    if (hint && !hintSeen) {
+      hintTimer = window.setTimeout(() => {
+        if (!panel.hidden) return;
+        hint.hidden = false;
+        window.requestAnimationFrame(() => hint.classList.add('is-visible'));
+      }, 900);
+    }
+  } catch (error) {
+    // If localStorage is unavailable, keep the assistant manual and skip the hint.
   }
+
 })();
