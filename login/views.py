@@ -2167,47 +2167,97 @@ def api_export_monthly_pdf(request: HttpRequest) -> HttpResponse:
         total_income = analysis["total_income"]
     total_saved = total_income - total_expense
 
-    def money_html(value):
-        return f"Rs. {value:,.2f}"
+    def pdf_text(value) -> str:
+        return (
+            str(value)
+            .replace("\\", "\\\\")
+            .replace("(", "\\(")
+            .replace(")", "\\)")
+            .replace("₹", "Rs.")
+        )
 
-    # Simple printable HTML response for PDF export.
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>Monthly Report - {month_date.strftime("%B %Y")}</title>
-        <style>
-            body {{ font-family: Arial, sans-serif; padding: 40px; }}
-            h1 {{ color: #333; }}
-            table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-            th, td {{ padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }}
-            th {{ background: #f5f5f5; }}
-            .summary {{ margin: 20px 0; padding: 20px; background: #f9f9f9; border-radius: 8px; }}
-            .positive {{ color: green; }}
-            .negative {{ color: red; }}
-        </style>
-    </head>
-    <body>
-        <h1>Monthly Analysis Report</h1>
-        <p>Month: {month_date.strftime("%B %Y")}</p>
-        <div class="summary">
-            <p><strong>Total Income:</strong> <span class="positive">{money_html(total_income)}</span></p>
-            <p><strong>Total Expenses:</strong> <span class="negative">{money_html(total_expense)}</span></p>
-            <p><strong>Net Savings:</strong> <span class="{"positive" if total_saved >= 0 else "negative"}">{money_html(total_saved)}</span></p>
-        </div>
-        <h2>Transactions</h2>
-        <table>
-            <tr><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th>Amount</th></tr>
-            {"".join(f"<tr><td>{t.date}</td><td>{t.txn_type}</td><td>{t.category}</td><td>{t.title}</td><td class={'positive' if t.txn_type == 'income' else 'negative'}>{'+' if t.txn_type == 'income' else '-'}{money_html(t.amount)}</td></tr>" for t in transactions)}
-        </table>
-    </body>
-    </html>
-    """
+    def money_pdf(value):
+        return f"Rs. {Decimal(str(value)):,.2f}"
 
-    response = HttpResponse(html_content, content_type="text/html; charset=utf-8")
+    lines = [
+        "SpendWise Monthly Analysis Report",
+        f"Month: {month_date.strftime('%B %Y')}",
+        "",
+        "Summary",
+        f"Total Income: {money_pdf(total_income)}",
+        f"Total Expenses: {money_pdf(total_expense)}",
+        f"Net Savings: {money_pdf(total_saved)}",
+        "",
+        "Transactions",
+    ]
+
+    if transactions:
+        for txn in transactions[:38]:
+            sign = "+" if txn.txn_type == "income" else "-"
+            lines.append(
+                " | ".join(
+                    [
+                        txn.date.strftime("%Y-%m-%d"),
+                        txn.txn_type.title(),
+                        txn.get_category_display(),
+                        txn.title[:36],
+                        f"{sign}{money_pdf(txn.amount)}",
+                    ]
+                )
+            )
+        if transactions.count() > 38:
+            lines.append(f"...and {transactions.count() - 38} more transactions. Export CSV for the full list.")
+    else:
+        lines.append("No transactions recorded for this month.")
+
+    stream_parts = ["BT", "/F1 18 Tf", "72 760 Td"]
+    for index, line in enumerate(lines):
+        if index == 1:
+            stream_parts.extend(["/F1 11 Tf", "0 -22 Td"])
+        elif index == 3:
+            stream_parts.extend(["/F1 14 Tf", "0 -26 Td"])
+        elif index == 4:
+            stream_parts.extend(["/F1 10 Tf", "0 -18 Td"])
+        elif index == 8:
+            stream_parts.extend(["/F1 14 Tf", "0 -28 Td"])
+        elif index == 9:
+            stream_parts.extend(["/F1 9 Tf", "0 -18 Td"])
+        elif index > 0 and index not in {1, 3, 4, 8, 9}:
+            stream_parts.append("0 -16 Td")
+        stream_parts.append(f"({pdf_text(line)}) Tj")
+    stream_parts.append("ET")
+    content_stream = "\n".join(stream_parts).encode("latin-1", errors="replace")
+
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Length " + str(len(content_stream)).encode("ascii") + b" >>\nstream\n" + content_stream + b"\nendstream",
+    ]
+    buffer = io.BytesIO()
+    buffer.write(b"%PDF-1.4\n")
+    offsets = [0]
+    for obj_num, obj in enumerate(objects, start=1):
+        offsets.append(buffer.tell())
+        buffer.write(f"{obj_num} 0 obj\n".encode("ascii"))
+        buffer.write(obj)
+        buffer.write(b"\nendobj\n")
+    xref_offset = buffer.tell()
+    buffer.write(f"xref\n0 {len(objects) + 1}\n".encode("ascii"))
+    buffer.write(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        buffer.write(f"{offset:010d} 00000 n \n".encode("ascii"))
+    buffer.write(
+        (
+            f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n"
+            f"startxref\n{xref_offset}\n%%EOF\n"
+        ).encode("ascii")
+    )
+
+    response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
     response["Content-Disposition"] = (
-        f"inline; filename=Monthly_Analysis_{month_date.strftime('%Y-%m')}.html"
+        f"attachment; filename=Monthly_Analysis_{month_date.strftime('%Y-%m')}.pdf"
     )
     return response
 
