@@ -1,0 +1,602 @@
+[
+  {
+    "sno": 1,
+    "name": "Akanksha Puri",
+    "email": "akanksha.puri@sourcefuse.com",
+    "title_company": "Associate Director HR SourceFuse Technologies"
+  },
+  {
+    "sno": 2,
+    "name": "Akanksha Sogani",
+    "email": "akanksha.sogani@perennialsys.com",
+    "title_company": "Head HR Perennial Systems"
+  },
+  {
+    "sno": 3,
+    "name": "Akhil Jogiparthi",
+    "email": "akhil@ibhubs.co",
+    "title_company": "Vice President - Talent Accelerator iB Hubs"
+  },
+  {
+    "sno": 4,
+    "name": "Akhila Chandan",
+    "email": "akhila@estuate.com",
+    "title_company": "Associate Vice President Human Resources Estuate,"
+  },
+  {
+    "sno": 5,
+    "name": "Akram Mohammad",
+    "email": "akram.mohammad@colruytgroup.com",
+    "title_company": "Deputy Head Head HR Colruyt India"
+  },
+  {
+    "sno": 6,
+    "name": "Akriti",
+    "email": "akriti@elsner.in",
+    "title_company": "HR-Head Elsner Technologies"
+  },
+  {
+    "sno": 7,
+    "name": "Akshata Bhandare",
+    "email": "akshata.bhandare@windmill.ch",
+    "title_company": "HR & Location Head, India Windmill"
+  },
+  {
+    "sno": 8,
+    "name": "Albino Mascarenhas",
+    "email": "albino@pixis.ai",
+    "title_company": "Head - Human Resources Global Pyxis One"
+  },
+  {
+    "sno": 9,
+    "name": "Allwyn Richard",
+    "email": "allwyn.r@qbrainx.com",
+    "title_company": "Head of Human Resources QBrainX Inc"
+  },
+  {
+    "sno": 10,
+    "name": "Alok Baghel",
+    "email": "alok.singh@recro.io",
+    "title_company": "Head Of Talent Management Recro"
+  },
+  {
+    "sno": 11,
+    "name": "Alok Kumar",
+    "email": "alok.kumar@vfislk.com",
+    "title_company": "Operations Leader and Head Transitions, L&D VFI SLK"
+  },
+  {
+    "sno": 12,
+    "name": "Alwyn Barretto",
+    "email": "alwyn.barretto@infrasofttech.com",
+    "title_company": "Head Recruitments Infrasoft Technologies"
+  },
+  {
+    "sno": 13,
+    "name": "Aman Khan",
+    "email": "aman.khan@areteanstech.com",
+    "title_company": "Vice President Human Resources Areteans"
+  },
+  {
+    "sno": 14,
+    "name": "Amandeep Kaur",
+    "email": "amandeep.k@antiersolutions.com",
+    "title_company": "Sr. HR Executive (Technical Recruitment Head) Antier Solutions"
+  },
+  {
+    "sno": 15,
+    "name": "Amar Sinha",
+    "email": "amar.sinha@nitorinfotech.com",
+    "title_company": "Director Talent Acquisition (People Function) Nitor Infotech"
+  },
+  {
+    "sno": 16,
+    "name": "Ambrish Kanungo",
+    "email": "ambrish.kanungo@beyondkey.com",
+    "title_company": "Head of HR Beyond Key"
+  },
+  {
+    "sno": 17,
+    "name": "Amiit Avaasthi",
+    "email": "amiit.avaasthi@altudo.co",
+    "title_company": "Chief People Officer Altudo"
+  },
+  {
+    "sno": 18,
+    "name": "Amit",
+    "email": "amit.malhotra@wundermanthompson.com",
+    "title_company": "Chief People Officer Wunderman Thompson MSC"
+  },
+  {
+    "sno": 19,
+    "name": "Amit Kataria",
+    "email": "amit@hanu.com",
+    "title_company": "Chief Human Resources Officer Hanu Software"
+  },
+  {
+    "sno": 20,
+    "name": "Amit Prayagi",
+    "email": "amit.prayagi@claimgenius.com",
+    "title_company": "Head Of Recruitment & HR Operation Claim Genius"
+  },
+  {
+    "sno": 21,
+    "name": "Amit Ranjan",
+    "email": "amit.ranjan@scikey.ai",
+    "title_company": "Associate Director- Talent Solutions SCIKEY"
+  },
+  {
+    "sno": 22,
+    "name": "Amit Sahoo",
+    "email": "amit.sahoo@areteanstech.com",
+    "title_company": "Vice President and Global Head - Human Resource Areteans"
+  },
+  {
+    "sno": 23,
+    "name": "Amita Shital",
+    "email": "ashital@svam.com",
+    "title_company": "Head of HR SVAM International"
+  },
+  {
+    "sno": 24,
+    "name": "Amitesh Verma",
+    "email": "amitesh.verma@cheersin.com",
+    "title_company": "Associate Director, Talent Acquisition Cheers Interactive"
+  },
+  {
+    "sno": 25,
+    "name": "Amitha K",
+    "email": "amitha.k@secure-24.com",
+    "title_company": "Director- HR Secure-24"
+  },
+  {
+    "sno": 26,
+    "name": "Amlan Nag",
+    "email": "amlan.nag@mjunction.in",
+    "title_company": "General Manager & Head HR mjunction services"
+  },
+  {
+    "sno": 27,
+    "name": "Amresh Mehra",
+    "email": "amreshm@zendrive.com",
+    "title_company": "VP - People & Culture Zendrive"
+  },
+  {
+    "sno": 28,
+    "name": "Amrita",
+    "email": "akishore@dimagi.com",
+    "title_company": "Director of People Operations, India Dimagi"
+  },
+  {
+    "sno": 29,
+    "name": "Amrita Cheema",
+    "email": "amrita.cheema@loconav.com",
+    "title_company": "Head HR - Global SaaS LocoNav"
+  },
+  {
+    "sno": 30,
+    "name": "Amrita Singh",
+    "email": "amrita.singh@cogentinfo.com",
+    "title_company": "Director - Recruitment & Delivery (US Staffing) COGENT Infotech"
+  },
+  {
+    "sno": 31,
+    "name": "Amrita Singh",
+    "email": "amrita.singh@itbd.net",
+    "title_company": "Head HR (India) IT BY DESIGN"
+  },
+  {
+    "sno": 32,
+    "name": "Amrita Tripathi",
+    "email": "amrita@sdnaglobal.com",
+    "title_company": "VP - India, ME and APAC HR Stanley David and Associates"
+  },
+  {
+    "sno": 33,
+    "name": "Amritesh Shukla",
+    "email": "amritesh.shukla@mygate.com",
+    "title_company": "Head Of Human Resources MyGate"
+  },
+  {
+    "sno": 34,
+    "name": "Amruta Urkude",
+    "email": "amruta@greatplaceitservices.com",
+    "title_company": "HR Head (Generalist) Great Place IT Services"
+  },
+  {
+    "sno": 35,
+    "name": "Amulya",
+    "email": "amulya.ms@utthunga.com",
+    "title_company": "Director HR Utthunga"
+  },
+  {
+    "sno": 36,
+    "name": "Anand Christopher",
+    "email": "anand.christopher@grassrootsbpo.com",
+    "title_company": "Vice President Human Resources Grassroots"
+  },
+  {
+    "sno": 37,
+    "name": "Anand E",
+    "email": "anand.e@increff.com",
+    "title_company": "Chief Human Resources Officer Increff"
+  },
+  {
+    "sno": 38,
+    "name": "Anand K",
+    "email": "ak@8kmiles.com",
+    "title_company": "Vice President Human Resources SecureKloud Technologies"
+  },
+  {
+    "sno": 39,
+    "name": "Anand Khot",
+    "email": "anandk@pharmarack.com",
+    "title_company": "Chief Human Resources Officer Pharmarack"
+  },
+  {
+    "sno": 40,
+    "name": "Anand Rajendran",
+    "email": "anand.r@whatarage.com",
+    "title_company": "Director - HR ADK Rage"
+  },
+  {
+    "sno": 41,
+    "name": "Anand Sasidharan",
+    "email": "anand@hubilo.com",
+    "title_company": "Head of Talent Acquisition Hubilo"
+  },
+  {
+    "sno": 42,
+    "name": "Anand Sl",
+    "email": "anand@auzmor.com",
+    "title_company": "HR Director / Operations Head (India) Auzmor"
+  },
+  {
+    "sno": 43,
+    "name": "Anand Soni",
+    "email": "anand@capsitech.com",
+    "title_company": "Talent Acquisition Head Capsitech"
+  },
+  {
+    "sno": 44,
+    "name": "Anand Thiagarajan",
+    "email": "athiagarajan@inniveinc.com",
+    "title_company": "Vice President - Human Resources Innive Inc"
+  },
+  {
+    "sno": 45,
+    "name": "Anandhi Srinivasan",
+    "email": "anandhi.s@dsmsoft.com",
+    "title_company": "Associate Vice President - Human Resources DSM SOFT"
+  },
+  {
+    "sno": 46,
+    "name": "Ananthram Iyer",
+    "email": "ananthram.iyer@customercentria.com",
+    "title_company": "Vice President HR Customer Centria"
+  },
+  {
+    "sno": 47,
+    "name": "Anchal Rastogi",
+    "email": "anrastogi@enhanceit.com",
+    "title_company": "AVP Recruitments Enhance IT"
+  },
+  {
+    "sno": 48,
+    "name": "Anchan Arasinaguppe",
+    "email": "aarasina@teksystems.com",
+    "title_company": "Associate Director Talent Acquisition TEKsystems Global Services in India"
+  },
+  {
+    "sno": 49,
+    "name": "Angel Mathew",
+    "email": "angel.mathew@delphix.com",
+    "title_company": "Human Resources Director Delphix"
+  },
+  {
+    "sno": 50,
+    "name": "Anil Chandra",
+    "email": "anil.chandra@thoughtspot.com",
+    "title_company": "Senior Director, Talent Acquisition ThoughtSpot"
+  },
+  {
+    "sno": 51,
+    "name": "Anil K",
+    "email": "anil.k@corestack.io",
+    "title_company": "Human Resources Director CoreStack"
+  },
+  {
+    "sno": 52,
+    "name": "Anil Moturi",
+    "email": "anil.moturi@solugenix.com",
+    "title_company": "Director Talent Acquisition Solugenix"
+  },
+  {
+    "sno": 53,
+    "name": "Anil Pereira",
+    "email": "anil.pereira@visiblealpha.com",
+    "title_company": "Senior Director Human Resources Visible Alpha"
+  },
+  {
+    "sno": 54,
+    "name": "Anil Ramachandran",
+    "email": "anil.kumar@flytxt.com",
+    "title_company": "Head - Global HR Flytxt"
+  },
+  {
+    "sno": 55,
+    "name": "Anil Tomar",
+    "email": "anil.tomar@fdsindia.co.in",
+    "title_company": "HR Head Fourth Dimension Solutions"
+  },
+  {
+    "sno": 56,
+    "name": "Animesh Kumar",
+    "email": "animesh.kumar@novopay.in",
+    "title_company": "Head HR, Novopay Novopay"
+  },
+  {
+    "sno": 57,
+    "name": "Anindita Ranjan",
+    "email": "anindita.ranjan@3ds.com",
+    "title_company": "Director HR Dassault Systems"
+  },
+  {
+    "sno": 58,
+    "name": "Anirban Chakravorty",
+    "email": "anirban.chakravorty@nttdata.com",
+    "title_company": "Senior Director & Regional Head - Human Resource NTT DATA"
+  },
+  {
+    "sno": 59,
+    "name": "Anirban Ghosh",
+    "email": "aghosh@trimaxamericas.com",
+    "title_company": "Head - Human Resources Management Data Glove"
+  },
+  {
+    "sno": 60,
+    "name": "Anirudhan Vasudevan",
+    "email": "anirudhan.vasudevan@replicon.com",
+    "title_company": "Senior Director Human Resources Replicon"
+  },
+  {
+    "sno": 61,
+    "name": "Anish Ahmed",
+    "email": "anish.ahmed@vaave.com",
+    "title_company": "Head-13x Talent Vaave"
+  },
+  {
+    "sno": 62,
+    "name": "Anish Raj",
+    "email": "anish.raj@sentieo.com",
+    "title_company": "Human Resources Director Sentieo"
+  },
+  {
+    "sno": 63,
+    "name": "Anita Mourya",
+    "email": "anita.mourya@capricot.com",
+    "title_company": "PS to Chairman / Director - HR Capricot Technologies"
+  },
+  {
+    "sno": 64,
+    "name": "Anita Noronha",
+    "email": "anoronha@shorewise.com",
+    "title_company": "Global Head Human Resources ShoreWise Consulting"
+  },
+  {
+    "sno": 65,
+    "name": "Anita Sidhwani",
+    "email": "asidhwani@cleo.com",
+    "title_company": "Head HR Cleo"
+  },
+  {
+    "sno": 66,
+    "name": "Anita Yadav",
+    "email": "anita@appventurez.com",
+    "title_company": "Global HR Head Appventurez"
+  },
+  {
+    "sno": 67,
+    "name": "Anitha Davis",
+    "email": "anitha.davis@incture.com",
+    "title_company": "Associate Director - Talent Acquisition Incture"
+  },
+  {
+    "sno": 68,
+    "name": "Anitha Prabhakar",
+    "email": "anitha.prabhakar@pramati.com",
+    "title_company": "HR Director Pramati Technologies"
+  },
+  {
+    "sno": 69,
+    "name": "Anjali",
+    "email": "anjali@knackforge.com",
+    "title_company": "Vice President Human Resources & Operations KnackForge"
+  },
+  {
+    "sno": 70,
+    "name": "Anjali Ghadge",
+    "email": "anjalig@mangoapps.com",
+    "title_company": "VP - HR & Operations I We're Hiring! MangoApps"
+  },
+  {
+    "sno": 71,
+    "name": "Anjali Patil",
+    "email": "anjali.patil@workindia.in",
+    "title_company": "HR Director WorkIndia"
+  },
+  {
+    "sno": 72,
+    "name": "Anjali Sharma",
+    "email": "anjali.sharma@fulcrumdigital.com",
+    "title_company": "Director, Global head of L&D Fulcrum Digital Inc"
+  },
+  {
+    "sno": 73,
+    "name": "Anjan Bose",
+    "email": "anjan.bose@hpl.co.in",
+    "title_company": "CIO & Head of HR HPL"
+  },
+  {
+    "sno": 74,
+    "name": "Anjani Salian",
+    "email": "anjani.salian@in.nbssap.com",
+    "title_company": "Head - Talent Acquisition & Talent Management Net Business Solutions"
+  },
+  {
+    "sno": 75,
+    "name": "Anju Tyagi",
+    "email": "anju.tyagi@bpoconvergence.com",
+    "title_company": "Head of HR BPO Convergence"
+  },
+  {
+    "sno": 76,
+    "name": "Ankit Shah",
+    "email": "ankit@compumatrice.com",
+    "title_company": "Head of HR & Operations CompuMatrice"
+  },
+  {
+    "sno": 77,
+    "name": "Ankit Sharma",
+    "email": "ankit.sharma@a1technology.com",
+    "title_company": "Head Of Recruitment & HR A-1 Technology"
+  },
+  {
+    "sno": 78,
+    "name": "Ankit Tomar",
+    "email": "ankit.tomar@rategain.com",
+    "title_company": "Associate Director HR Transformation RateGain"
+  },
+  {
+    "sno": 79,
+    "name": "Ankita",
+    "email": "ankita@zenwork.com",
+    "title_company": "Vice President HR & Operations Zenwork"
+  },
+  {
+    "sno": 80,
+    "name": "Ankita Rajrishi",
+    "email": "ankita.rajrishi@condecosoftware.com",
+    "title_company": "Head of Shared Services - Talent Acquisition Condeco"
+  },
+  {
+    "sno": 81,
+    "name": "Ankita Sinha",
+    "email": "ankita.sinha@mtxb2b.com",
+    "title_company": "Chief People Officer MTX Group"
+  },
+  {
+    "sno": 82,
+    "name": "Ankur Beri",
+    "email": "ankur.beri@niit-tech.com",
+    "title_company": "Group Head Human Resources NIIT Technologies"
+  },
+  {
+    "sno": 83,
+    "name": "Anna Andrews",
+    "email": "annaa@smartek21.com",
+    "title_company": "Head-Human Resources (India) SmarTek21"
+  },
+  {
+    "sno": 84,
+    "name": "Anna Mathunny",
+    "email": "anna@transactglobal.com",
+    "title_company": "Head Of Human Resources Transact Global"
+  },
+  {
+    "sno": 85,
+    "name": "Annapurna A",
+    "email": "annapurna.a@fime.com",
+    "title_company": "Head of HR & Admn FIME"
+  },
+  {
+    "sno": 86,
+    "name": "Annie Manoj",
+    "email": "annie.manoj@grasko.com",
+    "title_company": "Director - Human Resources Grasko Solutions"
+  },
+  {
+    "sno": 87,
+    "name": "Anoob Abraham",
+    "email": "anoob.abraham@arcadia.com",
+    "title_company": "Associate Director - Talent Acquisition Arcadia"
+  },
+  {
+    "sno": 88,
+    "name": "Anshika Khaitan",
+    "email": "anshika.khaitan@getvymo.com",
+    "title_company": "Director-People & Culture Vymo"
+  },
+  {
+    "sno": 89,
+    "name": "Anshu Anand",
+    "email": "anshu.anand@absolutdata.com",
+    "title_company": "Head Of Human Resources Absolutdata Analytics"
+  },
+  {
+    "sno": 90,
+    "name": "Ansuman Sahu",
+    "email": "ansumans@mindfiresolutions.com",
+    "title_company": "Head of HR / Staffing Mindfire Solutions"
+  },
+  {
+    "sno": 91,
+    "name": "Anto Faria",
+    "email": "anto.faria@urbanladder.com",
+    "title_company": "Head L&D Operation and Fulfillment Urban Ladder"
+  },
+  {
+    "sno": 92,
+    "name": "Anuj Agarwal",
+    "email": "anuj@deskera.com",
+    "title_company": "VP, Corporate Operations & HR Deskera"
+  },
+  {
+    "sno": 93,
+    "name": "Anuja Sivaram",
+    "email": "anuja@codenation.co.in",
+    "title_company": "CHRO & COO Trilogy Innovations"
+  },
+  {
+    "sno": 94,
+    "name": "Anupam Jauhari",
+    "email": "anupam.j@gsl.in",
+    "title_company": "Group CHRO Ginesys"
+  },
+  {
+    "sno": 95,
+    "name": "Anupam Srivastava",
+    "email": "anupam.srivastava@reltio.com",
+    "title_company": "Head Of Human Resources Reltio"
+  },
+  {
+    "sno": 96,
+    "name": "Anupama Dasgupta",
+    "email": "anupamadg@erevmax.com",
+    "title_company": "SVP Human Resources eRevMax"
+  },
+  {
+    "sno": 97,
+    "name": "Anupriya Gandhi",
+    "email": "anupriya.gandhi@juliacomputing.com",
+    "title_company": "Global Director People Ops Julia Computing"
+  },
+  {
+    "sno": 98,
+    "name": "Anurag Rana",
+    "email": "anurag.rana@sirionlabs.com",
+    "title_company": "Head of Human Resources SirionLabs"
+  },
+  {
+    "sno": 99,
+    "name": "Anurag Shrivastava",
+    "email": "anurags@talisma.com",
+    "title_company": "Director - HR Talisma"
+  },
+  {
+    "sno": 100,
+    "name": "Anurag Verma",
+    "email": "anurag@uniphore.com",
+    "title_company": "Vice President Human Resources Uniphore"
+  }
+]
