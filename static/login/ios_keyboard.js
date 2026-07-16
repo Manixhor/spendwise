@@ -24,7 +24,10 @@
     document.documentElement.style.setProperty('--app-visual-height', `${visualHeight}px`);
     document.documentElement.style.setProperty('--app-viewport-top', `${viewportTop}px`);
     document.documentElement.style.setProperty('--app-keyboard-height', `${keyboardHeight}px`);
-    document.documentElement.style.setProperty('--app-keyboard-shift', `${keyboardOpen ? Math.round(keyboardHeight * 0.5) : 0}px`);
+    document.documentElement.style.setProperty('--app-keyboard-offset', `${keyboardHeight}px`);
+    document.documentElement.style.setProperty('--sw-visible-height', `${visualHeight}px`);
+    document.documentElement.style.setProperty('--sw-keyboard-height', `${keyboardHeight}px`);
+    document.documentElement.style.setProperty('--app-keyboard-shift', '0px');
     document.body.classList.toggle('ios-keyboard-open', keyboardOpen);
     document.body.classList.toggle('ios-modal-keyboard-open', keyboardOpen && Boolean(activeModal));
   };
@@ -34,11 +37,22 @@
 
     window.setTimeout(() => {
       syncKeyboardState();
-      const container = target.closest('.modal-card, .export-modal__card, .expense-chatbot-panel, .card, form') || target;
-      target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
-      if (container !== target && container.scrollIntoView) {
-        container.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+      const scrollParent = target.closest('.modal-card, .export-modal__card, .expense-chatbot-messages, .expense-chatbot-panel');
+      if (scrollParent) {
+        const fieldRect = target.getBoundingClientRect();
+        const parentRect = scrollParent.getBoundingClientRect();
+        const topOverflow = fieldRect.top - parentRect.top - 18;
+        const bottomOverflow = fieldRect.bottom - parentRect.bottom + 18;
+
+        if (topOverflow < 0) {
+          scrollParent.scrollBy({ top: topOverflow, behavior: 'smooth' });
+        } else if (bottomOverflow > 0) {
+          scrollParent.scrollBy({ top: bottomOverflow, behavior: 'smooth' });
+        }
+        return;
       }
+
+      target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
     }, 120);
   };
 

@@ -2391,12 +2391,12 @@ body[data-theme="dark"] .txn-amt.neg {
 body.ios-modal-keyboard-open .modal-overlay.active {
   align-items: center;
   padding-top: max(12px, env(safe-area-inset-top, 0px));
-  padding-bottom: calc(var(--app-keyboard-height, 0px) + max(12px, env(safe-area-inset-bottom, 0px)));
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
 }
 
 body.ios-modal-keyboard-open .modal-overlay.active .modal-card {
-  max-height: calc(var(--app-visual-height, 100dvh) - 24px - env(safe-area-inset-top, 0px));
-  transform: translateY(calc(-1 * min(18px, var(--app-keyboard-shift, 0px)))) scale(1);
+  max-height: calc(var(--app-visual-height, 100dvh) - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  transform: translateY(0) scale(1);
 }
 
 .modal-header {
@@ -3675,14 +3675,14 @@ body[data-theme="dark"] .modal-select--transparent:focus {
   body.modal-keyboard-open .modal-overlay {
     align-items: center;
     padding-top: max(8px, env(safe-area-inset-top, 0px));
-    padding-bottom: calc(var(--app-keyboard-height, var(--app-keyboard-offset, 0px)) + max(10px, env(safe-area-inset-bottom, 0px)));
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
   }
 
   body.modal-keyboard-open .modal-card {
-    max-height: calc(var(--app-visual-height, 100dvh) - 18px - env(safe-area-inset-top, 0px));
+    max-height: calc(var(--app-visual-height, 100dvh) - 18px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
     padding-top: 18px;
     padding-bottom: 16px;
-    transform: translateY(calc(-1 * min(18px, var(--app-keyboard-shift, 0px)))) scale(1);
+    transform: translateY(0) scale(1);
   }
 
   .txn-modal-grid {
@@ -4731,7 +4731,7 @@ body[data-theme="light"] .expense-chatbot-composer input { color: #182033; }
 
 /* ─────────────────────────────────────────────────────────
    Responsive rewrite: Add Expense modal + SpendWise Assistant
-   Stable on iPhone Safari/PWA keyboard, without disabling zoom.
+   Stable on iPhone Safari/PWA keyboard while inputs are focused.
    ───────────────────────────────────────────────────────── */
 
 :root {
@@ -4783,13 +4783,13 @@ body.ios-modal-keyboard-open #txnModal.modal-overlay.active,
 body.modal-keyboard-open #txnModal.modal-overlay.active {
   align-items: center;
   padding-top: max(10px, env(safe-area-inset-top, 0px));
-  padding-bottom: calc(var(--sw-keyboard-height) + 12px);
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
 }
 
 body.ios-modal-keyboard-open #txnModal .modal-card,
 body.modal-keyboard-open #txnModal .modal-card {
-  max-height: calc(var(--sw-visible-height) - 22px - env(safe-area-inset-top, 0px));
-  transform: translateY(calc(-1 * min(20px, var(--app-keyboard-shift, 0px)))) scale(1);
+  max-height: calc(var(--sw-visible-height) - 22px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  transform: translateY(0) scale(1);
 }
 
 .expense-chatbot-panel,
@@ -4907,8 +4907,8 @@ body.modal-keyboard-open #txnModal .modal-card {
 
   body.expense-chatbot-keyboard-open .expense-chatbot-panel,
   body.expense-chatbot-input-active .expense-chatbot-panel {
-    bottom: var(--chat-keyboard-offset, 0px);
-    height: min(58vh, calc(var(--chat-visual-height, var(--sw-visible-height)) - 12px));
+    bottom: 0;
+    height: calc(var(--chat-visual-height, var(--sw-visible-height)) - 12px);
     max-height: calc(var(--chat-visual-height, var(--sw-visible-height)) - 12px);
     border-radius: 24px 24px 0 0;
   }

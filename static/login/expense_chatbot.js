@@ -48,9 +48,12 @@
     );
     root.style.setProperty('--chat-visual-height', `${viewport.height}px`);
     root.style.setProperty('--chat-keyboard-offset', `${keyboardOffset}px`);
-    root.style.setProperty('--chat-bottom-offset', `${keyboardOffset}px`);
+    root.style.setProperty('--chat-bottom-offset', '0px');
     document.documentElement.style.setProperty('--app-visual-height', `${viewport.height}px`);
     document.documentElement.style.setProperty('--app-keyboard-offset', `${keyboardOffset}px`);
+    document.documentElement.style.setProperty('--app-keyboard-height', `${keyboardOffset}px`);
+    document.documentElement.style.setProperty('--sw-visible-height', `${viewport.height}px`);
+    document.documentElement.style.setProperty('--sw-keyboard-height', `${keyboardOffset}px`);
     document.body.classList.toggle(
       'expense-chatbot-keyboard-open',
       !panel.hidden && keyboardOffset > 120,
@@ -113,7 +116,7 @@
     orb?.classList.remove('is-hidden');
     showSuggestions();
     addMessage('How much did you spend today?');
-    input.focus();
+    input.focus({ preventScroll: true });
   };
 
   const startConversation = () => {
@@ -133,7 +136,7 @@
     window.setTimeout(() => {
       if (!panel.hidden) addMessage('How much did you spend today?');
     }, 420);
-    input.focus();
+    input.focus({ preventScroll: true });
   };
 
   const finishChat = () => {

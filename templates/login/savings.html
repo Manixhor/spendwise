@@ -263,6 +263,9 @@ function syncSavingsVisualViewport() {
     : 0;
   document.documentElement.style.setProperty('--app-visual-height', `${height}px`);
   document.documentElement.style.setProperty('--app-keyboard-offset', `${keyboardOffset}px`);
+  document.documentElement.style.setProperty('--app-keyboard-height', `${keyboardOffset}px`);
+  document.documentElement.style.setProperty('--sw-visible-height', `${height}px`);
+  document.documentElement.style.setProperty('--sw-keyboard-height', `${keyboardOffset}px`);
   const hasActiveModal = Boolean(document.querySelector('.modal-overlay.active'));
   document.body.classList.toggle('modal-keyboard-open', hasActiveModal && keyboardOffset > 120);
 }
@@ -274,7 +277,6 @@ document.addEventListener('focusin', (event) => {
   if (event.target.closest?.('.modal-overlay')) {
     document.body.classList.add('modal-input-active');
     setTimeout(syncSavingsVisualViewport, 80);
-    setTimeout(() => event.target.scrollIntoView?.({ block: 'center', behavior: 'smooth' }), 120);
   }
 });
 document.addEventListener('focusout', () => {
@@ -317,7 +319,7 @@ function openAddGoal() {
 
   goalModal.classList.add('active');
   syncSavingsVisualViewport();
-  document.getElementById('goalName').focus();
+  document.getElementById('goalName').focus({ preventScroll: true });
 }
 
 function openEditGoal(id, name, target, priority = 'medium', allocation = 50) {

@@ -393,3 +393,28 @@ Skipped recipient 24 per user request and resumed from 25
   - Gmail message ID: 19f691019f37a2eb
   - Subject: Open to Software Engineer Opportunity at Zenwork
   - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 80. Ankita Rajrishi <ankita.rajrishi@condecosoftware.com>
+  - Company: Condeco
+  - Gmail message ID: 19f6911ff4c2d74c
+  - Subject: Open to Software Engineer Opportunity at Condeco
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 81. Ankita Sinha <ankita.sinha@mtxb2b.com>
+  - Company: MTX Group
+  - Gmail message ID: 19f6913f400f3c08
+  - Subject: Open to Software Engineer Opportunity at MTX Group
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 82. Ankur Beri <ankur.beri@niit-tech.com>
+  - Company: NIIT Technologies
+  - Gmail message ID: 19f6915dbb555bbc
+  - Subject: Open to Software Engineer Opportunity at NIIT Technologies
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 83. Anna <annaa@smartek21.com>
+  - Company: SmarTek21
+  - Gmail message ID: 19f6917c32e68f08
+  - Subject: Open to Software Engineer Opportunity at SmarTek21
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 84. Anna <anna@transactglobal.com>
+  - Company: Transact Global
+  - Gmail message ID: 19f6919c212adaae
+  - Subject: Open to Software Engineer Opportunity at Transact Global
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
