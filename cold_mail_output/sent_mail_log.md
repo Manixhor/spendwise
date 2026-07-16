@@ -111,10 +111,16 @@ Current stop point
 
 - Sent through recipient 23.
 - Recipient 24, Amitesh Verma <amitesh.verma@cheersin.com> at Cheers Interactive, was attempted after cooldown but Gmail returned RATE_LIMIT_EXCEEDED.
-- Resume from recipient 24 when Gmail quota clears.
+- Recipient 24 was later sent successfully.
 - Latest template uses company name in subject and body:
   - Subject format: Open to Software Engineer Opportunity at [Company Name]
   - Resume attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+
+- 24. Amitesh Verma <amitesh.verma@cheersin.com>
+  - Company: Cheers Interactive
+  - Gmail message ID: 19f692c272f9433f
+  - Subject: Open to Software Engineer Opportunity at Cheers Interactive
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
 
 Skipped recipient 24 per user request and resumed from 25
 
@@ -447,4 +453,49 @@ Skipped recipient 24 per user request and resumed from 25
   - Company: Mindfire Solutions
   - Gmail message ID: 19f6925b2d5addf3
   - Subject: Open to Software Engineer Opportunity at Mindfire Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 91. Anto Faria <anto.faria@urbanladder.com>
+  - Company: Urban Ladder
+  - Gmail message ID: 19f692e15260101e
+  - Subject: Open to Software Engineer Opportunity at Urban Ladder
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 92. Anuj Agarwal <anuj@deskera.com>
+  - Company: Deskera
+  - Gmail message ID: 19f69305e03a44a6
+  - Subject: Open to Software Engineer Opportunity at Deskera
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 93. Anuja Sivaram <anuja@codenation.co.in>
+  - Company: Trilogy Innovations
+  - Gmail message ID: 19f6932e7d2070ab
+  - Subject: Open to Software Engineer Opportunity at Trilogy Innovations
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 94. Anupam Jauhari <anupam.j@gsl.in>
+  - Company: Ginesys
+  - Gmail message ID: 19f69351e9b5bc68
+  - Subject: Open to Software Engineer Opportunity at Ginesys
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 95. Anupam Srivastava <anupam.srivastava@reltio.com>
+  - Company: Reltio
+  - Gmail message ID: 19f69371618218fe
+  - Subject: Open to Software Engineer Opportunity at Reltio
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 96. Anupama Dasgupta <anupamadg@erevmax.com>
+  - Company: eRevMax
+  - Gmail message ID: 19f6939005cf2ace
+  - Subject: Open to Software Engineer Opportunity at eRevMax
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 97. Anupriya Gandhi <anupriya.gandhi@juliacomputing.com>
+  - Company: Julia Computing
+  - Gmail message ID: 19f693b39d9bd46a
+  - Subject: Open to Software Engineer Opportunity at Julia Computing
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 98. Anurag Rana <anurag.rana@sirionlabs.com>
+  - Company: SirionLabs
+  - Gmail message ID: 19f693d409296d58
+  - Subject: Open to Software Engineer Opportunity at SirionLabs
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 99. Anurag Shrivastava <anurags@talisma.com>
+  - Company: Talisma
+  - Gmail message ID: 19f693faece5666b
+  - Subject: Open to Software Engineer Opportunity at Talisma
   - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf

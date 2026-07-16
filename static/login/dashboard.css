@@ -4865,10 +4865,12 @@ body.modal-keyboard-open #txnModal .modal-card {
   }
 
   body.expense-chatbot-keyboard-open .expense-chatbot-panel {
-    bottom: var(--chat-keyboard-offset, 0px);
-    height: calc(var(--chat-visual-height, var(--sw-visible-height)) - 12px);
-    max-height: calc(var(--chat-visual-height, var(--sw-visible-height)) - 12px);
+    top: calc(var(--chat-viewport-top, 0px) + max(8px, env(safe-area-inset-top, 0px)));
+    bottom: auto;
+    height: calc(var(--chat-visual-height, var(--sw-visible-height)) - max(8px, env(safe-area-inset-top, 0px)));
+    max-height: calc(var(--chat-visual-height, var(--sw-visible-height)) - max(8px, env(safe-area-inset-top, 0px)));
     border-radius: 24px 24px 0 0;
+    transform: translateY(0) scale(1);
   }
 
   body.expense-chatbot-keyboard-open .expense-chatbot-header {
@@ -4884,12 +4886,15 @@ body.modal-keyboard-open #txnModal .modal-card {
   }
 
   body.expense-chatbot-keyboard-open .expense-chatbot-messages {
+    flex: 1 1 auto;
+    min-height: 96px;
     padding: 8px 12px 6px;
   }
 
   body.expense-chatbot-keyboard-open .expense-chatbot-composer {
+    flex: 0 0 auto;
     width: calc(100% - 20px);
-    margin: 0 10px max(8px, env(safe-area-inset-bottom, 0px));
+    margin: 0 10px max(10px, env(safe-area-inset-bottom, 0px));
   }
 
   body.expense-chatbot-keyboard-open .expense-chatbot-note {

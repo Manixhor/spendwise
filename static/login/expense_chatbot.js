@@ -57,6 +57,7 @@
       layoutHeight - viewport.height - viewport.offsetTop,
     );
     root.style.setProperty('--chat-visual-height', `${viewport.height}px`);
+    root.style.setProperty('--chat-viewport-top', `${viewport.offsetTop}px`);
     root.style.setProperty('--chat-keyboard-offset', `${keyboardOffset}px`);
     root.style.setProperty('--chat-bottom-offset', '0px');
     document.documentElement.style.setProperty('--app-visual-height', `${viewport.height}px`);
@@ -68,6 +69,11 @@
       'expense-chatbot-keyboard-open',
       !panel.hidden && keyboardOffset > 120,
     );
+    if (!panel.hidden && keyboardOffset > 120) {
+      window.requestAnimationFrame(() => {
+        messages.scrollTop = messages.scrollHeight;
+      });
+    }
   };
 
   const localDate = () => {
