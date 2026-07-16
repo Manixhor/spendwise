@@ -26,6 +26,16 @@
   let hintTimer = null;
   let swipeStart = null;
 
+  const focusInputAfterLayout = () => {
+    window.setTimeout(() => {
+      if (panel.hidden || input.disabled) return;
+      input.focus({ preventScroll: true });
+      syncVisualViewport();
+      window.setTimeout(syncVisualViewport, 120);
+      window.setTimeout(syncVisualViewport, 320);
+    }, 180);
+  };
+
   const dismissHint = () => {
     window.clearTimeout(hintTimer);
     if (!hint) return;
@@ -116,7 +126,7 @@
     orb?.classList.remove('is-hidden');
     showSuggestions();
     addMessage('How much did you spend today?');
-    input.focus({ preventScroll: true });
+    focusInputAfterLayout();
   };
 
   const startConversation = () => {
@@ -136,7 +146,7 @@
     window.setTimeout(() => {
       if (!panel.hidden) addMessage('How much did you spend today?');
     }, 420);
-    input.focus({ preventScroll: true });
+    focusInputAfterLayout();
   };
 
   const finishChat = () => {
@@ -263,8 +273,11 @@
     fab.setAttribute('aria-expanded', 'true');
     panel.classList.add('is-open');
     backdrop.classList.add('is-open');
-    if (!messages.children.length) startConversation();
-    input.focus({ preventScroll: true });
+    if (!messages.children.length) {
+      startConversation();
+    } else {
+      focusInputAfterLayout();
+    }
     window.setTimeout(syncVisualViewport, 80);
   }
 

@@ -418,3 +418,33 @@ Skipped recipient 24 per user request and resumed from 25
   - Gmail message ID: 19f6919c212adaae
   - Subject: Open to Software Engineer Opportunity at Transact Global
   - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 85. Annapurna A <annapurna.a@fime.com>
+  - Company: FIME
+  - Gmail message ID: 19f691c41b0c9de5
+  - Subject: Open to Software Engineer Opportunity at FIME
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 86. Annie Manoj <annie.manoj@grasko.com>
+  - Company: Grasko Solutions
+  - Gmail message ID: 19f691e2045b9c9f
+  - Subject: Open to Software Engineer Opportunity at Grasko Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 87. Anoob Abraham <anoob.abraham@arcadia.com>
+  - Company: Arcadia
+  - Gmail message ID: 19f691fffbde63e4
+  - Subject: Open to Software Engineer Opportunity at Arcadia
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 88. Anshika Khaitan <anshika.khaitan@getvymo.com>
+  - Company: Vymo
+  - Gmail message ID: 19f6921e3d77b72b
+  - Subject: Open to Software Engineer Opportunity at Vymo
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 89. Anshu Anand <anshu.anand@absolutdata.com>
+  - Company: Absolutdata Analytics
+  - Gmail message ID: 19f6923cda089ced
+  - Subject: Open to Software Engineer Opportunity at Absolutdata Analytics
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 90. Ansuman <ansumans@mindfiresolutions.com>
+  - Company: Mindfire Solutions
+  - Gmail message ID: 19f6925b2d5addf3
+  - Subject: Open to Software Engineer Opportunity at Mindfire Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
