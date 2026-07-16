@@ -26,14 +26,17 @@
   let hintTimer = null;
   let swipeStart = null;
 
-  const focusInputAfterLayout = () => {
-    window.setTimeout(() => {
-      if (panel.hidden || input.disabled) return;
-      input.focus({ preventScroll: true });
-      syncVisualViewport();
-      window.setTimeout(syncVisualViewport, 120);
-      window.setTimeout(syncVisualViewport, 320);
-    }, 180);
+  const settleKeyboardLayout = () => {
+    syncVisualViewport();
+    window.setTimeout(syncVisualViewport, 80);
+    window.setTimeout(syncVisualViewport, 180);
+    window.setTimeout(syncVisualViewport, 360);
+  };
+
+  const focusInputNow = () => {
+    if (panel.hidden || input.disabled) return;
+    input.focus({ preventScroll: true });
+    settleKeyboardLayout();
   };
 
   const dismissHint = () => {
@@ -132,7 +135,7 @@
     orb?.classList.remove('is-hidden');
     showSuggestions();
     addMessage('How much did you spend today?');
-    focusInputAfterLayout();
+    focusInputNow();
   };
 
   const startConversation = () => {
@@ -152,7 +155,6 @@
     window.setTimeout(() => {
       if (!panel.hidden) addMessage('How much did you spend today?');
     }, 420);
-    focusInputAfterLayout();
   };
 
   const finishChat = () => {
@@ -281,10 +283,8 @@
     backdrop.classList.add('is-open');
     if (!messages.children.length) {
       startConversation();
-    } else {
-      focusInputAfterLayout();
     }
-    window.setTimeout(syncVisualViewport, 80);
+    focusInputNow();
   }
 
   function closeChat() {

@@ -499,3 +499,8 @@ Skipped recipient 24 per user request and resumed from 25
   - Gmail message ID: 19f693faece5666b
   - Subject: Open to Software Engineer Opportunity at Talisma
   - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 100. Anurag Verma <anurag@uniphore.com>
+  - Company: Uniphore
+  - Gmail message ID: 19f6941b2adea173
+  - Subject: Open to Software Engineer Opportunity at Uniphore
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
