@@ -1,0 +1,14 @@
+Hi Birendra,
+
+I hope you're doing well. I'm Manikanta Gururam, a Computer Science graduate with hands-on production experience in Python and Django development.
+
+I'm reaching out to check if there are any current or upcoming Software Engineer roles at Weaverbird Engineering & Technology where my background could be useful.
+
+Recently, I worked on production HRMS modules using Django and MySQL, and also built and deployed a full-stack web application end to end. My core skills include Python, Django, Django REST Framework, FastAPI, JavaScript, PostgreSQL/MySQL, and Git.
+
+I'd be happy to share my resume if my profile looks relevant, and I'd be glad to connect briefly if there's a suitable opening.
+
+Best regards,
+Manikanta Gururam
++91 9912303719
+LinkedIn: https://www.linkedin.com/in/manikanta-gururam

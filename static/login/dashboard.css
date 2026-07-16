@@ -3673,13 +3673,17 @@ body[data-theme="dark"] .modal-select--transparent:focus {
   }
 
   body.modal-keyboard-open .modal-overlay {
-    align-items: center;
+    top: var(--app-viewport-top, 0px);
+    bottom: auto;
+    height: var(--app-visual-height, 100dvh);
+    align-items: flex-start;
     padding-top: max(8px, env(safe-area-inset-top, 0px));
     padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
   }
 
   body.modal-keyboard-open .modal-card {
     max-height: calc(var(--app-visual-height, 100dvh) - 18px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    margin-top: 0;
     padding-top: 18px;
     padding-bottom: 16px;
     transform: translateY(0) scale(1);

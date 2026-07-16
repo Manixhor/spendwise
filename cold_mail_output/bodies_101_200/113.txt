@@ -1,0 +1,20 @@
+Hi Archana,
+
+I hope you're doing well. My name is Manikanta Gururam, a Computer Science graduate with 6+ months of hands-on production experience in Python and Django development. I'm reaching out to see if there are any current or upcoming Software Engineer openings at Quinbay.
+
+A quick snapshot of what I bring:
+
+- Shipped 7 production HRMS modules (Django + MySQL) used daily by 100% of company staff at my current internship
+- Built and deployed a full-stack web application end-to-end, live in production
+- Maintained zero-downtime deployments across multiple simultaneous projects
+- Independently built and deployed SpendWise, a personal finance tracking app with JWT authentication and 99.9% uptime - live demo: https://site--spendwise--m9lhjm5ftxzt.code.run/
+- Core stack: Python, Django, Django REST Framework, FastAPI, JavaScript, PostgreSQL/MySQL, Git
+
+I've attached my resume for your review, and you're welcome to try out SpendWise directly using the link above. I'd love the opportunity to contribute to the team at Quinbay and am happy to hop on a quick call at your convenience.
+
+Thank you for your time and consideration.
+
+Best regards,
+Manikanta Gururam
++91 9912303719 | manigururam06@gmail.com
+GitHub: https://github.com/Manixhor | LinkedIn: https://www.linkedin.com/in/manikanta-gururam

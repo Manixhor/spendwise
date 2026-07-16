@@ -286,9 +286,26 @@
       ? Math.max(0, layoutHeight - viewport.height - viewport.offsetTop)
       : 0;
     document.documentElement.style.setProperty('--app-visual-height', `${height}px`);
+    document.documentElement.style.setProperty('--app-viewport-top', `${viewport ? viewport.offsetTop : 0}px`);
     document.documentElement.style.setProperty('--app-keyboard-offset', `${keyboardOffset}px`);
+    document.documentElement.style.setProperty('--app-keyboard-height', `${keyboardOffset}px`);
+    document.documentElement.style.setProperty('--sw-visible-height', `${height}px`);
+    document.documentElement.style.setProperty('--sw-keyboard-height', `${keyboardOffset}px`);
     const hasActiveModal = Boolean(document.querySelector('.modal-overlay.active'));
     document.body.classList.toggle('modal-keyboard-open', hasActiveModal && keyboardOffset > 120);
+  }
+
+  function settleModalKeyboardLayout() {
+    syncAppVisualViewport();
+    setTimeout(syncAppVisualViewport, 80);
+    setTimeout(syncAppVisualViewport, 180);
+    setTimeout(syncAppVisualViewport, 360);
+  }
+
+  function focusModalInputNow(input) {
+    if (!input) return;
+    input.focus({ preventScroll: true });
+    settleModalKeyboardLayout();
   }
 
   window.visualViewport?.addEventListener('resize', syncAppVisualViewport);
@@ -297,8 +314,7 @@
   document.addEventListener('focusin', (event) => {
     if (event.target.closest?.('.modal-overlay')) {
       document.body.classList.add('modal-input-active');
-      setTimeout(syncAppVisualViewport, 80);
-      setTimeout(() => event.target.scrollIntoView?.({ block: 'center', behavior: 'smooth' }), 120);
+      settleModalKeyboardLayout();
     }
   });
   document.addEventListener('focusout', () => {
@@ -513,8 +529,8 @@ try {
   if (excessIncomeBtn && excessIncomeModal) {
     excessIncomeBtn.addEventListener('click', () => {
       excessIncomeModal.classList.add('active');
-      syncAppVisualViewport();
-      if (excessIncomeAmount) excessIncomeAmount.focus();
+      document.body.classList.add('modal-input-active');
+      focusModalInputNow(excessIncomeAmount);
     });
   }
 

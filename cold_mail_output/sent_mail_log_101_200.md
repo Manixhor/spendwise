@@ -1,0 +1,502 @@
+Sent cold emails - recipients 101-200
+
+- 101. Anusha Jayachandran <anusha@srswebsolutions.com>
+  - Company: SRS Web Solutions
+  - Gmail message ID: 19f69887f519fae7
+  - Subject: Open to Software Engineer Opportunity at SRS Web Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 102. Anusha Kishore <anusha.kishore@loco.gg>
+  - Company: Loco
+  - Gmail message ID: 19f698a9d08b3e40
+  - Subject: Open to Software Engineer Opportunity at Loco
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 103. Anusha Shetty <anusha@crestinfosystems.com>
+  - Company: Crest Infosystems
+  - Gmail message ID: 19f698c6eaef9db0
+  - Subject: Open to Software Engineer Opportunity at Crest Infosystems
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 104. Aparna Srikanth <aparna.srikanth@appsian.com>
+  - Company: Pathlock
+  - Gmail message ID: 19f6998783065242
+  - Subject: Open to Software Engineer Opportunity at Pathlock
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 105. Aradhana Gupta <aradhana@safexpay.com>
+  - Company: SafexPay
+  - Gmail message ID: 19f6998dc1b23aef
+  - Subject: Open to Software Engineer Opportunity at SafexPay
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 106. Arathi <arathi.gs@vyomlabs.com>
+  - Company: Vyom Labs
+  - Gmail message ID: 19f69995181b809a
+  - Subject: Open to Software Engineer Opportunity at Vyom Labs
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 107. Arathi Prabhu <arathi.prabhu@altruistahealth.com>
+  - Company: Altruista Health
+  - Gmail message ID: 19f6999bba4f11e9
+  - Subject: Open to Software Engineer Opportunity at Altruista Health
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 108. Arathi Rajeswari <arathi@suntecgroup.com>
+  - Company: SunTec Business Solutions
+  - Gmail message ID: 19f699a1d1a7fd14
+  - Subject: Open to Software Engineer Opportunity at SunTec Business Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 109. Aravind Chandrasekar <aravind.chandrasekar@tigerspike.com>
+  - Company: Concentrix Tigerspike
+  - Gmail message ID: 19f699a7bed20599
+  - Subject: Open to Software Engineer Opportunity at Concentrix Tigerspike
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 110. Aravind Warrier <aravind.warrier@rapidvaluesolutions.com>
+  - Company: RapidValue
+  - Gmail message ID: 19f699c23eb00071
+  - Subject: Open to Software Engineer Opportunity at RapidValue
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 111. Archana Anand <archana@aufait.in>
+  - Company: Aufait Technologies
+  - Gmail message ID: 19f699fbc98b9730
+  - Subject: Open to Software Engineer Opportunity at Aufait Technologies
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 112. Archana Kp <archana.kp@kilowott.com>
+  - Company: Kilowott
+  - Gmail message ID: 19f69a2334e2f23b
+  - Subject: Open to Software Engineer Opportunity at Kilowott
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 113. Archana Kunde <archana@quinbay.com>
+  - Company: Quinbay
+  - Gmail message ID: 19f69a40e93bf5ef
+  - Subject: Open to Software Engineer Opportunity at Quinbay
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 114. Archana Manne <archana.manne@locuz.com>
+  - Company: Locuz
+  - Gmail message ID: 19f69a5b2d4f3487
+  - Subject: Open to Software Engineer Opportunity at Locuz
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 115. Archana Sarda <archana.sarda@microlise.com>
+  - Company: Microlise
+  - Gmail message ID: 19f69a7485ef22a5
+  - Subject: Open to Software Engineer Opportunity at Microlise
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 116. Archana Shinde <archana.shinde@cognologix.com>
+  - Company: Cognologix Technologies
+  - Gmail message ID: 19f69a8b472090ed
+  - Subject: Open to Software Engineer Opportunity at Cognologix Technologies
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 117. Arif Memon <arif.memon@abzooba.com>
+  - Company: Abzooba
+  - Gmail message ID: 19f69aa468f3f13a
+  - Subject: Open to Software Engineer Opportunity at Abzooba
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 118. Arindam Kar <arindam.kar@yodlee.com>
+  - Company: Envestnet
+  - Gmail message ID: 19f69abd5ecd62a8
+  - Subject: Open to Software Engineer Opportunity at Envestnet
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 119. Arjita Chawla <arjita.chawla@quytech.com>
+  - Company: Quytech
+  - Gmail message ID: 19f69ad75cc12763
+  - Subject: Open to Software Engineer Opportunity at Quytech
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 120. Arjun Chatterjee <arjun.chatterjee@sunlife.com>
+  - Company: Sun Life
+  - Gmail message ID: 19f69aedc9a2d858
+  - Subject: Open to Software Engineer Opportunity at Sun Life
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 121. Arpana Jaiswal <arpanaj@umbrellainfocare.com>
+  - Company: Umbrella Infocare
+  - Gmail message ID: 19f69b051b07f7de
+  - Subject: Open to Software Engineer Opportunity at Umbrella Infocare
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 122. Arpita Sarkar <arpita.sarkar@webskitters.com>
+  - Company: WEBSKITTERS TECHNOLOGY SOLUTI
+  - Gmail message ID: 19f69b2334aafa5a
+  - Subject: Open to Software Engineer Opportunity at WEBSKITTERS TECHNOLOGY SOLUTI
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 123. Artoon Solutions <qa@artoonsolutions.com>
+  - Company: Artoon Solutions
+  - Gmail message ID: 19f69b2a517aba21
+  - Subject: Open to Software Engineer Opportunity at Artoon Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 124. Aru Uppal <aru.uppal@datdyn.com>
+  - Company: Data Dynamics
+  - Gmail message ID: 19f69b317553d913
+  - Subject: Open to Software Engineer Opportunity at Data Dynamics
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 125. Arun Kumar <arun.kumar@bobtechsolutions.com>
+  - Company: BOB Tech Solutions
+  - Gmail message ID: 19f69b389abe8ca8
+  - Subject: Open to Software Engineer Opportunity at BOB Tech Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 126. Arun Kumar <arun.kumar@shipsy.io>
+  - Company: Shipsy
+  - Gmail message ID: 19f69b416078dc4d
+  - Subject: Open to Software Engineer Opportunity at Shipsy
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 127. Arun Kumar <arun.kumar@wavicledata.com>
+  - Company: Wavicle Data Solutions
+  - Gmail message ID: 19f69b48ccb97e34
+  - Subject: Open to Software Engineer Opportunity at Wavicle Data Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 128. Arun Murugappa <arun@theatem.com>
+  - Company: ATEM Software Solutions
+  - Gmail message ID: 19f69b4f46a9269c
+  - Subject: Open to Software Engineer Opportunity at ATEM Software Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 129. Arun Ravi <arun.ravi@ipsoft.com>
+  - Company: Amelia
+  - Gmail message ID: 19f69b5795804a36
+  - Subject: Open to Software Engineer Opportunity at Amelia
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 130. Arun Singh <arun.singh@puresoftware.com>
+  - Company: PureSoftware
+  - Gmail message ID: 19f69b5e4f543209
+  - Subject: Open to Software Engineer Opportunity at PureSoftware
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 131. Arun Vigneswaran <arun@xto10x.com>
+  - Company: xto10x
+  - Gmail message ID: 19f69b67a7505ef3
+  - Subject: Open to Software Engineer Opportunity at xto10x
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 132. Arunima Bhushan <arunima.bhushan@orcapodservices.com>
+  - Company: Orcapod
+  - Gmail message ID: 19f69b6e0fc11851
+  - Subject: Open to Software Engineer Opportunity at Orcapod
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 133. Arushi Goel <arushi.goel@betterplace.co.in>
+  - Company: BetterPlace
+  - Gmail message ID: 19f69b759e1350fa
+  - Subject: Open to Software Engineer Opportunity at BetterPlace
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 134. Arushi Sawhney <arushi.sawhney@e2eresearch.com>
+  - Company: Altezzasys Systems
+  - Gmail message ID: 19f69b7d95ed17ea
+  - Subject: Open to Software Engineer Opportunity at Altezzasys Systems
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 135. Arvind Sadasivan <arvind.sadasivan@ekaplus.com>
+  - Company: Eka Software Solutions
+  - Gmail message ID: 19f69b83dd0bd43f
+  - Subject: Open to Software Engineer Opportunity at Eka Software Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 136. Asenath Sharon <sharon@srinsofttech.com>
+  - Company: SrinSoft Technologies
+  - Gmail message ID: 19f69b8aba19a444
+  - Subject: Open to Software Engineer Opportunity at SrinSoft Technologies
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 137. Asha Rao <asha.j@unilogcorp.com>
+  - Company: Unilog
+  - Gmail message ID: 19f69b912d45ff84
+  - Subject: Open to Software Engineer Opportunity at Unilog
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 138. Ashish Karnik <ashish.karnik@pavilion.io>
+  - Company: Pavilion
+  - Gmail message ID: 19f69b9921d9df77
+  - Subject: Open to Software Engineer Opportunity at Pavilion
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 139. Ashish Naidu <ashish.naidu@mindgate.in>
+  - Company: Mindgate Solutions
+  - Gmail message ID: 19f69ba3fd7b52d1
+  - Subject: Open to Software Engineer Opportunity at Mindgate Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 140. Ashok Manjunath <ashok@spenmo.com>
+  - Company: Spenmo
+  - Gmail message ID: 19f69bad8b47434a
+  - Subject: Open to Software Engineer Opportunity at Spenmo
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 141. Ashok Putsala <ashok.putsala@senecaglobal.com>
+  - Company: SenecaGlobal
+  - Gmail message ID: 19f69bbbacc0b7ec
+  - Subject: Open to Software Engineer Opportunity at SenecaGlobal
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 142. Ashok Seshadri <ashok.seshadri@objectfrontier.com>
+  - Company: ObjectFrontier Software
+  - Gmail message ID: 19f69bc483d7ff6f
+  - Subject: Open to Software Engineer Opportunity at ObjectFrontier Software
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 143. Ashok Tripathy <ashok.tripathy@bpoconvergence.com>
+  - Company: BPO Convergence
+  - Gmail message ID: 19f69bccf6c03c37
+  - Subject: Open to Software Engineer Opportunity at BPO Convergence
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 144. Ashraf Kazi <ashraf.kazi@simplifyhealthcare.com>
+  - Company: Simplify Healthcare
+  - Gmail message ID: 19f69bd36f7a4a62
+  - Subject: Open to Software Engineer Opportunity at Simplify Healthcare
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 145. Ashraf Mulla <ashraf.mulla@qseap.com>
+  - Company: qSEAp Infotech
+  - Gmail message ID: 19f69bdc4bb164bd
+  - Subject: Open to Software Engineer Opportunity at qSEAp Infotech
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 146. Ashton Lawrie <ashton.lawrie@iitms.co.in>
+  - Company: MasterSoft ERP Solutions
+  - Gmail message ID: 19f69be49d3ba1eb
+  - Subject: Open to Software Engineer Opportunity at MasterSoft ERP Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 147. Ashutosh Sinha <ashutosh@tuya.com>
+  - Company: Tuyasmart India
+  - Gmail message ID: 19f69bee2a172306
+  - Subject: Open to Software Engineer Opportunity at Tuyasmart India
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 148. Ashwani Bhargava <ashwanib@decisionminds.com>
+  - Company: Decision Minds
+  - Gmail message ID: 19f69bf74e7ceda2
+  - Subject: Open to Software Engineer Opportunity at Decision Minds
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 149. Ashwani Kumar <ashwani@successive.tech>
+  - Company: Successive Technologies
+  - Gmail message ID: 19f69bfea9427ffa
+  - Subject: Open to Software Engineer Opportunity at Successive Technologies
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 150. Ashwin Singh <ashwin@suki.ai>
+  - Company: Suki
+  - Gmail message ID: 19f69c06d30dca44
+  - Subject: Open to Software Engineer Opportunity at Suki
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 151. Ashwini Ashok <ashwini.ashok@eton-solutions.com>
+  - Company: Eton Solutions LP
+  - Gmail message ID: 19f69c104d17dab1
+  - Subject: Open to Software Engineer Opportunity at Eton Solutions LP
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 152. Ashwini J <ashwini.janardhanan@kaleyra.com>
+  - Company: Kaleyra
+  - Gmail message ID: 19f69c186b767583
+  - Subject: Open to Software Engineer Opportunity at Kaleyra
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 153. Aswanth Goka <agoka@workfusion.com>
+  - Company: WorkFusion
+  - Gmail message ID: 19f69c2009f1827b
+  - Subject: Open to Software Engineer Opportunity at WorkFusion
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 154. Aswin Prashannth <aswin@psrtek.com>
+  - Company: PSRTEK
+  - Gmail message ID: 19f69c28357c02f9
+  - Subject: Open to Software Engineer Opportunity at PSRTEK
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 155. Atin Karmokar <atin.karmokar@pentagon.co.in>
+  - Company: Pentagon System and Services
+  - Gmail message ID: 19f69c30cf1f32d4
+  - Subject: Open to Software Engineer Opportunity at Pentagon System and Services
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 156. Atul Kanknala <atul.kanknala@craveinfotech.com>
+  - Company: Crave InfoTech
+  - Gmail message ID: 19f69c3928ec7a04
+  - Subject: Open to Software Engineer Opportunity at Crave InfoTech
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 157. Atul Pal <atul.pal@innefu.com>
+  - Company: Innefu Labs
+  - Gmail message ID: 19f69c463e729864
+  - Subject: Open to Software Engineer Opportunity at Innefu Labs
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 158. Avinash Poojari <avinash@sedintechnologies.com>
+  - Company: Sedin Technologies
+  - Gmail message ID: 19f69c4fa4a99779
+  - Subject: Open to Software Engineer Opportunity at Sedin Technologies
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 159. Ayush Daryani <ayush.daryani@niftel.com>
+  - Company: Niftel Communications
+  - Gmail message ID: 19f69c57d5bbd346
+  - Subject: Open to Software Engineer Opportunity at Niftel Communications
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 160. Ayush Sinha <ayush.sinha@sugarboxnetworks.com>
+  - Company: SugarBox Networks
+  - Gmail message ID: 19f69c60804be167
+  - Subject: Open to Software Engineer Opportunity at SugarBox Networks
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 161. Babitha Nambiar <babitha.nambiar@opusconsulting.com>
+  - Company: Opus Consulting Solutions
+  - Gmail message ID: 19f69c6958f7bd15
+  - Subject: Open to Software Engineer Opportunity at Opus Consulting Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 162. Babu Thoppil <babu_thoppil@mahindrasatyam.com>
+  - Company: Mahindra Satyam BPO
+  - Gmail message ID: 19f69c70a6b0b205
+  - Subject: Open to Software Engineer Opportunity at Mahindra Satyam BPO
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 163. Balaji Er <balaji@isourceindia.com>
+  - Company: iSource ITES
+  - Gmail message ID: 19f69c78356fbd2c
+  - Subject: Open to Software Engineer Opportunity at iSource ITES
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 164. Balaji Thiyagarajan <balaji.thiyagarajan@thirdware.com>
+  - Company: Thirdware Solution INC
+  - Gmail message ID: 19f69c7ebab6e2e4
+  - Subject: Open to Software Engineer Opportunity at Thirdware Solution INC
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 165. Balakrishna Shetty <balakrishna.shetty@genisys-group.com>
+  - Company: Genisys Group
+  - Gmail message ID: 19f69c845c19f67f
+  - Subject: Open to Software Engineer Opportunity at Genisys Group
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 166. Balaraju Guddinti <balaraju.g@nslhub.com>
+  - Company: Brane Enterprises
+  - Gmail message ID: 19f69c8b8ea7a004
+  - Subject: Open to Software Engineer Opportunity at Brane Enterprises
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 167. Balesh S <balesh@adarshsolutions.com>
+  - Company: Adarsh Solutions
+  - Gmail message ID: 19f69c9321efacd8
+  - Subject: Open to Software Engineer Opportunity at Adarsh Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 168. Balneet Birah <balneet.birah@netsolutions.com>
+  - Company: Net Solutions
+  - Gmail message ID: 19f69c9a7889847b
+  - Subject: Open to Software Engineer Opportunity at Net Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 169. Bandana Kaul <bandana@airditsoftware.com>
+  - Company: Airdit Software Services
+  - Gmail message ID: 19f69ca139c68aad
+  - Subject: Open to Software Engineer Opportunity at Airdit Software Services
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 170. Bandla Shyamprasad <bandla.shyamprasad@terralogic.com>
+  - Company: Terralogic
+  - Gmail message ID: 19f69ca9268144eb
+  - Subject: Open to Software Engineer Opportunity at Terralogic
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 171. Banmeet Kour <banmeet.kour@itbd.net>
+  - Company: IT BY DESIGN
+  - Gmail message ID: 19f69cb326a4c557
+  - Subject: Open to Software Engineer Opportunity at IT BY DESIGN
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 172. Barkha Agrawal <bagrawal@cpg-inc.com>
+  - Company: Computer Power Group
+  - Gmail message ID: 19f69cbb970c692d
+  - Subject: Open to Software Engineer Opportunity at Computer Power Group
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 173. Barkha Dave <barkha@trellissoft.ai>
+  - Company: Trellissoft
+  - Gmail message ID: 19f69cc526bdfe5c
+  - Subject: Open to Software Engineer Opportunity at Trellissoft
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 174. Barkha Sharma <barkha@wobot.ai>
+  - Company: Wobot.ai
+  - Gmail message ID: 19f69ccda5cbf3e4
+  - Subject: Open to Software Engineer Opportunity at Wobot.ai
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 175. Basava <basava@kamivision.com>
+  - Company: Kami Vision
+  - Gmail message ID: 19f69cd5244f7cb7
+  - Subject: Open to Software Engineer Opportunity at Kami Vision
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 176. Batool Ali <batool.ali@electriphi.ai>
+  - Company: Ford Pro Charging
+  - Gmail message ID: 19f69cdf4fade4b6
+  - Subject: Open to Software Engineer Opportunity at Ford Pro Charging
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 177. Bedisha Karmakar <bedisha@reward360.co>
+  - Company: Reward360 Global Services.
+  - Gmail message ID: 19f69ce80ce1676f
+  - Subject: Open to Software Engineer Opportunity at Reward360 Global Services.
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 178. Benoy Koshy <benoy.koshy@sisainfosec.com>
+  - Company: SISA
+  - Gmail message ID: 19f69cf539831828
+  - Subject: Open to Software Engineer Opportunity at SISA
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 179. Bensely Zachariah <bensely.zachariah@fulcrumdigital.com>
+  - Company: Fulcrum Digital Inc
+  - Gmail message ID: 19f69cfda11aa16c
+  - Subject: Open to Software Engineer Opportunity at Fulcrum Digital Inc
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 180. Bensley Zachariah <bensley.zachariah@fulcrumdigital.com>
+  - Company: Fulcrum Digital Inc
+  - Gmail message ID: 19f69d05f4bb0409
+  - Subject: Open to Software Engineer Opportunity at Fulcrum Digital Inc
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 181. Benson Mendez <benson.mendez@microobjects.net>
+  - Company: MicroObjects
+  - Gmail message ID: 19f69d0eba455c6b
+  - Subject: Open to Software Engineer Opportunity at MicroObjects
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 182. Bhakti Dharod <bhakti.dharod@idfy.com>
+  - Company: IDfy
+  - Gmail message ID: 19f69d14f604e010
+  - Subject: Open to Software Engineer Opportunity at IDfy
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 183. Bharat Bhartia <bharat.bhartia@workindia.in>
+  - Company: WorkIndia
+  - Gmail message ID: 19f69d1ca402a476
+  - Subject: Open to Software Engineer Opportunity at WorkIndia
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 184. Bharat Rao <bharat@ka-nex.com>
+  - Company: CK Solutions
+  - Gmail message ID: 19f69d22caeddb67
+  - Subject: Open to Software Engineer Opportunity at CK Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 185. Bharathi Ravipati <bravipati@appstekcorp.com>
+  - Company: AppsTek
+  - Gmail message ID: 19f69d2d887e8552
+  - Subject: Open to Software Engineer Opportunity at AppsTek
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 186. Bhargavi Challa <bhargavic@aissel.com>
+  - Company: Aissel Technologies
+  - Gmail message ID: 19f69d3ab58dd91f
+  - Subject: Open to Software Engineer Opportunity at Aissel Technologies
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 187. Bharti Negi <bharti.negi@edifecs.com>
+  - Company: Edifecs
+  - Gmail message ID: 19f69d4150e84a2f
+  - Subject: Open to Software Engineer Opportunity at Edifecs
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 188. Bhavana Jain <bhavana@netcore.co.in>
+  - Company: Netcore Cloud
+  - Gmail message ID: 19f69d48c6f5d93c
+  - Subject: Open to Software Engineer Opportunity at Netcore Cloud
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 189. Bhavik Kaklotar <bkaklotar@diabsolut.com>
+  - Company: Diabsolut Inc
+  - Gmail message ID: 19f69d530e83fde6
+  - Subject: Open to Software Engineer Opportunity at Diabsolut Inc
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 190. Bhavik Shah <bhavik@games2win.com>
+  - Company: Games2win India
+  - Gmail message ID: 19f69d5b7beb82f2
+  - Subject: Open to Software Engineer Opportunity at Games2win India
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 191. Bhavika Sheth <bhavika.sheth@itcgindia.com>
+  - Company: ITCG Solutions
+  - Gmail message ID: 19f69d636757fdf0
+  - Subject: Open to Software Engineer Opportunity at ITCG Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 192. Bhavin Sanghavi <bhavin@mydukaan.io>
+  - Company: Dukaan
+  - Gmail message ID: 19f69d6c1ab3d0b7
+  - Subject: Open to Software Engineer Opportunity at Dukaan
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 193. Bhavya Shetty <bhavya@supplywisdom.com>
+  - Company: Supply Wisdom
+  - Gmail message ID: 19f69d7217a62b7a
+  - Subject: Open to Software Engineer Opportunity at Supply Wisdom
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 194. Bhawna Suri <bhawna@weexcel.in>
+  - Company: HR
+  - Gmail message ID: 19f69d7bc15799ee
+  - Subject: Open to Software Engineer Opportunity at HR
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 195. Bhupesh Wasmatkar <bhupesh.wasmatkar@verse.in>
+  - Company: VerSe Innovation
+  - Gmail message ID: 19f69d82cf6640b3
+  - Subject: Open to Software Engineer Opportunity at VerSe Innovation
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 196. Biju Varghese <biju.v@inapp.com>
+  - Company: InApp
+  - Gmail message ID: 19f69d8a81695c16
+  - Subject: Open to Software Engineer Opportunity at InApp
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 197. Bikram Dash <bikram.dash@tatwa.info>
+  - Company: TATWA Technologies
+  - Gmail message ID: 19f69d90bd82b198
+  - Subject: Open to Software Engineer Opportunity at TATWA Technologies
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 198. Bindu Krishnan <bindu.krishnan@ospyn.com>
+  - Company: Ospyn Technologies
+  - Gmail message ID: 19f69d9789e245bb
+  - Subject: Open to Software Engineer Opportunity at Ospyn Technologies
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 199. Binoy Varghese <binoy.varghese@rgigroup.com>
+  - Company: RGI Group
+  - Gmail message ID: 19f69da00981186b
+  - Subject: Open to Software Engineer Opportunity at RGI Group
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 200. Biplob Das <biplob.das@izmoltd.com>
+  - Company: izmo
+  - Gmail message ID: 19f69da6b8f450de
+  - Subject: Open to Software Engineer Opportunity at izmo
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
