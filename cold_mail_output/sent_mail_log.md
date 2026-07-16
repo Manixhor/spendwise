@@ -358,3 +358,28 @@ Skipped recipient 24 per user request and resumed from 25
   - Gmail message ID: 19f674b6a6fdeb5b
   - Subject: Open to Software Engineer Opportunity at Fulcrum Digital Inc
   - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 73. Anjan Bose <anjan.bose@hpl.co.in>
+  - Company: HPL
+  - Gmail message ID: 19f674d3ec40eee8
+  - Subject: Open to Software Engineer Opportunity at HPL
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 74. Anjani Salian <anjani.salian@in.nbssap.com>
+  - Company: Net Business Solutions
+  - Gmail message ID: 19f674f19eecc4f7
+  - Subject: Open to Software Engineer Opportunity at Net Business Solutions
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 75. Anju Tyagi <anju.tyagi@bpoconvergence.com>
+  - Company: BPO Convergence
+  - Gmail message ID: 19f6750f4d28352f
+  - Subject: Open to Software Engineer Opportunity at BPO Convergence
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 76. Ankit <ankit@compumatrice.com>
+  - Company: CompuMatrice
+  - Gmail message ID: 19f6752c87fc7342
+  - Subject: Open to Software Engineer Opportunity at CompuMatrice
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 77. Ankit Sharma <ankit.sharma@a1technology.com>
+  - Company: A-1 Technology
+  - Gmail message ID: 19f690c30efd2b71
+  - Subject: Open to Software Engineer Opportunity at A-1 Technology
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf

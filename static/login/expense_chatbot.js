@@ -48,6 +48,7 @@
     );
     root.style.setProperty('--chat-visual-height', `${viewport.height}px`);
     root.style.setProperty('--chat-keyboard-offset', `${keyboardOffset}px`);
+    root.style.setProperty('--chat-bottom-offset', `${keyboardOffset}px`);
     document.documentElement.style.setProperty('--app-visual-height', `${viewport.height}px`);
     document.documentElement.style.setProperty('--app-keyboard-offset', `${keyboardOffset}px`);
     document.body.classList.toggle(

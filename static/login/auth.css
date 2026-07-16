@@ -70,6 +70,33 @@ textarea {
   font: inherit;
 }
 
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+textarea,
+select {
+  font-size: max(16px, 1rem);
+}
+
+@supports (-webkit-touch-callout: none) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+body.ios-keyboard-open .right-panel {
+  align-items: center;
+  padding-bottom: calc(var(--app-keyboard-height, 0px) + max(16px, env(safe-area-inset-bottom, 0px)));
+}
+
+body.ios-keyboard-open .card {
+  max-height: calc(var(--app-visual-height, 100dvh) - 24px - env(safe-area-inset-top, 0px));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transform: translateY(calc(-1 * min(16px, var(--app-keyboard-shift, 0px))));
+  transition: transform 0.24s ease;
+}
+
 .brand-large,
 .title,
 .form-title {
