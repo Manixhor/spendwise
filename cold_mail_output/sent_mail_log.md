@@ -383,3 +383,13 @@ Skipped recipient 24 per user request and resumed from 25
   - Gmail message ID: 19f690c30efd2b71
   - Subject: Open to Software Engineer Opportunity at A-1 Technology
   - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 78. Ankit Tomar <ankit.tomar@rategain.com>
+  - Company: RateGain
+  - Gmail message ID: 19f690e26252a357
+  - Subject: Open to Software Engineer Opportunity at RateGain
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
+- 79. Ankita <ankita@zenwork.com>
+  - Company: Zenwork
+  - Gmail message ID: 19f691019f37a2eb
+  - Subject: Open to Software Engineer Opportunity at Zenwork
+  - Attachment: /Users/mani/Documents/resume/Manikanta_Gururam_Resume.pdf
