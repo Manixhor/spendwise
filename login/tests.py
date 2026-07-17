@@ -4,10 +4,10 @@ from decimal import Decimal
 
 from django.core import mail
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import Transaction, UserProfile
+from .models import SavingsGoal, Transaction, UserProfile
 
 
 class DashboardInsightsTests(TestCase):
@@ -116,6 +116,88 @@ class DashboardInsightsTests(TestCase):
         self.assertEqual(transaction.amount, Decimal('250.00'))
         self.assertEqual(payload['total_saved'], 9750.0)
         self.assertIn('₹9,750', payload['saving_message'])
+
+
+@override_settings(
+    STORAGES={
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        },
+    }
+)
+class SavingsGoalAllocationTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='goals@example.com',
+            email='goals@example.com',
+            password='secret123',
+            first_name='Goalie',
+        )
+        self.profile = UserProfile.objects.create(
+            user=self.user,
+            salary=Decimal('50000.00'),
+            target_savings=Decimal('10000.00'),
+        )
+        self.client.force_login(self.user)
+
+    def test_completed_auto_allocated_goal_is_capped_and_frozen(self):
+        current_month = date.today().replace(day=1).strftime('%Y-%m')
+        goal = SavingsGoal.objects.create(
+            user=self.user,
+            name='Emergency Fund',
+            target_amount=Decimal('10000.00'),
+            saved_amount=Decimal('0.00'),
+            current_month_auto_allocation=Decimal('10000.00'),
+            last_allocated_month=current_month,
+            allocation_percentage=70,
+            is_active=True,
+        )
+
+        response = self.client.get(reverse('savings'))
+        goal.refresh_from_db()
+        rendered_goal = response.context['goals'][0]
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(goal.saved_amount, Decimal('10000.00'))
+        self.assertEqual(goal.current_month_auto_allocation, Decimal('0.00'))
+        self.assertFalse(goal.is_active)
+        self.assertEqual(rendered_goal['saved_amount'], 10000.0)
+        self.assertEqual(rendered_goal['progress_pct'], 100)
+        self.assertTrue(rendered_goal['is_complete'])
+        self.assertFalse(rendered_goal['is_active'])
+
+    def test_completed_goals_are_excluded_from_future_allocation(self):
+        completed = SavingsGoal.objects.create(
+            user=self.user,
+            name='Done Goal',
+            target_amount=Decimal('10000.00'),
+            saved_amount=Decimal('10000.00'),
+            current_month_auto_allocation=Decimal('0.00'),
+            allocation_percentage=70,
+            is_active=False,
+        )
+        active = SavingsGoal.objects.create(
+            user=self.user,
+            name='Next Goal',
+            target_amount=Decimal('20000.00'),
+            saved_amount=Decimal('0.00'),
+            current_month_auto_allocation=Decimal('0.00'),
+            allocation_percentage=50,
+            is_active=True,
+        )
+
+        response = self.client.get(reverse('api_goal_allocations'))
+        payload = response.json()
+        allocations = {item['id']: item for item in payload['allocations']}
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(allocations[completed.id]['allocated_this_month'], 0)
+        self.assertEqual(allocations[completed.id]['saved_amount'], 10000.0)
+        self.assertTrue(allocations[completed.id]['is_complete'])
+        self.assertGreater(allocations[active.id]['allocated_this_month'], 0)
 
 
 class MonthlyAnalysisTests(TestCase):

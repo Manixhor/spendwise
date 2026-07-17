@@ -1,0 +1,22 @@
+Hi Gracy,
+
+I hope you're doing well. I'm Manikanta Gururam, a Computer Science graduate currently working as a Full Stack/Python Developer Intern at Lagran Software Solutions.
+
+I'm reaching out to check if there are any current or upcoming Software Engineer / Full Stack Developer opportunities at Perfios Software Solutions where my background could be useful.
+
+A quick summary of my background:
+- Working on production HRMS modules at Lagran Software Solutions using Django and MySQL
+- Built and deployed full-stack web applications end to end
+- Independently built and deployed SpendWise, a personal finance tracking app with JWT authentication: https://site--spendwise--m9lhjm5ftxzt.code.run/
+- Comfortable with Python, Django, DRF, FastAPI, JavaScript, PostgreSQL/MySQL, and Git
+- Interested in backend, full-stack, and software engineering roles
+
+I'd be happy to share my resume or any additional details if needed. I would really appreciate your guidance if there's a relevant opportunity.
+
+Thank you for your time.
+
+Best regards,
+Manikanta Gururam
++91 9912303719
+GitHub: https://github.com/Manixhor
+LinkedIn: https://www.linkedin.com/in/manikanta-gururam

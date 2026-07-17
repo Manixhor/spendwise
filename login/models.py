@@ -122,8 +122,12 @@ class SavingsGoal(models.Model):
     @property
     def progress_pct(self):
         if self.target_amount > 0:
+            effective_saved = min(
+                self.saved_amount + self.current_month_auto_allocation,
+                self.target_amount,
+            )
             return min(
-                round(float(self.saved_amount) / float(self.target_amount) * 100, 1),
+                round(float(effective_saved) / float(self.target_amount) * 100, 1),
                 100,
             )
         return 0
