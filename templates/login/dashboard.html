@@ -9,7 +9,20 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="{% static 'login/dashboard.css' %}" />
 </head>
-<body>
+<body class="dashboard-intro-pending">
+<div class="dashboard-splash" id="dashboardSplash" aria-hidden="true">
+  <div class="splash-logo-mark">
+    <div class="splash-s-crescent splash-s-crescent-top"></div>
+    <div class="splash-s-crescent splash-s-crescent-bottom"></div>
+    <div class="splash-bars" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="splash-light"></div>
+  </div>
+  <div class="splash-wordmark">SpendWise</div>
+</div>
 <div class="app">
 
   <!-- ── Sidebar ─────────────────────────────────────── -->
@@ -270,6 +283,22 @@
 
 <!-- ── Chart data from Django ──────────────────────────── -->
 <script>
+  (() => {
+    const splash = document.getElementById('dashboardSplash');
+    const finishIntro = () => {
+      document.body.classList.remove('dashboard-intro-pending');
+      document.body.classList.add('dashboard-intro-complete');
+      splash?.remove();
+    };
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      finishIntro();
+      return;
+    }
+
+    window.setTimeout(finishIntro, 3900);
+  })();
+
   let dashboardChartData = {{ chart_months|safe }};
   let dailySpendingData = {{ daily_spending|safe }};
   // Hoisted so onclick="editTransaction(...)" can access these globals

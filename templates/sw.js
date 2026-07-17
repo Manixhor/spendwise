@@ -1,8 +1,7 @@
-const CACHE_NAME = 'spendwise-shell-v1';
+const CACHE_NAME = 'spendwise-shell-v2';
 const SHELL_ASSETS = [
   '/',
   '/dashboard/',
-  '/static/manifest.json',
 ];
 
 self.addEventListener('install', (event) => {
@@ -15,7 +14,15 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(
+        keys
+          .filter((key) => key.startsWith('spendwise-shell-') && key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
+      ))
+      .then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', (event) => {
