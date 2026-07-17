@@ -97,7 +97,6 @@ body.dashboard-intro-complete .expense-chatbot {
   z-index: 10000;
   display: grid;
   place-items: center;
-  gap: 26px;
   align-content: center;
   background: #fff;
   color: #171b22;
@@ -107,78 +106,30 @@ body.dashboard-intro-complete .expense-chatbot {
 
 .splash-logo-mark {
   position: relative;
-  width: 190px;
-  height: 190px;
+  width: min(520px, 72vw);
+  aspect-ratio: 1;
+  overflow: hidden;
   animation: splashLogoDock 0.8s cubic-bezier(0.65, 0, 0.35, 1) 3.05s forwards;
 }
 
-.splash-s-crescent {
-  --splash-rotate: -18deg;
-  position: absolute;
-  inset: 14px;
-  border-radius: 50%;
-  opacity: 0;
-  transform: scale(0.72) rotate(var(--splash-rotate));
-  animation: splashCrescentDraw 0.9s ease 0.12s forwards;
-}
-
-.splash-s-crescent::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 26px solid #171b22;
-}
-
-.splash-s-crescent::after {
-  content: "";
-  position: absolute;
-  inset: -8px 52px -8px -12px;
-  border-radius: 50%;
-  background: #fff;
-}
-
-.splash-s-crescent-top {
-  clip-path: polygon(0 0, 100% 0, 100% 52%, 0 52%);
-}
-
-.splash-s-crescent-bottom {
-  --splash-rotate: 162deg;
-  clip-path: polygon(0 48%, 100% 48%, 100% 100%, 0 100%);
-  animation-delay: 0.28s;
-}
-
-.splash-bars {
-  position: absolute;
-  left: 74px;
-  bottom: 64px;
-  width: 58px;
-  height: 66px;
-  display: flex;
-  align-items: flex-end;
-  gap: 9px;
-  transform: rotate(-1deg);
-}
-
-.splash-bars span {
+.splash-logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   display: block;
-  width: 13px;
-  background: #171b22;
-  transform-origin: bottom;
-  transform: scaleY(0);
-  animation: splashBarRise 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+  transform: scale(0.92);
+  clip-path: inset(0 100% 0 0);
+  animation:
+    splashLogoReveal 1.15s cubic-bezier(0.22, 1, 0.36, 1) 0.12s forwards,
+    splashLogoSettle 0.42s ease 1.22s forwards;
 }
-
-.splash-bars span:nth-child(1) { height: 31px; animation-delay: 0.92s; }
-.splash-bars span:nth-child(2) { height: 48px; animation-delay: 1.04s; }
-.splash-bars span:nth-child(3) { height: 66px; animation-delay: 1.16s; }
 
 .splash-light {
   position: absolute;
-  top: 22px;
-  left: -60px;
-  width: 62px;
-  height: 150px;
+  inset: 10% auto 10% -18%;
+  width: 18%;
+  height: 80%;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.88), transparent);
   filter: blur(1px);
   opacity: 0;
@@ -186,58 +137,37 @@ body.dashboard-intro-complete .expense-chatbot {
   animation: splashLightSweep 0.75s ease 1.55s forwards;
 }
 
-.splash-wordmark {
-  font-family: var(--font-display);
-  font-size: clamp(2.4rem, 8vw, 5.2rem);
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  color: #171b22;
-  opacity: 0;
-  transform: translateY(12px);
-  animation:
-    splashWordmarkReveal 0.58s ease 1.95s forwards,
-    splashWordmarkExit 0.56s ease 3.05s forwards;
-}
-
-.splash-wordmark::first-letter {
-  letter-spacing: 0.22em;
-}
-
-@keyframes splashCrescentDraw {
-  to {
+@keyframes splashLogoReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+    clip-path: inset(0 100% 0 0);
+  }
+  30% {
     opacity: 1;
-    transform: scale(1) rotate(var(--splash-rotate));
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    clip-path: inset(0 0 0 0);
   }
 }
 
-@keyframes splashBarRise {
-  to { transform: scaleY(1); }
+@keyframes splashLogoSettle {
+  50% { transform: scale(1.025); }
+  100% { transform: scale(1); }
 }
 
 @keyframes splashLightSweep {
   0% { opacity: 0; transform: translateX(0) rotate(18deg); }
-  18% { opacity: 0.9; }
-  100% { opacity: 0; transform: translateX(280px) rotate(18deg); }
-}
-
-@keyframes splashWordmarkReveal {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  18% { opacity: 0.92; }
+  100% { opacity: 0; transform: translateX(760%) rotate(18deg); }
 }
 
 @keyframes splashLogoDock {
   to {
-    transform: translate(calc(-50vw + 34px), calc(-50vh + 34px)) scale(0.21);
+    transform: translate(calc(-50vw + 34px), calc(-50vh + 34px)) scale(0.085);
     opacity: 0;
-  }
-}
-
-@keyframes splashWordmarkExit {
-  to {
-    opacity: 0;
-    transform: translateY(-8px);
   }
 }
 
@@ -1951,7 +1881,7 @@ body[data-theme="dark"] .txn-amt.neg {
     flex-direction: row;
     width: 100%;
     height: 64px;
-    padding: 0 16px;
+    padding: 0 12px;
     gap: 0;
     justify-content: space-between;
     align-items: center;
@@ -1964,16 +1894,16 @@ body[data-theme="dark"] .txn-amt.neg {
   }
 
   .avatar-wrap {
-    margin-right: 12px;
+    margin-right: 8px;
     flex-shrink: 0;
   }
 
   .sidebar-logo-link {
-    margin-right: 8px;
+    margin-right: 6px;
   }
 
   .profile-avatar-wrap {
-    display: none;
+    display: block;
   }
 
   .nav-icons {
@@ -1984,18 +1914,12 @@ body[data-theme="dark"] .txn-amt.neg {
   }
 
   .nav-icon {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
   }
 
   .sidebar-theme {
-    margin-top: 0;
-    margin-left: 12px;
-    flex-direction: row;
-    gap: 4px;
-    padding: 5px;
-    border-radius: 14px;
-    flex-shrink: 0;
+    display: none;
   }
 
   .theme-btn {
