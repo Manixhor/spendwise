@@ -77,7 +77,36 @@
       });
     }
 
-    function applyTheme(theme, persist = true) {
+    let themeTimer = null;
+
+    function animateThemeChange(theme, trigger) {
+      window.clearTimeout(themeTimer);
+      body.classList.remove('theme-transitioning', 'theme-to-light', 'theme-to-dark');
+
+      if (trigger) {
+        const rect = trigger.getBoundingClientRect();
+        body.style.setProperty('--theme-origin-x', `${rect.left + rect.width / 2}px`);
+        body.style.setProperty('--theme-origin-y', `${rect.top + rect.height / 2}px`);
+        trigger.classList.remove('is-switching');
+        void trigger.offsetWidth;
+        trigger.classList.add('is-switching');
+      } else {
+        body.style.setProperty('--theme-origin-x', '50%');
+        body.style.setProperty('--theme-origin-y', '50%');
+      }
+
+      body.classList.add('theme-transitioning', `theme-to-${theme}`);
+      themeTimer = window.setTimeout(() => {
+        body.classList.remove('theme-transitioning', 'theme-to-light', 'theme-to-dark');
+        trigger?.classList.remove('is-switching');
+      }, 760);
+    }
+
+    function applyTheme(theme, persist = true, trigger = null) {
+      const previousTheme = body.getAttribute('data-theme');
+      if (persist && previousTheme && previousTheme !== theme) {
+        animateThemeChange(theme, trigger);
+      }
       body.setAttribute('data-theme', theme);
       updateButtons(theme);
       updateThemeColor(theme);
@@ -90,7 +119,7 @@
     applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'), false);
 
     buttons.forEach((button) => {
-      button.addEventListener('click', () => applyTheme(button.dataset.themeValue));
+      button.addEventListener('click', () => applyTheme(button.dataset.themeValue, true, button));
     });
   })();
 </script>
