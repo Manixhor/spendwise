@@ -9,13 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="{% static 'login/dashboard.css' %}" />
 </head>
-<body class="dashboard-intro-pending">
-<div class="dashboard-splash" id="dashboardSplash" aria-hidden="true">
-  <div class="splash-logo-mark">
-    <img src="{% static 'icons/spendwise-logo-source.png' %}" alt="" class="splash-logo-image" />
-    <div class="splash-light"></div>
-  </div>
-</div>
+<body>
 <div class="app">
 
   <!-- ── Sidebar ─────────────────────────────────────── -->
@@ -276,22 +270,6 @@
 
 <!-- ── Chart data from Django ──────────────────────────── -->
 <script>
-  (() => {
-    const splash = document.getElementById('dashboardSplash');
-    const finishIntro = () => {
-      document.body.classList.remove('dashboard-intro-pending');
-      document.body.classList.add('dashboard-intro-complete');
-      splash?.remove();
-    };
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      finishIntro();
-      return;
-    }
-
-    window.setTimeout(finishIntro, 3900);
-  })();
-
   let dashboardChartData = {{ chart_months|safe }};
   let dailySpendingData = {{ daily_spending|safe }};
   // Hoisted so onclick="editTransaction(...)" can access these globals
