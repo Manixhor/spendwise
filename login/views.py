@@ -1408,7 +1408,11 @@ def signup_verify(request: HttpRequest) -> HttpResponse:
             )
             return redirect("dashboard")
 
-    return render(request, "login/signup.html")
+    return render(
+        request,
+        "login/signup_verify.html",
+        {"errors": errors, "email": user.email},
+    )
 
 
 
@@ -2062,28 +2066,29 @@ def _calculate_goal_allocations(available_amount: float, goals: list) -> dict:
 def profile_view(request: HttpRequest) -> HttpResponse:
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     success = False
+    error = None
 
     if request.method == "POST":
         first_name = request.POST.get("first_name", "").strip()
         last_name = request.POST.get("last_name", "").strip()
         email = request.POST.get("email", "").strip().lower()
 
-        request.user.first_name = first_name
-        request.user.last_name = last_name
-        if email and email != request.user.email:
-            if (
-                not User.objects.filter(email=email)
-                .exclude(pk=request.user.pk)
-                .exists()
-            ):
+        if email and email != request.user.email and (
+            User.objects.filter(email=email).exclude(pk=request.user.pk).exists()
+        ):
+            error = "That email is already in use by another account."
+        else:
+            request.user.first_name = first_name
+            request.user.last_name = last_name
+            if email and email != request.user.email:
                 request.user.email = email
                 request.user.username = email
-        request.user.save()
+            request.user.save()
 
-        if "avatar" in request.FILES:
-            profile.avatar = request.FILES["avatar"]
-        profile.save()
-        success = True
+            if "avatar" in request.FILES:
+                profile.avatar = request.FILES["avatar"]
+            profile.save()
+            success = True
 
     return render(
         request,
@@ -2093,6 +2098,7 @@ def profile_view(request: HttpRequest) -> HttpResponse:
             "profile": profile,
             "active_nav": "profile",
             "success": success,
+            "error": error,
         },
     )
 
@@ -2247,62 +2253,102 @@ def api_export_monthly_pdf(request: HttpRequest) -> HttpResponse:
     def money_pdf(value):
         return f"Rs. {Decimal(str(value)):,.2f}"
 
-    lines = [
-        "SpendWise Monthly Analysis Report",
-        f"Month: {month_date.strftime('%B %Y')}",
-        "",
-        "Summary",
-        f"Total Income: {money_pdf(total_income)}",
-        f"Total Expenses: {money_pdf(total_expense)}",
-        f"Net Savings: {money_pdf(total_saved)}",
-        "",
-        "Transactions",
+    page_height = 792
+    top_y = 760
+    bottom_margin = 40
+
+    header_lines = [
+        ("SpendWise Monthly Analysis Report", 18, 22),
+        (f"Month: {month_date.strftime('%B %Y')}", 11, 22),
+        ("", 10, 16),
+        ("Summary", 14, 26),
+        (f"Total Income: {money_pdf(total_income)}", 10, 18),
+        (f"Total Expenses: {money_pdf(total_expense)}", 10, 16),
+        (f"Net Savings: {money_pdf(total_saved)}", 10, 16),
+        ("", 10, 16),
+        ("Transactions", 14, 28),
     ]
+
+    continuation_header = [
+        ("SpendWise Monthly Analysis Report (continued)", 14, 22),
+        (f"Month: {month_date.strftime('%B %Y')}", 11, 22),
+        ("", 10, 16),
+        ("Transactions (continued)", 12, 24),
+    ]
+
+    pages = []
+    current_page = []
+    y = top_y
+
+    def start_new_page():
+        nonlocal current_page, y
+        if current_page:
+            pages.append(current_page)
+        current_page = []
+        y = top_y
+
+    for text, font, dy in header_lines:
+        current_page.append((text, font, dy))
+        y -= dy
 
     if transactions:
-        for txn in transactions[:38]:
+        for txn in transactions:
             sign = "+" if txn.txn_type == "income" else "-"
-            lines.append(
-                " | ".join(
-                    [
-                        txn.date.strftime("%Y-%m-%d"),
-                        txn.txn_type.title(),
-                        txn.get_category_display(),
-                        txn.title[:36],
-                        f"{sign}{money_pdf(txn.amount)}",
-                    ]
-                )
+            line = " | ".join(
+                [
+                    txn.date.strftime("%Y-%m-%d"),
+                    txn.txn_type.title(),
+                    txn.get_category_display(),
+                    txn.title[:36],
+                    f"{sign}{money_pdf(txn.amount)}",
+                ]
             )
-        if transactions.count() > 38:
-            lines.append(f"...and {transactions.count() - 38} more transactions. Export CSV for the full list.")
+            if current_page and y - 16 < bottom_margin:
+                start_new_page()
+                for text, font, dy in continuation_header:
+                    current_page.append((text, font, dy))
+                    y -= dy
+            current_page.append((line, 9, 16))
+            y -= 16
     else:
-        lines.append("No transactions recorded for this month.")
+        current_page.append(("No transactions recorded for this month.", 9, 16))
+    if current_page:
+        pages.append(current_page)
 
-    stream_parts = ["BT", "/F1 18 Tf", "72 760 Td"]
-    for index, line in enumerate(lines):
-        if index == 1:
-            stream_parts.extend(["/F1 11 Tf", "0 -22 Td"])
-        elif index == 3:
-            stream_parts.extend(["/F1 14 Tf", "0 -26 Td"])
-        elif index == 4:
-            stream_parts.extend(["/F1 10 Tf", "0 -18 Td"])
-        elif index == 8:
-            stream_parts.extend(["/F1 14 Tf", "0 -28 Td"])
-        elif index == 9:
-            stream_parts.extend(["/F1 9 Tf", "0 -18 Td"])
-        elif index > 0 and index not in {1, 3, 4, 8, 9}:
-            stream_parts.append("0 -16 Td")
-        stream_parts.append(f"({pdf_text(line)}) Tj")
-    stream_parts.append("ET")
-    content_stream = "\n".join(stream_parts).encode("latin-1", errors="replace")
+    def build_content_stream(page_lines):
+        parts = ["BT", "/F1 18 Tf", f"72 {top_y} Td"]
+        for index, (text, font, dy) in enumerate(page_lines):
+            parts.append(f"/F1 {font} Tf")
+            if index > 0:
+                parts.append(f"0 -{dy} Td")
+            parts.append(f"({pdf_text(text)}) Tj")
+        parts.append("ET")
+        return "\n".join(parts).encode("latin-1", errors="replace")
 
+    kids = []
     objects = [
         b"<< /Type /Catalog /Pages 2 0 R >>",
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Pages /Kids [] /Count 0 >>",
         b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        b"<< /Length " + str(len(content_stream)).encode("ascii") + b" >>\nstream\n" + content_stream + b"\nendstream",
     ]
+    for page_num, page_lines in enumerate(pages, start=1):
+        page_id = 3 + 2 * page_num - 1
+        content_id = 3 + 2 * page_num
+        kids.append(f"{page_id} 0 R")
+        content_stream = build_content_stream(page_lines)
+        objects.append(
+            (
+                f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 {page_height}] "
+                f"/Resources << /Font << /F1 3 0 R >> >> /Contents {content_id} 0 R >>"
+            ).encode("ascii")
+        )
+        objects.append(
+            b"<< /Length " + str(len(content_stream)).encode("ascii")
+            + b" >>\nstream\n" + content_stream + b"\nendstream"
+        )
+    objects[1] = (
+        f"<< /Type /Pages /Kids [{' '.join(kids)}] /Count {len(pages)} >>"
+    ).encode("ascii")
     buffer = io.BytesIO()
     buffer.write(b"%PDF-1.4\n")
     offsets = [0]
@@ -2537,9 +2583,12 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
             )
 
         if amount_decimal <= 0:
-            amount = 0
-        else:
-            amount = amount_decimal
+            return JsonResponse(
+                {"error": "Amount must be greater than 0."},
+                status=400,
+            )
+
+        amount = amount_decimal
 
         txn = Transaction.objects.create(
             user=request.user,
@@ -2814,14 +2863,21 @@ def api_update_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
         valid_categories = {key for key, _ in Transaction.CATEGORY_CHOICES}
         if category not in valid_categories:
             category = "other"
-        if not amount or float(amount) <= 0:
+        try:
+            amount_decimal = Decimal(str(amount))
+        except (decimal.InvalidOperation, TypeError, ValueError):
+            return JsonResponse(
+                {"error": "Amount must be a valid number."},
+                status=400,
+            )
+        if amount_decimal <= 0:
             return JsonResponse({"error": "Amount must be greater than 0."}, status=400)
         if not title:
             return JsonResponse({"error": "Title is required."}, status=400)
 
         # Update the transaction
         txn.title = title
-        txn.amount = Decimal(str(amount))
+        txn.amount = amount_decimal
         txn.txn_type = txn_type
         txn.category = category
         if category != "lend" or txn_type != "expense":

@@ -39,6 +39,8 @@
 
     {% if success %}
     <div class="pf-success">✅ Profile updated successfully!</div>
+    {% elif error %}
+    <div class="pf-success pf-error">⚠️ {{ error }}</div>
     {% endif %}
 
     <form method="post" enctype="multipart/form-data" class="pf-form" novalidate>
