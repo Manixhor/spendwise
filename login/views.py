@@ -25,7 +25,12 @@ from django.utils.html import strip_tags
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from .models import Transaction, UserProfile, SavingsGoal
-from .spending_coach import fetch_dad_joke, fetch_motivation, get_spending_message
+from .spending_coach import (
+    dad_joke_fallback,
+    fetch_dad_joke,
+    fetch_motivation,
+    get_spending_message,
+)
 from .templatetags.currency_filters import indian_currency
 
 
@@ -1457,7 +1462,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     stats = _dashboard_stats(request.user, profile)
     coach = get_spending_message(stats["spend_pct"])
-    dad_joke = fetch_dad_joke()
+    dad_joke = dad_joke_fallback()
 
     # Smart motivation quote — context-aware, no repeats
     goals = SavingsGoal.objects.filter(user=request.user)
@@ -1515,7 +1520,6 @@ def api_dashboard_summary(request: HttpRequest) -> JsonResponse:
     return JsonResponse(
         {
             "success": True,
-            "dad_joke": fetch_dad_joke(),
             "available_expense_dates": _available_expense_dates(request.user),
             "recent_expenses": recent_expenses,
             **_dashboard_stats_payload(stats),
@@ -1704,7 +1708,7 @@ def savings(request: HttpRequest) -> HttpResponse:
             "goal_count": goals.count(),
             "monthly_saved": monthly_saved,
             "monthly_expenses": monthly_expenses,
-            "available_for_goals": net_available,
+            "available_for_goals": available_for_goals,
             "allocation_breakdown": allocation_breakdown,
             "motivation": motivation,
             "active_nav": "savings",

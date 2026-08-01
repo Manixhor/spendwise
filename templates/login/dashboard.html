@@ -179,6 +179,27 @@
 
     </div>
 
+    <!-- ── Category breakdown ─────────────────────────────── -->
+    <section class="card cat-tiles-card">
+      <div class="chart-header">
+        <h2 class="chart-title">Category Breakdown</h2>
+        <div class="legend">
+          <span class="leg-dot purple"></span><span class="leg-txt">By spend</span>
+        </div>
+      </div>
+      <div class="tile-grid" id="categoryTiles">
+        {% for cat in cat_tiles %}
+        <div class="tile" style="background:{{ cat.color }}20; border:1px solid {{ cat.color }}40;">
+          <div class="tile-icon" style="background:{{ cat.color }}40;">{{ cat.icon }}</div>
+          <p class="tile-amount">{{ cat.amount|indian_currency }}</p>
+          <p class="tile-name">{{ cat.label }}</p>
+        </div>
+        {% empty %}
+        <p class="txn-empty">No spending yet this month. Add an expense to see your breakdown.</p>
+        {% endfor %}
+      </div>
+    </section>
+
     <!-- ── Add Expense + Latest Transactions ──────────────── -->
     <section class="card txn-section">
       <div class="txn-header-row">
@@ -489,12 +510,18 @@
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        const totalBalanceEl = document.getElementById('totalBalance');
-        const totalExpenseEl = document.getElementById('totalExpense');
-        const totalSavedEl = document.getElementById('totalSaved');
-        if (totalBalanceEl) totalBalanceEl.textContent = formatCurrency(data.total_balance);
-        if (totalExpenseEl) totalExpenseEl.textContent = '−₹' + data.total_expense.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        if (totalSavedEl) totalSavedEl.textContent = formatCurrency(data.total_saved, { showPlus: true });
+        const savingsAmount = document.getElementById('savingsAmount');
+        const savingsSubAmount = document.getElementById('savingsSubAmount');
+        if (savingsAmount) {
+          savingsAmount.textContent = formatCurrency(data.total_saved, { showPlus: true });
+          savingsAmount.classList.toggle('is-negative', Number(data.total_saved) < 0);
+          savingsAmount.classList.toggle('is-positive', Number(data.total_saved) > 0);
+        }
+        if (savingsSubAmount) {
+          savingsSubAmount.textContent = formatCurrency(data.total_saved);
+          savingsSubAmount.classList.toggle('is-negative', Number(data.total_saved) < 0);
+          savingsSubAmount.classList.toggle('is-positive', Number(data.total_saved) > 0);
+        }
         updateMotivationCard(data.total_saved, data.total_expense);
         location.reload();
       } else {
@@ -547,10 +574,6 @@ try {
       renderInsightStockSummary(data.insight_stock);
       renderCategoryTiles(data.cat_tiles || []);
 
-      const jokeText = document.getElementById('jokeBannerText');
-      if (jokeText && data.dad_joke) {
-        jokeText.textContent = data.dad_joke;
-      }
       if (typeof data.total_saved === 'number' && typeof data.total_expense === 'number') {
         updateMotivationCard(data.total_saved, data.total_expense);
       }
@@ -558,6 +581,19 @@ try {
       // Non-blocking; initial server render remains visible.
     }
   }
+
+  // Fresh dad joke, fetched asynchronously so it never blocks page render.
+  (function loadDadJoke() {
+    fetch('/api/dad-joke/')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.dad_joke) {
+          const jokeText = document.getElementById('jokeBannerText');
+          if (jokeText) jokeText.textContent = data.dad_joke;
+        }
+      })
+      .catch(() => { /* keep the server-rendered joke */ });
+  })();
 
   hydrateDashboardFromApi();
 
@@ -1514,17 +1550,13 @@ try {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        const totalBalanceEl = document.getElementById('totalBalance');
-        const totalExpenseEl = document.getElementById('totalExpense');
-        const totalSavedEl   = document.getElementById('totalSaved');
-        if (totalBalanceEl) totalBalanceEl.textContent = formatCurrency(data.total_balance);
-        if (totalExpenseEl) totalExpenseEl.textContent = '−₹' + data.total_expense.toLocaleString('en-IN', {minimumFractionDigits:2});
-        if (totalSavedEl)   totalSavedEl.textContent   = formatCurrency(data.total_saved, { showPlus: true });
         const savingsAmount = document.getElementById('savingsAmount');
         const savingsSubAmount = document.getElementById('savingsSubAmount');
-        savingsAmount.textContent = formatCurrency(data.total_saved, { showPlus: true });
-        savingsAmount.classList.toggle('is-negative', data.total_saved < 0);
-        savingsAmount.classList.toggle('is-positive', data.total_saved > 0);
+        if (savingsAmount) {
+          savingsAmount.textContent = formatCurrency(data.total_saved, { showPlus: true });
+          savingsAmount.classList.toggle('is-negative', data.total_saved < 0);
+          savingsAmount.classList.toggle('is-positive', data.total_saved > 0);
+        }
         if (savingsSubAmount) {
           savingsSubAmount.textContent = formatCurrency(data.total_saved);
           savingsSubAmount.classList.toggle('is-negative', data.total_saved < 0);
@@ -1859,7 +1891,23 @@ try {
 
   updateMotivationCard({{ total_saved|default:0 }}, {{ total_expense|default:0 }});
 
-  function renderCategoryTiles(tiles) { /* removed */ }
+  function renderCategoryTiles(tiles) {
+    const wrap = document.getElementById('categoryTiles');
+    if (!wrap) return;
+
+    if (!tiles.length) {
+      wrap.innerHTML = '<p class="txn-empty">No spending yet this month. Add an expense to see your breakdown.</p>';
+      return;
+    }
+
+    wrap.innerHTML = tiles.map(cat => `
+      <div class="tile" style="background:${cat.color}20; border:1px solid ${cat.color}40;">
+        <div class="tile-icon" style="background:${cat.color}40;">${cat.icon}</div>
+        <p class="tile-amount">${formatCurrency(cat.amount)}</p>
+        <p class="tile-name">${cat.label}</p>
+      </div>
+    `).join('');
+  }
 
 } catch(e) { console.error('Dashboard init error:', e); }
  </script>

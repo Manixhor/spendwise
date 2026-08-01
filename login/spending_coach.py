@@ -7,6 +7,8 @@ import random
 import urllib.request
 import urllib.error
 
+from django.core.cache import cache
+
 
 # ── Message banks ─────────────────────────────────────────
 
@@ -83,24 +85,35 @@ def get_spending_message(spend_pct: float | None) -> dict:
         return {"message": random.choice(CRITICAL), "tone": "critical", "emoji": "🚨"}
 
 
+_DAD_JOKE_FALLBACKS = [
+    "Why did the bank robber take a bath? He wanted to make a clean getaway.",
+    "I told my wallet a joke. It didn't laugh — it was too broke.",
+    "Why is money called dough? Because we all knead it.",
+    "I asked my bank for a loan. They said 'Sure, what's your collateral?' I said 'My sense of humour.' They didn't laugh.",
+]
+
+
+def dad_joke_fallback() -> str:
+    """Returns a random local dad joke without making any network call."""
+    return random.choice(_DAD_JOKE_FALLBACKS)
+
+
 def fetch_dad_joke() -> str:
-    """Fetches a random dad joke from icanhazdadjoke.com."""
+    """Fetches a random dad joke from icanhazdadjoke.com (cached ~6h)."""
+    cached = cache.get("spendwise_dad_joke")
+    if cached:
+        return cached
     try:
         req = urllib.request.Request(
             "https://icanhazdadjoke.com/",
             headers={"Accept": "text/plain", "User-Agent": "SpendWise/1.0"},
         )
         with urllib.request.urlopen(req, timeout=3) as resp:
-            return resp.read().decode("utf-8").strip()
+            joke = resp.read().decode("utf-8").strip()
     except (urllib.error.URLError, Exception):
-        # Fallback jokes if API is unreachable
-        fallbacks = [
-            "Why did the bank robber take a bath? He wanted to make a clean getaway.",
-            "I told my wallet a joke. It didn't laugh — it was too broke.",
-            "Why is money called dough? Because we all knead it.",
-            "I asked my bank for a loan. They said 'Sure, what's your collateral?' I said 'My sense of humour.' They didn't laugh.",
-        ]
-        return random.choice(fallbacks)
+        joke = dad_joke_fallback()
+    cache.set("spendwise_dad_joke", joke, 6 * 60 * 60)
+    return joke
 
 
 _SAVINGS_QUOTES = [
