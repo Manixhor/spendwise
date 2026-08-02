@@ -92,7 +92,7 @@
       </div>
 
       <!-- Motivation card -->
-      <div class="card motivation-card motivation-{{ motivation.bucket }}">
+      <div class="card motivation-card motivation-{{ motivation.bucket }}" id="motivationCard">
         <div class="motivation-orb motivation-orb-1"></div>
         <div class="motivation-orb motivation-orb-2"></div>
         <div class="motivation-inner">
@@ -105,10 +105,76 @@
             {% else %}🎯{% endif %}
           </span>
           <div class="motivation-text">
-            <p class="motivation-quote">"{{ motivation.quote }}"</p>
+            <p class="motivation-quote" id="motivationQuote">"{{ motivation.quote }}"</p>
             <p class="motivation-author">{{ motivation.author }}</p>
+            <span class="motivation-badge" id="motivationBadge"></span>
+            <p class="motivation-meta" id="motivationMeta"></p>
           </div>
         </div>
+      </div>
+
+    </div>
+
+    <!-- ── Trend + Overview charts ────────────────────────── -->
+    <div class="charts-row">
+
+      <!-- Sparkline: expense vs saved trend -->
+      <div class="card sparkline-card">
+        <div class="spark-header">
+          <div class="spark-meta">
+            <span class="spark-label">Spent this month</span>
+            <span class="spark-amount" id="sparkExpenseAmount">{{ total_expense|indian_currency }}</span>
+            <span class="spark-change" id="sparkExpenseChange"></span>
+          </div>
+          <div class="spark-meta">
+            <span class="spark-label">Saved this month</span>
+            <span class="spark-amount spark-saved" id="sparkSavedAmount">{{ total_saved|indian_currency }}</span>
+            <span class="spark-change" id="sparkSavedChange"></span>
+          </div>
+        </div>
+        <div class="spark-chart-wrap">
+          <svg viewBox="0 0 600 100" class="spark-svg" id="sparkSvg" preserveAspectRatio="xMidYMid meet" aria-label="Expense and savings trend over the last 6 months">
+            <defs>
+              <linearGradient id="expSparkGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(255,107,107,0.30)"/>
+                <stop offset="100%" stop-color="rgba(255,107,107,0.02)"/>
+              </linearGradient>
+              <linearGradient id="savedSparkGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(52,211,153,0.30)"/>
+                <stop offset="100%" stop-color="rgba(52,211,153,0.02)"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="spark-x-axis" id="sparkXAxis"></div>
+      </div>
+
+      <!-- Overview: monthly expenses -->
+      <div class="card chart-card">
+        <div class="chart-header">
+          <h2 class="chart-title">Overview</h2>
+          <div class="legend">
+            <span class="leg-dot purple"></span><span class="leg-txt">Expenses</span>
+          </div>
+        </div>
+        <div class="chart-body">
+          <div class="y-axis" id="chartYAxis">
+            <span>—</span><span></span><span></span><span></span><span>₹0</span>
+          </div>
+          <div class="chart-svg-wrap">
+            <svg viewBox="0 0 680 230" class="chart-svg" preserveAspectRatio="xMidYMid meet" id="overviewSvg" aria-label="Monthly expenses overview chart">
+              <defs>
+                <linearGradient id="expG2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(167,139,250,0.60)"/>
+                  <stop offset="100%" stop-color="rgba(167,139,250,0.12)"/>
+                </linearGradient>
+              </defs>
+              <!-- Bars rendered by JS -->
+            </svg>
+            <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
+          </div>
+        </div>
+        <div class="x-axis" id="chartXAxis"></div>
       </div>
 
     </div>
@@ -739,6 +805,37 @@ try {
       dot.setAttribute('r', 4); dot.setAttribute('fill', '#34d399');
       svg.appendChild(dot);
     }
+
+    // X axis labels
+    const xAxis = document.getElementById('sparkXAxis');
+    if (xAxis) xAxis.innerHTML = data.map(d => `<span>${d.label}</span>`).join('');
+
+    // Header amounts (latest month) + change vs previous month
+    const fmt = v => '₹' + Number(v).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    const lastMonth = data[data.length - 1];
+    const prevMonth = data[data.length - 2];
+    if (lastMonth) {
+      const expAmt = document.getElementById('sparkExpenseAmount');
+      const savAmt = document.getElementById('sparkSavedAmount');
+      if (expAmt) expAmt.textContent = fmt(lastMonth.expense);
+      if (savAmt) savAmt.textContent = fmt(lastMonth.saved);
+
+      const pct = (cur, prev) => prev > 0 ? Math.round((cur - prev) / prev * 100) : (cur > 0 ? 100 : 0);
+      if (prevMonth) {
+        const expChange = document.getElementById('sparkExpenseChange');
+        if (expChange) {
+          const ep = pct(lastMonth.expense, prevMonth.expense);
+          expChange.textContent = `${ep >= 0 ? '↑' : '↓'} ${Math.abs(ep)}% vs last month`;
+          expChange.className = 'spark-change ' + (ep <= 0 ? 'spark-up' : 'spark-down');
+        }
+        const savChange = document.getElementById('sparkSavedChange');
+        if (savChange) {
+          const sp = pct(lastMonth.saved, prevMonth.saved);
+          savChange.textContent = `${sp >= 0 ? '↑' : '↓'} ${Math.abs(sp)}% vs last month`;
+          savChange.className = 'spark-change ' + (sp >= 0 ? 'spark-up' : 'spark-down');
+        }
+      }
+    }
   }
 
   renderSparkline(dashboardChartData);
@@ -1025,6 +1122,9 @@ try {
         `<span>${fmt(maxVal)}</span><span>${fmt(maxVal*0.75)}</span>` +
         `<span>${fmt(maxVal*0.5)}</span><span>${fmt(maxVal*0.25)}</span><span>₹0</span>`;
     }
+
+    const xAxis = document.getElementById('chartXAxis');
+    if (xAxis) xAxis.innerHTML = data.map(d => `<span>${d.label}</span>`).join('');
   }
 
   renderChart(dashboardChartData);
@@ -1597,7 +1697,7 @@ try {
   })();
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeTxnModal(); closeModal(); }
+    if (e.key === 'Escape') { closeTxnModal(); }
   });
 
   function buildAiStyleMotivationMessage(saved, spent, ratio, tone) {

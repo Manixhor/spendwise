@@ -679,6 +679,14 @@ body[data-theme="dark"] .filter-tab:hover:not(.active) {
   gap: 14px;
 }
 
+/* Charts row — trend + overview stacked full width */
+.charts-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  margin-top: 14px;
+}
+
 /* Savings card — full width strip above top-row */
 .savings-card {
   background:
@@ -3074,6 +3082,26 @@ body.ios-modal-keyboard-open .modal-overlay.active .modal-card {
 .motivation-almost_there .motivation-author { color: #d97706; }
 .motivation-goal_reached .motivation-author { color: #059669; }
 .motivation-no_goals     .motivation-author { color: var(--muted); }
+
+.motivation-badge {
+  align-self: flex-start;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(124,58,237,0.14);
+  color: #7c3aed;
+  border: 1px solid rgba(124,58,237,0.22);
+}
+
+.motivation-meta {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0;
+}
 
 /* ── Target Savings Widget ──────────────────────────────── */
 .set-target-btn {
