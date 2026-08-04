@@ -13,3 +13,4 @@ Partial batch sent 426-427 and 429-441 on 2026-07-20. Skipped 425 and 428 pendin
 Partial batch sent 442-446 and 448-452 on 2026-07-20. Skipped 447 pending company/domain confirmation. Used Company + Skill = Outcome subjects, text/markdown, no attachments, LinkedIn included, and 10-15 minute chat line.
 Partial batch sent 453-457 and 460-462 on 2026-07-20. Skipped 458 and 459 pending company/domain confirmation. Used Company + Skill = Outcome subjects, text/markdown, no attachments, LinkedIn included, and 10-15 minute chat line.
 Controlled batch sent 477-486 on 2026-07-20. Used refreshed company-based subject lines, text/markdown, no attachments, LinkedIn included, phone number included, and 10-15 minute chat line.
+Final stretch sent 487-496 and 498-500 on 2026-07-20. Skipped 497 pending company/domain confirmation. Used refreshed company-based subject lines, text/markdown, no attachments, LinkedIn included, phone number included, and 10-15 minute chat line.
