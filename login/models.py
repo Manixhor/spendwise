@@ -53,6 +53,7 @@ class Transaction(models.Model):
         ("shopping", "Shopping"),
         ("food", "Food"),
         ("utilities", "Utilities"),
+        ("lend", "Lend"),
         ("other", "Other"),
     ]
     TYPE_CHOICES = [
@@ -71,6 +72,10 @@ class Transaction(models.Model):
     )
     date = models.DateField()
     note = models.TextField(blank=True, default="")
+    is_settled = models.BooleanField(
+        default=False,
+        help_text="Marks lending transactions as paid back.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

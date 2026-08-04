@@ -205,6 +205,7 @@ CATEGORY_ICONS = {
     "shopping": "🛍️",
     "food": "🍽️",
     "utilities": "💡",
+    "lend": "₹",
     "other": "📦",
 }
 
@@ -217,6 +218,7 @@ CATEGORY_COLORS = {
     "shopping": "#fdba74",
     "food": "#a5f3fc",
     "utilities": "#d9f99d",
+    "lend": "#fed7aa",
     "other": "#e2e8f0",
 }
 
@@ -229,6 +231,7 @@ CATEGORY_ACCENTS = {
     "shopping": {"bg": "#ffedd5", "fg": "#c2410c"},
     "food": {"bg": "#cffafe", "fg": "#0891b2"},
     "utilities": {"bg": "#ecfccb", "fg": "#4d7c0f"},
+    "lend": {"bg": "#ffedd5", "fg": "#c2410c"},
     "other": {"bg": "#e5e7eb", "fg": "#475569"},
 }
 
@@ -244,6 +247,11 @@ MOTIVATION_BADGES = {
     "elite": "Elite",
     "clean": "Clean",
 }
+
+
+def _active_expense_qs(qs):
+    """Expense queryset excluding lend items that have already been paid back."""
+    return qs.filter(txn_type="expense").exclude(category="lend", is_settled=True)
 
 
 def _motivation_tone(saved_amount: float, expense_amount: float) -> str:
@@ -541,12 +549,16 @@ def _serialize_txn(txn: Transaction) -> dict:
         "category_label": txn.get_category_display(),
         "date": txn.date.isoformat(),
         "icon": CATEGORY_ICONS.get(txn.category, "📦"),
+        "is_settled": txn.is_settled,
+        "can_mark_paid": txn.txn_type == "expense"
+        and txn.category == "lend"
+        and not txn.is_settled,
     }
 
 
 def _available_expense_dates(user) -> list[str]:
     raw_dates = (
-        Transaction.objects.filter(user=user, txn_type="expense")
+        _active_expense_qs(Transaction.objects.filter(user=user))
         .order_by("date")
         .values_list("date", flat=True)
         .distinct()
@@ -617,11 +629,8 @@ def _build_monthly_weeks(user, month_start: date, month_end: date) -> list[dict]
             date__gte=cursor,
             date__lte=week_end,
         ).aggregate(s=Sum("amount"))["s"] or Decimal("0")
-        expense = Transaction.objects.filter(
-            user=user,
-            txn_type="expense",
-            date__gte=cursor,
-            date__lte=week_end,
+        expense = _active_expense_qs(
+            Transaction.objects.filter(user=user, date__gte=cursor, date__lte=week_end)
         ).aggregate(s=Sum("amount"))["s"] or Decimal("0")
         weeks.append(
             {
@@ -697,12 +706,13 @@ def _build_monthly_categories(
     total_expense_float = float(total_expense)
 
     for key, label in Transaction.CATEGORY_CHOICES:
-        amount = Transaction.objects.filter(
-            user=user,
-            txn_type="expense",
-            category=key,
-            date__gte=month_start,
-            date__lte=month_end,
+        amount = _active_expense_qs(
+            Transaction.objects.filter(
+                user=user,
+                category=key,
+                date__gte=month_start,
+                date__lte=month_end,
+            )
         ).aggregate(s=Sum("amount"))["s"] or Decimal("0")
 
         if amount <= 0:
@@ -775,11 +785,8 @@ def _build_top_spending_days(user, month_start: date, month_end: date) -> list[d
     daily_spend = {}
     badge_classes = ["payment", "figma", "withdrawal", "webflow", "zalando"]
 
-    for txn in Transaction.objects.filter(
-        user=user,
-        txn_type="expense",
-        date__gte=month_start,
-        date__lte=month_end,
+    for txn in _active_expense_qs(
+        Transaction.objects.filter(user=user, date__gte=month_start, date__lte=month_end)
     ).order_by("date", "created_at"):
         entry = daily_spend.setdefault(
             txn.date,
@@ -831,7 +838,7 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
     total_income = month_txns.filter(txn_type="income").aggregate(s=Sum("amount"))[
         "s"
     ] or Decimal("0")
-    total_expense = month_txns.filter(txn_type="expense").aggregate(s=Sum("amount"))[
+    total_expense = _active_expense_qs(month_txns).aggregate(s=Sum("amount"))[
         "s"
     ] or Decimal("0")
     
@@ -855,7 +862,7 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
     prev_income = prev_txns.filter(txn_type="income").aggregate(s=Sum("amount"))[
         "s"
     ] or Decimal("0")
-    prev_expense = prev_txns.filter(txn_type="expense").aggregate(s=Sum("amount"))[
+    prev_expense = _active_expense_qs(prev_txns).aggregate(s=Sum("amount"))[
         "s"
     ] or Decimal("0")
     
@@ -1079,7 +1086,7 @@ def _dashboard_stats(user, profile):
     total_income = txns.filter(txn_type="income").aggregate(s=Sum("amount"))[
         "s"
     ] or Decimal("0")
-    total_expense = txns.filter(txn_type="expense").aggregate(s=Sum("amount"))[
+    total_expense = _active_expense_qs(txns).aggregate(s=Sum("amount"))[
         "s"
     ] or Decimal("0")
 
@@ -1101,7 +1108,7 @@ def _dashboard_stats(user, profile):
     # Category breakdown (expenses only)
     cat_data = {}
     for cat, label in Transaction.CATEGORY_CHOICES:
-        amt = txns.filter(txn_type="expense", category=cat).aggregate(s=Sum("amount"))[
+        amt = _active_expense_qs(txns.filter(category=cat)).aggregate(s=Sum("amount"))[
             "s"
         ] or Decimal("0")
         if amt > 0:
@@ -1146,8 +1153,8 @@ def _dashboard_stats(user, profile):
         else:
             m_end = d.replace(month=d.month + 1, day=1) - timedelta(days=1)
 
-        m_exp = Transaction.objects.filter(
-            user=user, txn_type="expense", date__gte=m_start, date__lte=m_end
+        m_exp = _active_expense_qs(
+            Transaction.objects.filter(user=user, date__gte=m_start, date__lte=m_end)
         ).aggregate(s=Sum("amount"))["s"] or Decimal("0")
         m_inc = Transaction.objects.filter(
             user=user, txn_type="income", date__gte=m_start, date__lte=m_end
@@ -1166,10 +1173,8 @@ def _dashboard_stats(user, profile):
     daily_spending = []
     current_day = month_start
     while current_day <= today:
-        day_expense = Transaction.objects.filter(
-            user=user,
-            txn_type="expense",
-            date=current_day
+        day_expense = _active_expense_qs(
+            Transaction.objects.filter(user=user, date=current_day)
         ).aggregate(s=Sum("amount"))["s"] or Decimal("0")
         
         daily_spending.append({
@@ -1505,7 +1510,9 @@ def api_dashboard_summary(request: HttpRequest) -> JsonResponse:
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     stats = _dashboard_stats(request.user, profile)
     recent_expenses = [
-        _serialize_txn(txn) for txn in stats["recent_txns"] if txn.txn_type == "expense"
+        _serialize_txn(txn)
+        for txn in stats["recent_txns"]
+        if txn.txn_type == "expense" and not (txn.category == "lend" and txn.is_settled)
     ]
     return JsonResponse(
         {
@@ -1531,7 +1538,7 @@ def api_expenses_by_date(request: HttpRequest) -> JsonResponse:
                 {"error": "Invalid date format. Use YYYY-MM-DD."}, status=400
             )
 
-    qs = Transaction.objects.filter(user=request.user, txn_type="expense").order_by(
+    qs = _active_expense_qs(Transaction.objects.filter(user=request.user)).order_by(
         "-date", "-created_at"
     )
     if selected_date:
@@ -1587,8 +1594,8 @@ def savings(request: HttpRequest) -> HttpResponse:
 
     first_of_month = date.today().replace(day=1)
     monthly_expenses = (
-        Transaction.objects.filter(
-            user=request.user, txn_type="expense", date__gte=first_of_month
+        _active_expense_qs(
+            Transaction.objects.filter(user=request.user, date__gte=first_of_month)
         ).aggregate(total=Sum("amount"))["total"]
         or 0
     )
@@ -1849,8 +1856,8 @@ def api_goal_allocations(request: HttpRequest) -> JsonResponse:
         current_month_str = first_of_month.strftime("%Y-%m")
         
         monthly_expenses = float(
-            Transaction.objects.filter(
-                user=request.user, txn_type="expense", date__gte=first_of_month
+            _active_expense_qs(
+                Transaction.objects.filter(user=request.user, date__gte=first_of_month)
             ).aggregate(total=Sum("amount"))["total"] or 0
         )
 
@@ -2114,6 +2121,39 @@ def monthly(request: HttpRequest) -> HttpResponse:
             "profile": profile,
             "active_nav": "monthly",
             **monthly_analysis,
+        },
+    )
+
+
+# ── Lend Tracker ──────────────────────────────────────────
+@login_required(login_url="/login/")
+def lend(request: HttpRequest) -> HttpResponse:
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    lends = list(
+        Transaction.objects.filter(
+            user=request.user,
+            txn_type="expense",
+            category="lend",
+        ).order_by("is_settled", "-date", "-created_at")
+    )
+    pending_lends = [txn for txn in lends if not txn.is_settled]
+    paid_lends = [txn for txn in lends if txn.is_settled]
+    pending_total = sum((txn.amount for txn in pending_lends), Decimal("0"))
+    paid_total = sum((txn.amount for txn in paid_lends), Decimal("0"))
+
+    return render(
+        request,
+        "login/lend.html",
+        {
+            "user": request.user,
+            "profile": profile,
+            "active_nav": "lend",
+            "lends": lends,
+            "pending_lends": pending_lends,
+            "paid_lends": paid_lends,
+            "pending_total": pending_total,
+            "paid_total": paid_total,
+            "lend_count": len(lends),
         },
     )
 
@@ -2465,6 +2505,9 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
 
         if txn_type not in ("income", "expense"):
             txn_type = "expense"
+        valid_categories = {key for key, _ in Transaction.CATEGORY_CHOICES}
+        if category not in valid_categories:
+            category = "other"
         if not amount or float(amount) <= 0:
             amount = 0
 
@@ -2512,6 +2555,37 @@ def api_delete_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
         return JsonResponse(
             {
                 "success": True,
+                "available_expense_dates": _available_expense_dates(request.user),
+                **_dashboard_stats_payload(stats),
+            }
+        )
+    except Transaction.DoesNotExist:
+        return JsonResponse({"error": "Transaction not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+# ── API: Mark Lend Paid ───────────────────────────────────
+@login_required(login_url="/login/")
+@require_http_methods(["POST"])
+def api_mark_lend_paid(request: HttpRequest, txn_id: int) -> JsonResponse:
+    try:
+        txn = Transaction.objects.get(id=txn_id, user=request.user)
+        if txn.txn_type != "expense" or txn.category != "lend":
+            return JsonResponse(
+                {"error": "Only lend transactions can be marked paid."},
+                status=400,
+            )
+
+        txn.is_settled = True
+        txn.save(update_fields=["is_settled"])
+
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        stats = _dashboard_stats(request.user, profile)
+        return JsonResponse(
+            {
+                "success": True,
+                "txn": _serialize_txn(txn),
                 "available_expense_dates": _available_expense_dates(request.user),
                 **_dashboard_stats_payload(stats),
             }
@@ -2707,6 +2781,9 @@ def api_update_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
 
         if txn_type not in ("income", "expense"):
             txn_type = "expense"
+        valid_categories = {key for key, _ in Transaction.CATEGORY_CHOICES}
+        if category not in valid_categories:
+            category = "other"
         if not amount or float(amount) <= 0:
             return JsonResponse({"error": "Amount must be greater than 0."}, status=400)
 
@@ -2715,6 +2792,8 @@ def api_update_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
         txn.amount = Decimal(str(amount))
         txn.txn_type = txn_type
         txn.category = category
+        if category != "lend" or txn_type != "expense":
+            txn.is_settled = False
         txn.date = txn_date
         txn.note = data.get("note", "")
         txn.save()

@@ -88,8 +88,8 @@ class UserProfileAdmin(admin.ModelAdmin):
 # ── Transaction admin ──────────────────────────────────────
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
-    list_display  = ('user', 'title', 'txn_type', 'category', 'amount', 'date', 'created_at')
-    list_filter   = ('txn_type', 'category', 'date')
+    list_display  = ('user', 'title', 'txn_type', 'category', 'amount', 'is_settled', 'date', 'created_at')
+    list_filter   = ('txn_type', 'category', 'is_settled', 'date')
     search_fields = ('user__username', 'user__email', 'title', 'note')
     ordering      = ('-date', '-created_at')
     date_hierarchy = 'date'
@@ -97,7 +97,7 @@ class TransactionAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Transaction', {
-            'fields': ('user', 'title', 'amount', 'txn_type', 'category', 'date', 'note')
+            'fields': ('user', 'title', 'amount', 'txn_type', 'category', 'is_settled', 'date', 'note')
         }),
         ('Meta', {
             'fields': ('created_at',),

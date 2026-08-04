@@ -26,6 +26,15 @@
         <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>
       </svg>
     </a>
+    <a href="{% url 'lend' %}" class="nav-icon {% if active_nav == 'lend' %}active{% endif %}" aria-label="Lend Tracker" title="Lend Tracker">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 5h7.2a3.2 3.2 0 0 1 0 6.4H7"/>
+        <path d="M7 5v14"/>
+        <path d="M7 11.4h9"/>
+        <path d="M15.5 15.5h5"/>
+        <path d="M18 13v5"/>
+      </svg>
+    </a>
     <a href="{% url 'savings' %}" class="nav-icon {% if active_nav == 'savings' %}active{% endif %}" aria-label="Savings Goals" title="Savings Goals">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>

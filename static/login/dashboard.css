@@ -1711,6 +1711,28 @@ body[data-theme="dark"] .txn-item.offline-pending {
 
 .txn-icon svg { width: 15px; height: 15px; }
 
+.txn-icon.lend {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255,237,213,0.96) 0%, rgba(254,215,170,0.92) 100%);
+  color: #c2410c;
+  border-color: rgba(249,115,22,0.22);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.txn-icon.lend::after {
+  content: "";
+  position: absolute;
+  right: 7px;
+  bottom: 8px;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid currentColor;
+  border-top: 2px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.82;
+}
+
 .figma      { background: rgba(94,92,230,0.12);  color: var(--accent); }
 .withdrawal { background: rgba(48,209,88,0.12);  color: #1a7a4a; }
 .payment    { background: rgba(10,132,255,0.12); color: #0a5fa0; }
@@ -1758,6 +1780,13 @@ body[data-theme="dark"] .txn-item.offline-pending {
   border: 1px solid rgba(255, 69, 58, 0.18);
 }
 
+.txn-amt.settled {
+  color: var(--muted);
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.20);
+  text-decoration: line-through;
+}
+
 body[data-theme="dark"] .txn-amt {
   color: #4ade80;
   background: rgba(74, 222, 128, 0.12);
@@ -1768,6 +1797,18 @@ body[data-theme="dark"] .txn-amt.neg {
   color: #fb7185;
   background: rgba(251, 113, 133, 0.12);
   border-color: rgba(251, 113, 133, 0.20);
+}
+
+body[data-theme="dark"] .txn-amt.settled {
+  color: #8fa2c7;
+  background: rgba(148, 163, 184, 0.10);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+body[data-theme="dark"] .txn-icon.lend {
+  background: linear-gradient(135deg, rgba(124,45,18,0.82) 0%, rgba(154,52,18,0.72) 100%);
+  color: #fdba74;
+  border-color: rgba(251,146,60,0.24);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1868,13 +1909,13 @@ body[data-theme="dark"] .txn-amt.neg {
 
   .nav-icons {
     flex-direction: row;
-    gap: 2px;
+    gap: 0;
     flex: 1;
     justify-content: center;
   }
 
   .nav-icon {
-    width: 44px;
+    width: 38px;
     height: 44px;
   }
 
@@ -3208,7 +3249,8 @@ body.ios-modal-keyboard-open .modal-overlay.active .modal-card {
 
 /* Shared base for both buttons */
 .txn-edit,
-.txn-delete {
+.txn-delete,
+.txn-mark-paid {
   width: 30px; height: 30px;
   border-radius: 9px;
   border: 1px solid transparent;
@@ -3224,6 +3266,38 @@ body.ios-modal-keyboard-open .modal-overlay.active .modal-card {
 .txn-delete svg {
   width: 14px; height: 14px;
   pointer-events: none;
+}
+
+.txn-mark-paid {
+  background: linear-gradient(135deg, rgba(236,253,245,0.96) 0%, rgba(209,250,229,0.95) 100%);
+  border-color: rgba(16,185,129,0.20);
+  color: #047857;
+  font-size: 1rem;
+  font-weight: 900;
+  box-shadow: 0 2px 8px rgba(16,185,129,0.10), 0 1px 0 rgba(255,255,255,0.78) inset;
+}
+
+.txn-mark-paid:hover {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: rgba(5,150,105,0.30);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16,185,129,0.28), 0 1px 0 rgba(255,255,255,0.20) inset;
+}
+
+.txn-paid-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(148,163,184,0.12);
+  border: 1px solid rgba(148,163,184,0.20);
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 /* Edit — soft purple Apple style */
@@ -3283,6 +3357,25 @@ body[data-theme="dark"] .txn-delete:hover {
   background: linear-gradient(135deg, rgba(220,38,38,0.80) 0%, rgba(239,68,68,0.75) 100%);
   color: #fff;
   box-shadow: 0 6px 16px rgba(255,69,58,0.28);
+}
+
+body[data-theme="dark"] .txn-mark-paid {
+  background: linear-gradient(135deg, rgba(20,83,45,0.86) 0%, rgba(19,78,74,0.82) 100%);
+  border-color: rgba(52,211,153,0.20);
+  color: #86efac;
+  box-shadow: 0 2px 8px rgba(16,185,129,0.12);
+}
+
+body[data-theme="dark"] .txn-mark-paid:hover {
+  background: linear-gradient(135deg, rgba(16,185,129,0.82) 0%, rgba(5,150,105,0.78) 100%);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(16,185,129,0.26);
+}
+
+body[data-theme="dark"] .txn-paid-pill {
+  background: rgba(148,163,184,0.10);
+  border-color: rgba(148,163,184,0.16);
+  color: #8fa2c7;
 }
 
 /* Always show on mobile */

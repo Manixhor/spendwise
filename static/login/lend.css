@@ -1,0 +1,249 @@
+.lend-main {
+  overflow-y: auto;
+  padding: 34px clamp(18px, 3vw, 34px);
+  gap: 18px;
+}
+
+.lend-add-btn {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.86rem;
+  background: linear-gradient(135deg, #f97316 0%, #dc2626 100%);
+  box-shadow: 0 14px 28px rgba(249,115,22,0.20), 0 1px 0 rgba(255,255,255,0.18) inset;
+}
+
+.lend-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.lend-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.lend-summary-amount {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.lend-summary-amount.negative { color: var(--negative); }
+.lend-summary-amount.positive { color: var(--positive); }
+
+.lend-summary-sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.lend-list-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lend-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lend-section-head h2 {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 1.12rem;
+  letter-spacing: 0;
+}
+
+.lend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lend-item {
+  min-height: 66px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-sub);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.42);
+}
+
+.lend-item.is-paid {
+  opacity: 0.78;
+}
+
+.lend-icon {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #c2410c;
+  font-size: 1.08rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, rgba(255,237,213,0.98) 0%, rgba(254,215,170,0.94) 100%);
+  border: 1px solid rgba(249,115,22,0.22);
+  box-shadow: var(--shadow-sm);
+}
+
+.lend-icon::after {
+  content: "";
+  position: absolute;
+  right: 8px;
+  bottom: 9px;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid currentColor;
+  border-top: 2px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.84;
+}
+
+.lend-info {
+  min-width: 0;
+}
+
+.lend-info h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lend-info p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.lend-amount {
+  color: var(--ink);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.lend-amount.negative {
+  color: var(--negative);
+}
+
+.lend-paid-btn,
+.lend-paid-pill {
+  height: 32px;
+  border-radius: 999px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.76rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.lend-paid-btn {
+  border: 1px solid rgba(16,185,129,0.20);
+  color: #047857;
+  background: linear-gradient(135deg, rgba(236,253,245,0.96) 0%, rgba(209,250,229,0.95) 100%);
+  cursor: pointer;
+}
+
+.lend-paid-btn:hover {
+  color: #fff;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.lend-paid-btn:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.lend-paid-pill {
+  color: var(--muted);
+  background: rgba(148,163,184,0.12);
+  border: 1px solid rgba(148,163,184,0.20);
+}
+
+.lend-empty {
+  margin: 0;
+  padding: 16px;
+  color: var(--muted);
+  text-align: center;
+  border: 1px dashed var(--border-sub);
+  border-radius: 14px;
+}
+
+body[data-theme="dark"] .lend-item {
+  background: rgba(15,23,42,0.52);
+}
+
+body[data-theme="dark"] .lend-icon {
+  background: linear-gradient(135deg, rgba(124,45,18,0.82) 0%, rgba(154,52,18,0.72) 100%);
+  color: #fdba74;
+  border-color: rgba(251,146,60,0.24);
+}
+
+body[data-theme="dark"] .lend-paid-btn {
+  background: linear-gradient(135deg, rgba(20,83,45,0.86) 0%, rgba(19,78,74,0.82) 100%);
+  border-color: rgba(52,211,153,0.20);
+  color: #86efac;
+}
+
+@media (max-width: 900px) {
+  .lend-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .lend-main {
+    padding: 18px 14px 26px;
+  }
+
+  .lend-item {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .lend-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .lend-paid-btn,
+  .lend-paid-pill {
+    grid-column: 2 / -1;
+    width: fit-content;
+  }
+}
+
+@media (max-width: 390px) {
+  .lend-item {
+    padding: 11px 10px;
+  }
+
+  .lend-amount {
+    font-size: 0.82rem;
+  }
+}

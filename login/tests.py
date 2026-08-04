@@ -117,6 +117,64 @@ class DashboardInsightsTests(TestCase):
         self.assertEqual(payload['total_saved'], 9750.0)
         self.assertIn('₹9,750', payload['saving_message'])
 
+    def test_lend_expense_can_be_marked_paid_to_restore_available_salary(self):
+        response = self.client.post(
+            reverse('api_add_transaction'),
+            data=json.dumps({
+                'title': 'Lent to friend',
+                'amount': 2000,
+                'txn_type': 'expense',
+                'category': 'lend',
+                'date': str(date.today()),
+            }),
+            content_type='application/json',
+        )
+        payload = response.json()
+        txn = Transaction.objects.get(title='Lent to friend')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payload['total_expense'], 2000.0)
+        self.assertEqual(payload['total_saved'], 8000.0)
+        self.assertFalse(txn.is_settled)
+
+        paid_response = self.client.post(reverse('api_mark_lend_paid', args=[txn.id]))
+        paid_payload = paid_response.json()
+        txn.refresh_from_db()
+
+        self.assertEqual(paid_response.status_code, 200)
+        self.assertTrue(txn.is_settled)
+        self.assertEqual(paid_payload['total_expense'], 0.0)
+        self.assertEqual(paid_payload['total_saved'], 10000.0)
+        self.assertTrue(paid_payload['txn']['is_settled'])
+
+    def test_lend_tracker_page_separates_pending_and_paid_lends(self):
+        Transaction.objects.create(
+            user=self.user,
+            title='Pending lend',
+            amount=Decimal('1200.00'),
+            txn_type='expense',
+            category='lend',
+            date=date.today(),
+        )
+        Transaction.objects.create(
+            user=self.user,
+            title='Paid lend',
+            amount=Decimal('700.00'),
+            txn_type='expense',
+            category='lend',
+            is_settled=True,
+            date=date.today(),
+        )
+
+        response = self.client.get(reverse('lend'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['active_nav'], 'lend')
+        self.assertEqual(response.context['pending_total'], Decimal('1200.00'))
+        self.assertEqual(response.context['paid_total'], Decimal('700.00'))
+        self.assertContains(response, 'Pending lend')
+        self.assertContains(response, 'Paid lend')
+
 
 @override_settings(
     STORAGES={

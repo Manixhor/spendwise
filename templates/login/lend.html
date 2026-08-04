@@ -1,0 +1,135 @@
+{% load static %}
+{% load currency_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  {% include "login/includes/pwa_meta.html" %}
+  <title>SpendWise – Lend Tracker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}" />
+  <link rel="stylesheet" href="{% static 'login/lend.css' %}" />
+</head>
+<body>
+<div class="app">
+  {% include "login/includes/sidebar.html" %}
+
+  <main class="main lend-main">
+    <header class="main-header">
+      <div>
+        <p class="monthly-eyebrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" style="vertical-align:-1px;margin-right:4px;">
+            <path d="M7 5h7.2a3.2 3.2 0 0 1 0 6.4H7"/>
+            <path d="M7 5v14"/>
+            <path d="M7 11.4h9"/>
+            <path d="M15.5 15.5h5"/>
+            <path d="M18 13v5"/>
+          </svg>
+          Lend Tracker
+        </p>
+        <h1 class="welcome">Money You Lent</h1>
+      </div>
+      <a class="lend-add-btn" href="{% url 'dashboard' %}#add-lend">+ Add Lend</a>
+    </header>
+
+    <section class="lend-summary-grid">
+      <div class="card lend-summary-card">
+        <span class="card-label">Pending Return</span>
+        <p class="lend-summary-amount negative">{{ pending_total|indian_currency }}</p>
+        <p class="lend-summary-sub">{{ pending_lends|length }} active lend{{ pending_lends|length|pluralize }}</p>
+      </div>
+      <div class="card lend-summary-card">
+        <span class="card-label">Paid Back</span>
+        <p class="lend-summary-amount positive">{{ paid_total|indian_currency }}</p>
+        <p class="lend-summary-sub">{{ paid_lends|length }} settled lend{{ paid_lends|length|pluralize }}</p>
+      </div>
+      <div class="card lend-summary-card">
+        <span class="card-label">Total Tracked</span>
+        <p class="lend-summary-amount">{{ lend_count }}</p>
+        <p class="lend-summary-sub">Lend records in SpendWise</p>
+      </div>
+    </section>
+
+    <section class="card lend-list-card">
+      <div class="lend-section-head">
+        <div>
+          <span class="card-label">Pending</span>
+          <h2>Still waiting</h2>
+        </div>
+      </div>
+
+      <div class="lend-list">
+        {% for txn in pending_lends %}
+        <article class="lend-item" id="lend-{{ txn.id }}">
+          <div class="lend-icon">₹</div>
+          <div class="lend-info">
+            <h3>{{ txn.title }}</h3>
+            <p>{{ txn.date|date:"M d, Y" }} · Pending return</p>
+          </div>
+          <strong class="lend-amount negative">−{{ txn.amount|indian_currency }}</strong>
+          <button class="lend-paid-btn" type="button" data-lend-id="{{ txn.id }}">Mark paid</button>
+        </article>
+        {% empty %}
+        <p class="lend-empty">No pending lends right now.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="card lend-list-card">
+      <div class="lend-section-head">
+        <div>
+          <span class="card-label">Paid</span>
+          <h2>Returned money</h2>
+        </div>
+      </div>
+
+      <div class="lend-list">
+        {% for txn in paid_lends %}
+        <article class="lend-item is-paid">
+          <div class="lend-icon">₹</div>
+          <div class="lend-info">
+            <h3>{{ txn.title }}</h3>
+            <p>{{ txn.date|date:"M d, Y" }} · Paid back</p>
+          </div>
+          <strong class="lend-amount">{{ txn.amount|indian_currency }}</strong>
+          <span class="lend-paid-pill">Paid</span>
+        </article>
+        {% empty %}
+        <p class="lend-empty">Paid lends will appear here after you mark them paid.</p>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  document.querySelectorAll('.lend-paid-btn').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const id = button.dataset.lendId;
+      if (!id) return;
+      button.disabled = true;
+      button.textContent = 'Updating...';
+
+      try {
+        const res = await fetch(`/api/transactions/${id}/mark-paid/`, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          location.reload();
+          return;
+        }
+        button.disabled = false;
+        button.textContent = 'Mark paid';
+        alert(data.error || 'Could not mark this lend as paid.');
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = 'Mark paid';
+        alert('Network error. Please try again.');
+      }
+    });
+  });
+</script>
+</body>
+</html>

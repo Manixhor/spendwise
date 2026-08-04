@@ -7,6 +7,7 @@ from .views import (
     login_view,
     logout_view,
     dashboard,
+    lend,
     monthly,
     savings,
     profile_view,
@@ -15,6 +16,7 @@ from .views import (
     api_export_monthly_csv,
     api_add_transaction,
     api_delete_transaction,
+    api_mark_lend_paid,
     api_update_transaction,
     api_set_salary,
     api_excess_income,
@@ -40,6 +42,7 @@ urlpatterns = [
     path("logout/", logout_view, name="logout"),
     path("dashboard/", dashboard, name="dashboard"),
     path("monthly/", monthly, name="monthly"),
+    path("lend/", lend, name="lend"),
     path(
         "monthly/email/",
         api_email_monthly_analysis,
@@ -60,6 +63,11 @@ urlpatterns = [
         "api/transactions/<int:txn_id>/delete/",
         api_delete_transaction,
         name="api_delete_transaction",
+    ),
+    path(
+        "api/transactions/<int:txn_id>/mark-paid/",
+        api_mark_lend_paid,
+        name="api_mark_lend_paid",
     ),
     # Salary / target
     path("api/salary/", api_set_salary, name="api_set_salary"),
