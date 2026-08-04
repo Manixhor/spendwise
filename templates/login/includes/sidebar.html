@@ -1,4 +1,8 @@
+{% load static %}
 <aside class="sidebar">
+  <a href="{% url 'dashboard' %}" class="desktop-sidebar-logo" aria-label="SpendWise dashboard" title="SpendWise">
+    <img src="{% static 'icons/spendwise-sw-icon-180.png' %}" alt="SpendWise" />
+  </a>
   <div class="avatar-wrap profile-avatar-wrap">
     <a href="{% url 'profile' %}" class="avatar-link" title="Edit Profile">
       {% if profile.avatar %}
