@@ -140,6 +140,7 @@
             <p class="ma-chart-sub">{{ selected_month_label }}</p>
           </div>
           <div class="ma-chart-legend">
+            <span class="leg-dot green"></span><span class="leg-txt">Income</span>
             <span class="leg-dot purple"></span><span class="leg-txt">Expenses</span>
           </div>
         </div>
@@ -154,6 +155,10 @@
           <div class="ma-bars-wrap" style="position:relative;">
             <svg viewBox="0 0 560 220" class="ma-bar-svg" id="maBarSvg" aria-label="Monthly spending bar chart">
               <defs>
+                <linearGradient id="incomeBar" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#34d399" stop-opacity="0.9"/>
+                  <stop offset="100%" stop-color="#34d399" stop-opacity="0.5"/>
+                </linearGradient>
                 <linearGradient id="expenseBar" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.9"/>
                   <stop offset="100%" stop-color="#a78bfa" stop-opacity="0.5"/>
@@ -161,6 +166,18 @@
               </defs>
 
               {% for week in weekly_chart.weeks %}
+                {% if week.income_height > 0 %}
+                <rect
+                  class="ma-bar"
+                  x="{{ week.income_x }}" y="{{ week.income_y }}"
+                  width="{{ week.bar_width }}" height="{{ week.income_height }}"
+                  rx="6" fill="url(#incomeBar)"
+                  data-label="{{ week.label }}"
+                  data-range="{{ week.range_label }}"
+                  data-kind="Income"
+                  data-amount="{{ week.income }}"
+                  style="cursor:pointer;"/>
+                {% endif %}
                 <rect
                   class="ma-bar"
                   x="{{ week.expense_x }}" y="{{ week.expense_y }}"
@@ -168,7 +185,8 @@
                   rx="6" fill="url(#expenseBar)"
                   data-label="{{ week.label }}"
                   data-range="{{ week.range_label }}"
-                  data-expense="{{ week.expense }}"
+                  data-kind="Expenses"
+                  data-amount="{{ week.expense }}"
                   style="cursor:pointer;"/>
               {% endfor %}
             </svg>
@@ -213,7 +231,7 @@
           bars.forEach(bar => {
             bar.addEventListener('mouseenter', () => {
               bar.setAttribute('opacity', '0.75');
-              tip.textContent = bar.dataset.range + ': ' + fmt(bar.dataset.expense);
+              tip.textContent = bar.dataset.range + ' · ' + bar.dataset.kind + ': ' + fmt(bar.dataset.amount);
               tip.style.display = 'block';
             });
             bar.addEventListener('mousemove', (e) => {
@@ -236,7 +254,7 @@
 
         <div class="ma-cat-list">
           {% for category in categories %}
-            <div class="ma-cat-item" title="{{ category.label }} · {{ category.share_pct|floatformat:1 }}% · ₹{{ category.amount|floatformat:2 }}">
+            <div class="ma-cat-item" title="{{ category.label }} · {{ category.share_pct|floatformat:1 }}% · {{ category.amount|indian_currency }}">
               <div class="ma-cat-icon" style="background:{{ category.icon_bg }}; color:{{ category.icon_fg }};" title="{{ category.label }}" aria-label="{{ category.label }}">
                 {% if category.key == 'rent' %}
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -262,7 +280,7 @@
                 <span class="ma-cat-name">{{ category.label }}</span>
                 <div class="ma-cat-bar-track"><div class="ma-cat-bar-fill" style="width:{{ category.share_pct|floatformat:1 }}%; background:{{ category.color }};"></div></div>
               </div>
-              <span class="ma-cat-amt">₹{{ category.amount|floatformat:2 }}</span>
+              <span class="ma-cat-amt">{{ category.amount|indian_currency }}</span>
             </div>
           {% empty %}
             <div class="txn-empty">No expense categories recorded for this month.</div>

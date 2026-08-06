@@ -655,15 +655,25 @@ def _build_monthly_weeks(user, month_start: date, month_end: date) -> list[dict]
 
     max_val = max(
         max((week["expense"] for week in weeks), default=0),
+        max((week["income"] for week in weeks), default=0),
         1,
     )
     slot_width = chart_width / len(weeks)
     bar_width = min(40, max(24, int(slot_width * 0.55)))
+    bar_gap = 4
 
     for index, week in enumerate(weeks):
-        # Center the single expense bar in the slot
+        # Center the pair of income + expense bars in the slot
         center_x = index * slot_width + slot_width / 2
-        expense_x = center_x - bar_width / 2
+        income_x = center_x - bar_width - bar_gap / 2
+        expense_x = center_x + bar_gap / 2
+
+        income_height = (
+            0
+            if week["income"] <= 0
+            else max(10, round((week["income"] / max_val) * chart_inner_height, 1))
+        )
+        income_y = pad_top + (chart_inner_height - income_height)
 
         expense_height = (
             0
@@ -674,17 +684,15 @@ def _build_monthly_weeks(user, month_start: date, month_end: date) -> list[dict]
 
         week.update(
             {
-                "income_height": 0,
+                "income_height": income_height,
                 "expense_height": expense_height,
-                "income_y": chart_height,
+                "income_y": income_y,
                 "expense_y": expense_y,
-                "income_x": round(expense_x, 1),
+                "income_x": round(income_x, 1),
                 "expense_x": round(expense_x, 1),
                 "bar_width": bar_width,
             }
         )
-
-    trend_path = ""
 
     axis_step = ceil(max_val / 5) if max_val else 1
     y_axis_labels = [
@@ -693,7 +701,6 @@ def _build_monthly_weeks(user, month_start: date, month_end: date) -> list[dict]
 
     return {
         "weeks": weeks,
-        "trend_path": trend_path,
         "y_axis_labels": y_axis_labels,
         "max_value": round(max_val, 2),
     }
@@ -1471,19 +1478,10 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             }
         )
 
-    # Get motivation quote - use API quotes for real motivational content
-    api_quote = fetch_motivation()
-    motivation = {
-        "quote": api_quote.get("text", ""),
-        "author": api_quote.get("author", "Unknown"),
-        "bucket": "making_progress",  # default bucket
-    }
-
-    # If API fails, fallback to context-aware quote
-    if not motivation["quote"]:
-        last_quote = request.session.get("last_dash_motivation_quote", None)
-        motivation = _get_motivation_quote(monthly_saved, goals_data, last_quote)
-        request.session["last_dash_motivation_quote"] = motivation["quote"]
+    # Context-aware motivation quote, no repeats between page loads
+    last_quote = request.session.get("last_dash_motivation_quote", None)
+    motivation = _get_motivation_quote(monthly_saved, goals_data, last_quote)
+    request.session["last_dash_motivation_quote"] = motivation["quote"]
 
     return render(
         request,
@@ -1691,19 +1689,10 @@ def savings(request: HttpRequest) -> HttpResponse:
             }
         )
 
-    # Get motivation quote - use API quotes for real motivational content
-    api_quote = fetch_motivation()
-    motivation = {
-        "quote": api_quote.get("text", ""),
-        "author": api_quote.get("author", "Unknown"),
-        "bucket": "making_progress",  # default bucket
-    }
-
-    # If API fails, fallback to context-aware quote
-    if not motivation["quote"]:
-        last_quote = request.session.get("last_motivation_quote", None)
-        motivation = _get_motivation_quote(float(monthly_saved), goals_data, last_quote)
-        request.session["last_motivation_quote"] = motivation["quote"]
+    # Context-aware motivation quote, no repeats between page loads
+    last_quote = request.session.get("last_motivation_quote", None)
+    motivation = _get_motivation_quote(float(monthly_saved), goals_data, last_quote)
+    request.session["last_motivation_quote"] = motivation["quote"]
 
     return render(
         request,
@@ -2494,7 +2483,7 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
     try:
         data = json.loads(request.body)
         raw_title = data.get("title", "").strip()
-        title = raw_title or "Untitled"
+        title = raw_title
         amount = data.get("amount", 0)
         txn_type = data.get("txn_type", "expense").strip()
         category = data.get("category", "other").strip()
@@ -2536,6 +2525,12 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
                     {"error": "Lend date cannot be in the future."},
                     status=400,
                 )
+
+        if not title:
+            return JsonResponse(
+                {"error": "Title is required."},
+                status=400,
+            )
 
         if amount_decimal <= 0:
             amount = 0
@@ -2799,7 +2794,7 @@ def api_update_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
         txn = Transaction.objects.get(id=txn_id, user=request.user)
         data = json.loads(request.body)
 
-        title = data.get("title", "").strip() or "Untitled"
+        title = data.get("title", "").strip()
         amount = data.get("amount", 0)
         txn_type = data.get("txn_type", "expense").strip()
         category = data.get("category", "other").strip()
@@ -2817,6 +2812,8 @@ def api_update_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
             category = "other"
         if not amount or float(amount) <= 0:
             return JsonResponse({"error": "Amount must be greater than 0."}, status=400)
+        if not title:
+            return JsonResponse({"error": "Title is required."}, status=400)
 
         # Update the transaction
         txn.title = title
