@@ -29,7 +29,7 @@
         </p>
         <h1 class="welcome">Money You Lent</h1>
       </div>
-      <a class="lend-add-btn" href="{% url 'dashboard' %}#add-lend">+ Add Lend</a>
+      <button class="lend-add-btn" id="lendAddBtn" type="button">+ Add Lend</button>
     </header>
 
     <section class="lend-summary-grid">
@@ -102,7 +102,137 @@
   </main>
 </div>
 
+<div class="modal-overlay" id="lendModal" role="dialog" aria-modal="true" aria-labelledby="lendModalTitle">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 class="modal-title" id="lendModalTitle">Add Lend</h2>
+      <button class="modal-close" id="lendModalClose" aria-label="Close">&times;</button>
+    </div>
+
+    <p class="form-sub" style="margin-bottom: 20px;">Track money you gave someone. It reduces your available balance until marked paid.</p>
+
+    <label class="modal-field-label" for="lendTitle">Person / note</label>
+    <input type="text" id="lendTitle" class="modal-select modal-select--transparent" placeholder="e.g. Lent to Rahul" autocomplete="off" enterkeyhint="next" />
+
+    <label class="modal-field-label" for="lendAmount" style="margin-top: 10px;">Amount</label>
+    <div class="modal-field-wrap">
+      <span class="modal-currency">₹</span>
+      <input type="number" id="lendAmount" class="modal-input" placeholder="0.00" min="1" step="0.01" enterkeyhint="next" />
+    </div>
+
+    <label class="modal-field-label" for="lendDate" style="margin-top: 10px;">Date</label>
+    <input type="date" id="lendDate" class="modal-select modal-select--transparent" value="{% now 'Y-m-d' %}" enterkeyhint="done" />
+
+    <p class="modal-error" id="lendError"></p>
+    <button class="modal-save-btn" id="lendSaveBtn">Save Lend</button>
+  </div>
+</div>
+
 <script>
+  function getLocalDateInputValue(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  const lendModal = document.getElementById('lendModal');
+  const lendAddBtn = document.getElementById('lendAddBtn');
+  const lendCloseBtn = document.getElementById('lendModalClose');
+  const lendSaveBtn = document.getElementById('lendSaveBtn');
+  const lendTitleInput = document.getElementById('lendTitle');
+  const lendAmountInput = document.getElementById('lendAmount');
+  const lendDateInput = document.getElementById('lendDate');
+  const lendError = document.getElementById('lendError');
+
+  function openLendModal() {
+    if (!lendModal) return;
+    if (lendTitleInput) lendTitleInput.value = '';
+    if (lendAmountInput) lendAmountInput.value = '';
+    if (lendDateInput) lendDateInput.value = getLocalDateInputValue();
+    if (lendError) lendError.textContent = '';
+    lendModal.classList.add('active');
+    requestAnimationFrame(() => lendTitleInput?.focus());
+  }
+
+  function closeLendModal() {
+    if (!lendModal) return;
+    lendModal.classList.remove('active');
+    if (lendSaveBtn) {
+      lendSaveBtn.disabled = false;
+      lendSaveBtn.textContent = 'Save Lend';
+    }
+    if (lendError) lendError.textContent = '';
+  }
+
+  lendAddBtn?.addEventListener('click', openLendModal);
+  lendCloseBtn?.addEventListener('click', closeLendModal);
+  lendModal?.addEventListener('click', (event) => {
+    if (event.target === lendModal) closeLendModal();
+  });
+
+  lendTitleInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      lendAmountInput?.focus();
+    }
+  });
+
+  lendAmountInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      lendDateInput?.focus();
+    }
+  });
+
+  lendDateInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      lendSaveBtn?.click();
+    }
+  });
+
+  lendSaveBtn?.addEventListener('click', async () => {
+    const title = lendTitleInput?.value.trim() || 'Lend';
+    const amount = parseFloat(lendAmountInput?.value || '0') || 0;
+    const txnDate = lendDateInput?.value || getLocalDateInputValue();
+
+    if (!amount || amount <= 0) {
+      if (lendError) lendError.textContent = 'Please enter a valid amount greater than 0.';
+      return;
+    }
+
+    lendSaveBtn.disabled = true;
+    lendSaveBtn.textContent = 'Saving...';
+    if (lendError) lendError.textContent = '';
+
+    try {
+      const res = await fetch('/api/transactions/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({
+          title,
+          amount,
+          txn_type: 'expense',
+          category: 'lend',
+          date: txnDate,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        location.reload();
+        return;
+      }
+      lendSaveBtn.disabled = false;
+      lendSaveBtn.textContent = 'Save Lend';
+      if (lendError) lendError.textContent = data.error || 'Could not save lend.';
+    } catch (error) {
+      lendSaveBtn.disabled = false;
+      lendSaveBtn.textContent = 'Save Lend';
+      if (lendError) lendError.textContent = 'Network error. Please try again.';
+    }
+  });
+
   document.querySelectorAll('.lend-paid-btn').forEach((button) => {
     button.addEventListener('click', async () => {
       const id = button.dataset.lendId;

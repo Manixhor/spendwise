@@ -174,6 +174,29 @@ class DashboardInsightsTests(TestCase):
         self.assertEqual(response.context['paid_total'], Decimal('700.00'))
         self.assertContains(response, 'Pending lend')
         self.assertContains(response, 'Paid lend')
+        self.assertContains(response, 'id="lendModal"')
+        self.assertContains(response, "category: 'lend'")
+
+    def test_lend_tracker_can_create_lend_transaction(self):
+        response = self.client.post(
+            reverse('api_add_transaction'),
+            data=json.dumps({
+                'title': 'Lend from tracker',
+                'amount': 500,
+                'txn_type': 'expense',
+                'category': 'lend',
+                'date': str(date.today()),
+            }),
+            content_type='application/json',
+        )
+
+        txn = Transaction.objects.get(title='Lend from tracker')
+        payload = response.json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(txn.category, 'lend')
+        self.assertFalse(txn.is_settled)
+        self.assertEqual(payload['total_expense'], 500.0)
 
 
 @override_settings(
