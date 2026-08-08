@@ -1647,14 +1647,14 @@ body[data-theme="dark"] .txn-date-btn:nth-child(even):not(.active):not(.today) {
 }
 
 .txn-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) minmax(108px, auto) 104px;
   align-items: center;
   gap: 11px;
   padding: 9px 8px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background 0.15s;
-  flex-wrap: wrap;
 }
 
 .txn-item.offline-pending {
@@ -1675,6 +1675,7 @@ body[data-theme="dark"] .txn-item.offline-pending {
   .txn-item {
     gap: 8px;
     padding: 8px 6px;
+    grid-template-columns: 32px minmax(0, 1fr) minmax(86px, auto) 86px;
   }
   
   .txn-icon {
@@ -1742,7 +1743,7 @@ body[data-theme="dark"] .txn-item.offline-pending {
 .spotify    { background: rgba(48,209,88,0.12);  color: #1a7a4a; }
 
 .txn-info {
-  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -1762,6 +1763,8 @@ body[data-theme="dark"] .txn-item.offline-pending {
 }
 
 .txn-amt {
+  justify-self: end;
+  text-align: right;
   font-size: 0.82rem;
   font-weight: 700;
   white-space: nowrap;
@@ -2155,7 +2158,7 @@ body[data-theme="dark"] .txn-icon.lend {
   .txn-item {
     padding: 10px 8px;
     gap: 10px;
-    flex-wrap: nowrap;
+    grid-template-columns: 34px minmax(0, 1fr) minmax(92px, auto) 92px;
   }
 
   .txn-icon {
@@ -2166,7 +2169,6 @@ body[data-theme="dark"] .txn-icon.lend {
   }
 
   .txn-info {
-    flex: 1;
     min-width: 0;
   }
 
@@ -2187,13 +2189,12 @@ body[data-theme="dark"] .txn-icon.lend {
   .txn-amt {
     font-size: 0.76rem;
     padding: 2px 7px;
-    flex-shrink: 0;
   }
 
   .txn-actions {
     opacity: 1;
     gap: 4px;
-    flex-shrink: 0;
+    min-width: 92px;
   }
 
   .txn-edit,
@@ -2342,6 +2343,16 @@ body[data-theme="dark"] .txn-icon.lend {
   .main {
     padding: 12px 10px 16px;
     gap: 10px;
+  }
+
+  .txn-item {
+    grid-template-columns: 32px minmax(0, 1fr) minmax(78px, auto);
+  }
+
+  .txn-actions {
+    grid-column: 2 / -1;
+    min-width: 0;
+    justify-content: flex-start;
   }
 
   .welcome {
@@ -3239,10 +3250,11 @@ body.ios-modal-keyboard-open .modal-overlay.active .modal-card {
 .txn-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
   opacity: 0;
   transition: opacity 0.18s;
-  flex-shrink: 0;
+  min-width: 104px;
 }
 
 .txn-item:hover .txn-actions { opacity: 1; }
@@ -3380,7 +3392,10 @@ body[data-theme="dark"] .txn-paid-pill {
 
 /* Always show on mobile */
 @media (max-width: 768px) {
-  .txn-actions { opacity: 1; }
+  .txn-actions {
+    opacity: 1;
+    min-width: 92px;
+  }
 }
 
 .txn-empty {
