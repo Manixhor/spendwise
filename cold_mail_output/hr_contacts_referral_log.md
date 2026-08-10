@@ -91,6 +91,14 @@
 - 82 | sent via Gmail | Coderound | chaitanya@coderound.tech | subject: Open to Software Developer Roles at Coderound
 - 83 | sent via Gmail | Success Pact | swati.sinha@successpact.com | subject: Open to Suitable Software Developer Opportunities
 - 84 | skipped | Pylonmc | shruti.pylonmc@gmail.com | reason: personal Gmail / company-domain mismatch
+
+## 2026-08-05 catch-up sends
+
+- 9 | sent via Gmail | Altimetrik | prajaput@altimetrik.com | subject: Seeking Software Engineer Opportunities at Altimetrik | note: previously failed via Outlook
+- 10 | sent via Gmail | Tech Wurkz | monishaki@techwurkz.com | subject: Seeking Software Engineer Opportunities at Tech Wurkz | note: previously not marked sent
+- 20 | sent via Gmail | Talent Pursuits / LehLah | hamsika@talent-pursuits.com | subject: Seeking Software Engineer Opportunities - Manikanta Gururam | note: sent despite company/email-domain mismatch using neutral consultancy wording
+- 47 | sent via Gmail | Wave Visas / PR Jobs | prjobs@wavevisas.com | subject: Seeking Software Engineer Opportunities - Manikanta Gururam | note: sent despite company/email-domain mismatch using neutral consultancy wording
+- 84 | sent via Gmail | Pylonmc | shruti.pylonmc@gmail.com | subject: Seeking Software Engineer Opportunities - Manikanta Gururam | note: sent despite personal Gmail/company-domain mismatch
 - 85 | sent via Gmail | Net2Source | mishra.sneha@net2source.co.in | subject: Open to Suitable Software Developer Opportunities
 - 86 | sent via Gmail | BMW Techworks | Amruta.Dalvi@bmwtechworks.in | subject: Seeking Your Guidance for Software Roles at BMW Techworks
 - 87 | sent via Gmail | Revilo Recruitment | oliver.reeves@revilorecruitment.com | subject: Open to Suitable Software Developer Opportunities
