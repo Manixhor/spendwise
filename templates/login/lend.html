@@ -165,6 +165,51 @@
     if (lendError) lendError.textContent = '';
   }
 
+  function setLendError(message, focusTarget = null) {
+    if (lendError) lendError.textContent = message;
+    focusTarget?.focus();
+  }
+
+  function validateLendForm() {
+    const title = lendTitleInput?.value.trim() || '';
+    const amountText = lendAmountInput?.value || '';
+    const amount = Number(amountText);
+    const txnDate = lendDateInput?.value || '';
+    const today = getLocalDateInputValue();
+
+    if (!title) {
+      setLendError('Please enter the person name or note.', lendTitleInput);
+      return null;
+    }
+
+    if (title.length > 120) {
+      setLendError('Person or note must be 120 characters or less.', lendTitleInput);
+      return null;
+    }
+
+    if (!amountText || !Number.isFinite(amount) || amount <= 0) {
+      setLendError('Please enter a valid amount greater than 0.', lendAmountInput);
+      return null;
+    }
+
+    if (amount > 999999999) {
+      setLendError('Amount is too large. Please enter a smaller lend amount.', lendAmountInput);
+      return null;
+    }
+
+    if (!txnDate) {
+      setLendError('Please choose a lend date.', lendDateInput);
+      return null;
+    }
+
+    if (txnDate > today) {
+      setLendError('Lend date cannot be in the future.', lendDateInput);
+      return null;
+    }
+
+    return { title, amount, txnDate };
+  }
+
   lendAddBtn?.addEventListener('click', openLendModal);
   lendCloseBtn?.addEventListener('click', closeLendModal);
   lendModal?.addEventListener('click', (event) => {
@@ -193,14 +238,8 @@
   });
 
   lendSaveBtn?.addEventListener('click', async () => {
-    const title = lendTitleInput?.value.trim() || 'Lend';
-    const amount = parseFloat(lendAmountInput?.value || '0') || 0;
-    const txnDate = lendDateInput?.value || getLocalDateInputValue();
-
-    if (!amount || amount <= 0) {
-      if (lendError) lendError.textContent = 'Please enter a valid amount greater than 0.';
-      return;
-    }
+    const validForm = validateLendForm();
+    if (!validForm) return;
 
     lendSaveBtn.disabled = true;
     lendSaveBtn.textContent = 'Saving...';
@@ -211,11 +250,11 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
         body: JSON.stringify({
-          title,
-          amount,
+          title: validForm.title,
+          amount: validForm.amount,
           txn_type: 'expense',
           category: 'lend',
-          date: txnDate,
+          date: validForm.txnDate,
         }),
       });
       const data = await res.json();

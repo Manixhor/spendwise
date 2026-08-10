@@ -2493,7 +2493,8 @@ def api_export_monthly_csv(request: HttpRequest) -> HttpResponse:
 def api_add_transaction(request: HttpRequest) -> JsonResponse:
     try:
         data = json.loads(request.body)
-        title = data.get("title", "").strip() or "Untitled"
+        raw_title = data.get("title", "").strip()
+        title = raw_title or "Untitled"
         amount = data.get("amount", 0)
         txn_type = data.get("txn_type", "expense").strip()
         category = data.get("category", "other").strip()
@@ -2508,13 +2509,43 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
         valid_categories = {key for key, _ in Transaction.CATEGORY_CHOICES}
         if category not in valid_categories:
             category = "other"
-        if not amount or float(amount) <= 0:
+
+        try:
+            amount_decimal = Decimal(str(amount))
+        except (decimal.InvalidOperation, TypeError, ValueError):
+            amount_decimal = Decimal("0")
+
+        if category == "lend":
+            if not raw_title:
+                return JsonResponse(
+                    {"error": "Person or note is required for lend."},
+                    status=400,
+                )
+            if len(raw_title) > 120:
+                return JsonResponse(
+                    {"error": "Person or note must be 120 characters or less."},
+                    status=400,
+                )
+            if amount_decimal <= 0:
+                return JsonResponse(
+                    {"error": "Lend amount must be greater than 0."},
+                    status=400,
+                )
+            if txn_date > date.today():
+                return JsonResponse(
+                    {"error": "Lend date cannot be in the future."},
+                    status=400,
+                )
+
+        if amount_decimal <= 0:
             amount = 0
+        else:
+            amount = amount_decimal
 
         txn = Transaction.objects.create(
             user=request.user,
             title=title,
-            amount=Decimal(str(amount)),
+            amount=amount,
             txn_type=txn_type,
             category=category,
             date=txn_date,

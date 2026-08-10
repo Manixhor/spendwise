@@ -1,5 +1,5 @@
 import json
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.core import mail
@@ -197,6 +197,40 @@ class DashboardInsightsTests(TestCase):
         self.assertEqual(txn.category, 'lend')
         self.assertFalse(txn.is_settled)
         self.assertEqual(payload['total_expense'], 500.0)
+
+    def test_lend_transaction_requires_person_or_note(self):
+        response = self.client.post(
+            reverse('api_add_transaction'),
+            data=json.dumps({
+                'title': '',
+                'amount': 500,
+                'txn_type': 'expense',
+                'category': 'lend',
+                'date': str(date.today()),
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Person or note is required', response.json()['error'])
+        self.assertFalse(Transaction.objects.filter(category='lend').exists())
+
+    def test_lend_transaction_rejects_future_date(self):
+        response = self.client.post(
+            reverse('api_add_transaction'),
+            data=json.dumps({
+                'title': 'Future lend',
+                'amount': 500,
+                'txn_type': 'expense',
+                'category': 'lend',
+                'date': str(date.today() + timedelta(days=1)),
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('future', response.json()['error'])
+        self.assertFalse(Transaction.objects.filter(title='Future lend').exists())
 
 
 @override_settings(
