@@ -14,6 +14,7 @@ from .views import (
     api_email_monthly_analysis,
     api_export_monthly_pdf,
     api_export_monthly_csv,
+    api_export_monthly_xlsx,
     api_add_transaction,
     api_delete_transaction,
     api_mark_lend_paid,
@@ -50,6 +51,7 @@ urlpatterns = [
     ),
     path("monthly/export/pdf/", api_export_monthly_pdf, name="api_export_monthly_pdf"),
     path("monthly/export/csv/", api_export_monthly_csv, name="api_export_monthly_csv"),
+    path("monthly/export/xlsx/", api_export_monthly_xlsx, name="api_export_monthly_xlsx"),
     path("savings/", savings, name="savings"),
     path("profile/", profile_view, name="profile"),
     # Transaction APIs

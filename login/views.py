@@ -1117,15 +1117,15 @@ def _dashboard_stats(user, profile):
         total_saved = total_income - total_expense
         total_balance = total_income - total_expense
 
-    # Category breakdown (expenses only)
+    # Category breakdown (expenses only) — single grouped query
     cat_data = {}
-    for cat, label in Transaction.CATEGORY_CHOICES:
-        amt = _active_expense_qs(txns.filter(category=cat)).aggregate(s=Sum("amount"))[
-            "s"
-        ] or Decimal("0")
+    cat_labels = dict(Transaction.CATEGORY_CHOICES)
+    for row in _active_expense_qs(txns).values("category").annotate(s=Sum("amount")):
+        cat = row["category"]
+        amt = row["s"] or Decimal("0")
         if amt > 0:
             cat_data[cat] = {
-                "label": label,
+                "label": cat_labels.get(cat, cat),
                 "amount": amt,
                 "icon": CATEGORY_ICONS.get(cat, "📦"),
                 "color": CATEGORY_COLORS.get(cat, "#e2e8f0"),
@@ -1155,8 +1155,9 @@ def _dashboard_stats(user, profile):
         "-date", "-created_at"
     )[:7]
 
-    # Chart: last 6 months saved vs expenses
+    # Chart: last 6 months saved vs expenses — two grouped queries total
     chart_months = []
+    month_windows = []
     for i in range(5, -1, -1):
         d = today.replace(day=1) - timedelta(days=i * 28)
         m_start = d.replace(day=1)
@@ -1164,13 +1165,36 @@ def _dashboard_stats(user, profile):
             m_end = d.replace(year=d.year + 1, month=1, day=1) - timedelta(days=1)
         else:
             m_end = d.replace(month=d.month + 1, day=1) - timedelta(days=1)
+        month_windows.append((m_start, m_end, d))
 
-        m_exp = _active_expense_qs(
-            Transaction.objects.filter(user=user, date__gte=m_start, date__lte=m_end)
-        ).aggregate(s=Sum("amount"))["s"] or Decimal("0")
-        m_inc = Transaction.objects.filter(
-            user=user, txn_type="income", date__gte=m_start, date__lte=m_end
-        ).aggregate(s=Sum("amount"))["s"] or Decimal("0")
+    first_start = month_windows[0][0]
+    last_end = month_windows[-1][1]
+    exp_rows = (
+        _active_expense_qs(
+            Transaction.objects.filter(
+                user=user, date__gte=first_start, date__lte=last_end
+            )
+        )
+        .values("date__year", "date__month")
+        .annotate(s=Sum("amount"))
+    )
+    inc_rows = (
+        Transaction.objects.filter(
+            user=user,
+            txn_type="income",
+            date__gte=first_start,
+            date__lte=last_end,
+        )
+        .values("date__year", "date__month")
+        .annotate(s=Sum("amount"))
+    )
+    exp_map = {(r["date__year"], r["date__month"]): r["s"] for r in exp_rows}
+    inc_map = {(r["date__year"], r["date__month"]): r["s"] for r in inc_rows}
+
+    for m_start, _m_end, d in month_windows:
+        key = (m_start.year, m_start.month)
+        m_exp = exp_map.get(key) or Decimal("0")
+        m_inc = inc_map.get(key) or Decimal("0")
         m_saved = max(m_inc - m_exp, Decimal("0"))
 
         chart_months.append(
@@ -1181,18 +1205,22 @@ def _dashboard_stats(user, profile):
             }
         )
 
-    # Daily spending for current month
+    # Daily spending for current month — single grouped query
+    daily_map = {
+        r["date"]: r["s"] or Decimal("0")
+        for r in _active_expense_qs(
+            Transaction.objects.filter(user=user, date__gte=month_start, date__lte=today)
+        )
+        .values("date")
+        .annotate(s=Sum("amount"))
+    }
     daily_spending = []
     current_day = month_start
     while current_day <= today:
-        day_expense = _active_expense_qs(
-            Transaction.objects.filter(user=user, date=current_day)
-        ).aggregate(s=Sum("amount"))["s"] or Decimal("0")
-        
         daily_spending.append({
             "day": current_day.day,
             "date": current_day.isoformat(),
-            "amount": float(day_expense),
+            "amount": float(daily_map.get(current_day, Decimal("0"))),
         })
         current_day += timedelta(days=1)
 
@@ -1876,6 +1904,8 @@ def api_goal_allocations(request: HttpRequest) -> JsonResponse:
 
         goals = list(SavingsGoal.objects.filter(user=request.user))
 
+        # Pure read-only projection: apply this month's rollover and allocation
+        # math in memory WITHOUT persisting, so a GET request has no side effects.
         for g in goals:
             if g.last_allocated_month != current_month_str:
                 target = float(g.target_amount)
@@ -1883,11 +1913,9 @@ def api_goal_allocations(request: HttpRequest) -> JsonResponse:
                 if base_saved > 0:
                     g.saved_amount = Decimal("0")
                     g.current_month_auto_allocation = Decimal(str(round(min(base_saved, target), 2)))
-                    g.save(update_fields=["saved_amount", "current_month_auto_allocation"])
                 else:
                     g.current_month_auto_allocation = Decimal("0")
-                    g.save(update_fields=["current_month_auto_allocation"])
-            _sync_goal_completion(g)
+            _sync_goal_completion(g, commit=False)
 
         available_after_prior = allocatable
         for g in goals:
@@ -1903,9 +1931,7 @@ def api_goal_allocations(request: HttpRequest) -> JsonResponse:
                 new_effective = min(effective_saved + allocated, float(g.target_amount))
                 new_auto = max(new_effective - float(g.saved_amount), 0)
                 g.current_month_auto_allocation = Decimal(str(round(new_auto, 2)))
-                g.last_allocated_month = current_month_str
-                g.save(update_fields=["current_month_auto_allocation", "last_allocated_month"])
-                _sync_goal_completion(g)
+            _sync_goal_completion(g, commit=False)
 
         allocation_data = []
         for goal in goals:
@@ -1975,7 +2001,7 @@ def _goal_is_fundable(goal: "SavingsGoal") -> bool:
     return bool(goal.is_active) and _goal_remaining_amount(goal) > 0
 
 
-def _sync_goal_completion(goal: "SavingsGoal") -> bool:
+def _sync_goal_completion(goal: "SavingsGoal", commit: bool = True) -> bool:
     """Persist completed goals at their target so future auto-allocation skips them."""
     target = Decimal(str(goal.target_amount or 0))
     if target <= 0:
@@ -1999,7 +2025,8 @@ def _sync_goal_completion(goal: "SavingsGoal") -> bool:
         fields.append("saved_amount")
 
     if fields:
-        goal.save(update_fields=fields)
+        if commit:
+            goal.save(update_fields=fields)
         return True
     return False
 
@@ -2169,10 +2196,21 @@ def api_email_monthly_analysis(request: HttpRequest) -> JsonResponse:
         )
 
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
+
+    # POST endpoints should receive the month in the body, not the query string.
+    month_value = request.POST.get("month")
+    if not month_value and request.content_type == "application/json":
+        try:
+            month_value = (json.loads(request.body) or {}).get("month")
+        except (ValueError, TypeError):
+            month_value = None
+    if not month_value:
+        month_value = request.GET.get("month")
+
     analysis = _build_monthly_analysis(
         request.user,
         profile,
-        _parse_month_param(request.GET.get("month")),
+        _parse_month_param(month_value),
     )
     email_context = _build_monthly_analysis_email_context(
         request.user, profile, analysis

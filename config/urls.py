@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.static import serve as django_serve
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 from login.admin_views import admin_broadcast, admin_dashboard
@@ -35,4 +36,19 @@ urlpatterns = [
     path('admin/broadcast/', admin_broadcast, name='admin_broadcast'),
     path('admin/', admin.site.urls),
     path('', include('login.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+# Serve media in production too (Django's static() helper is a no-op when DEBUG=False).
+# For larger deployments, replace this with an external object store (S3/Cloudinary) via
+# DEFAULT_FILE_STORAGE — but for a small Render app this keeps uploaded avatars working.
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    urlpatterns += [
+        path(
+            "media/<path:path>",
+            never_cache(django_serve),
+            {"document_root": settings.MEDIA_ROOT},
+            name="media_serve",
+        ),
+    ]

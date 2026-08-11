@@ -47,8 +47,10 @@ def ensure_deploy_superuser(sender, **kwargs):
         user.email = email
         changed = True
 
-    user.set_password(password)
-    changed = True
+    # Only set the password on creation. On later migrates we never overwrite it,
+    # otherwise an admin's in-app password change would be silently reset.
+    if created:
+        user.set_password(password)
 
     if changed:
         user.save()

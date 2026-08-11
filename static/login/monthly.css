@@ -141,6 +141,55 @@ body[data-theme="dark"] .download-option:hover {
   color: #e0e7ff;
 }
 
+/* ── Email report button ─────────────────────────────────── */
+.email-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  background: rgba(99,102,241,0.10);
+  color: #4f46e5;
+  border: 1px solid rgba(99,102,241,0.35);
+  border-radius: 12px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.email-btn:hover {
+  background: rgba(99,102,241,0.18);
+  transform: translateY(-1px);
+}
+
+.email-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+body[data-theme="dark"] .email-btn {
+  color: #a5b4fc;
+  border-color: rgba(129,140,248,0.35);
+  background: rgba(99,102,241,0.14);
+}
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: emailSpinner 0.7s linear infinite;
+}
+
+@keyframes emailSpinner {
+  to { transform: rotate(360deg); }
+}
+
 /* ── Export Modal ─────────────────────────────────────────── */
 .export-modal {
   position: fixed;
@@ -945,11 +994,13 @@ body[data-theme="dark"] .ma-reminder-btn:hover {
 
   .download-dropdown,
   .download-btn,
+  .email-btn,
   .month-selector {
     width: 100%;
   }
 
-  .download-btn {
+  .download-btn,
+  .email-btn {
     justify-content: center;
     min-height: 46px;
     border-radius: 16px;

@@ -64,8 +64,25 @@
               </svg>
               Export as CSV
             </button>
+	            <button class="download-option" role="menuitem" data-export="xlsx" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <rect x="9" y="10" width="7" height="9"/>
+              </svg>
+              Export as Excel
+            </button>
           </div>
         </div>
+        <button type="button" class="email-btn" id="emailReportBtn" title="Email this month's analysis to you" aria-label="Email monthly analysis">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Email
+        </button>
         <div class="month-selector">
           <a class="month-btn" href="?month={{ prev_month_param }}" aria-label="Previous month" title="Previous month">&#8249;</a>
           <span class="month-label" id="monthLabel" title="Selected month: {{ selected_month_label }}">{{ selected_month_label }}</span>
@@ -376,6 +393,13 @@
           <small>Spreadsheet-friendly data</small>
         </span>
       </button>
+      <button class="export-format" type="button" data-export-choice="xlsx" role="radio" aria-checked="false">
+        <span class="export-format__icon"><i class="fa-solid fa-file-excel"></i></span>
+        <span>
+          <strong>Excel</strong>
+          <small>Formatted .xlsx workbook</small>
+        </span>
+      </button>
     </div>
 
     <div class="export-modal__actions">
@@ -402,9 +426,12 @@ const SELECTED_MONTH = '{{ selected_month_param }}';
   let selectedExportFormat = 'pdf';
 
   const getExportUrl = (format) => {
-    return format === 'pdf'
-      ? `/monthly/export/pdf/?month=${encodeURIComponent(SELECTED_MONTH)}`
-      : `/monthly/export/csv/?month=${encodeURIComponent(SELECTED_MONTH)}`;
+    const map = {
+      pdf: '/monthly/export/pdf/',
+      csv: '/monthly/export/csv/',
+      xlsx: '/monthly/export/xlsx/',
+    };
+    return `${map[format] || map.pdf}?month=${encodeURIComponent(SELECTED_MONTH)}`;
   };
 
   const setExportFormat = (format) => {
@@ -473,6 +500,34 @@ const SELECTED_MONTH = '{{ selected_month_param }}';
     if (event.key === 'Escape' && exportModal?.classList.contains('show')) {
       closeExportModal();
       exportBtn?.setAttribute('aria-expanded', 'false');
+    }
+  });
+})();
+
+(function () {
+  const emailBtn = document.getElementById('emailReportBtn');
+  if (!emailBtn) return;
+
+  emailBtn.addEventListener('click', async () => {
+    const original = emailBtn.innerHTML;
+    emailBtn.disabled = true;
+    emailBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span> Sending…';
+    try {
+      const res = await fetch('/monthly/email/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': CSRF,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ month: SELECTED_MONTH }),
+      });
+      const data = await res.json();
+      alert(data.message || data.error || 'Email report request finished.');
+    } catch (e) {
+      alert('Could not send the email report. Please try again.');
+    } finally {
+      emailBtn.disabled = false;
+      emailBtn.innerHTML = original;
     }
   });
 })();
