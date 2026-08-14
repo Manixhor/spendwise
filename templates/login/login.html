@@ -24,7 +24,7 @@
         </svg>
       </span>
       <input type="email" name="email" placeholder="Enter your email"
-             class="field-input" autocomplete="email"
+             class="field-input" autocomplete="email" enterkeyhint="next"
              value="{{ form.email|default:'' }}" />
     </div>
     {% if errors.email %}<p class="field-msg">{{ errors.email }}</p>{% endif %}
@@ -37,7 +37,7 @@
         </svg>
       </span>
       <input type="password" name="password" placeholder="Enter your password"
-             class="field-input" autocomplete="current-password" />
+             class="field-input" autocomplete="current-password" enterkeyhint="done" />
     </div>
     {% if errors.password %}<p class="field-msg">{{ errors.password }}</p>{% endif %}
 

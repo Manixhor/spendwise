@@ -37,7 +37,7 @@
 
     window.setTimeout(() => {
       syncKeyboardState();
-      const scrollParent = target.closest('.modal-card, .export-modal__card, .expense-chatbot-messages, .expense-chatbot-panel');
+      const scrollParent = target.closest('.modal-card, .export-modal__card, .expense-chatbot-messages, .expense-chatbot-panel, .card');
       if (scrollParent) {
         const fieldRect = target.getBoundingClientRect();
         const parentRect = scrollParent.getBoundingClientRect();
@@ -53,7 +53,7 @@
       }
 
       target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
-    }, 120);
+    }, 150);
   };
 
   window.visualViewport?.addEventListener('resize', syncKeyboardState);

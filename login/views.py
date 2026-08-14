@@ -22,6 +22,7 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.html import strip_tags
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from .models import Transaction, UserProfile, SavingsGoal
@@ -1382,6 +1383,7 @@ def _send_signup_otp_email(user: User, code: str) -> None:
 
 
 # ── Sign Up ───────────────────────────────────────────────
+@ensure_csrf_cookie
 def signup(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -1470,6 +1472,7 @@ def signup(request: HttpRequest) -> HttpResponse:
     return render(request, "login/signup.html")
 
 
+@ensure_csrf_cookie
 def signup_verify(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -1572,6 +1575,7 @@ def _send_password_reset_otp_email(user: User, code: str) -> None:
     email.send(fail_silently=False)
 
 
+@ensure_csrf_cookie
 def forgot_password(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -1612,6 +1616,7 @@ def forgot_password(request: HttpRequest) -> HttpResponse:
     return render(request, "login/forgot_password.html")
 
 
+@ensure_csrf_cookie
 def forgot_password_verify(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -1663,6 +1668,7 @@ def forgot_password_verify(request: HttpRequest) -> HttpResponse:
     )
 
 
+@ensure_csrf_cookie
 def forgot_password_reset(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -1710,6 +1716,7 @@ def forgot_password_reset(request: HttpRequest) -> HttpResponse:
 
 
 # ── Login ─────────────────────────────────────────────────
+@ensure_csrf_cookie
 def login_view(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")

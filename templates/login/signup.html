@@ -24,7 +24,7 @@
         </svg>
       </span>
       <input type="text" name="name" placeholder="Enter your name"
-             class="field-input" autocomplete="name"
+             class="field-input" autocomplete="name" enterkeyhint="next"
              value="{{ form.name|default:'' }}" />
     </div>
     {% if errors.name %}<p class="field-msg">{{ errors.name }}</p>{% endif %}
@@ -37,7 +37,7 @@
         </svg>
       </span>
       <input type="email" name="email" placeholder="Enter your email"
-             class="field-input" autocomplete="email"
+             class="field-input" autocomplete="email" enterkeyhint="next"
              value="{{ form.email|default:'' }}" />
     </div>
     {% if errors.email %}<p class="field-msg">{{ errors.email }}</p>{% endif %}
@@ -50,7 +50,7 @@
         </svg>
       </span>
       <input type="password" name="password" placeholder="Create a password (min 8 chars)"
-             class="field-input" autocomplete="new-password" />
+             class="field-input" autocomplete="new-password" enterkeyhint="next" />
     </div>
     {% if errors.password %}<p class="field-msg">{{ errors.password }}</p>{% endif %}
 
@@ -63,7 +63,7 @@
         </svg>
       </span>
       <input type="password" name="confirm_password" placeholder="Confirm your password"
-             class="field-input" autocomplete="new-password" />
+             class="field-input" autocomplete="new-password" enterkeyhint="done" />
     </div>
     {% if errors.confirm_password %}<p class="field-msg">{{ errors.confirm_password }}</p>{% endif %}
 
