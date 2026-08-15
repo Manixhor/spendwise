@@ -1,9 +1,12 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
-from django.urls import reverse
+from django.shortcuts import redirect
+from django.urls import path, reverse
+from django.utils import timezone
 from django.utils.html import format_html
 
+from .monthly_mailer import send_monthly_analysis_batch
 from .models import MonthlyAnalysisMailSetting, Transaction, UserProfile, SavingsGoal
 
 
@@ -87,6 +90,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(MonthlyAnalysisMailSetting)
 class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/login/monthlyanalysismailsetting/change_list.html'
     list_display = (
         'enabled',
         'send_day',
@@ -111,6 +115,37 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
         if MonthlyAnalysisMailSetting.objects.exists():
             return False
         return super().has_add_permission(request)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'send-now/',
+                self.admin_site.admin_view(self.send_now),
+                name='login_monthlyanalysismailsetting_send_now',
+            ),
+        ]
+        return custom_urls + urls
+
+    def send_now(self, request):
+        if request.method != 'POST':
+            return redirect('admin:login_monthlyanalysismailsetting_changelist')
+
+        month = timezone.localtime().strftime('%Y-%m')
+        result = send_monthly_analysis_batch(month)
+        if result['failed']:
+            self.message_user(
+                request,
+                f"Sent {result['sent']} monthly analysis email(s) for {month}; {result['failed']} failed.",
+                level=messages.WARNING,
+            )
+        else:
+            self.message_user(
+                request,
+                f"Sent {result['sent']} monthly analysis email(s) for {month}.",
+                level=messages.SUCCESS,
+            )
+        return redirect('admin:login_monthlyanalysismailsetting_changelist')
 
 
 # ── Transaction admin ──────────────────────────────────────

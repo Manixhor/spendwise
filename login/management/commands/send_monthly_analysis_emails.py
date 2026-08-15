@@ -1,17 +1,8 @@
-from datetime import date, timedelta
-
-from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from login.models import MonthlyAnalysisMailSetting
-from login.views import send_monthly_analysis_email
-
-
-def _previous_month(today: date) -> str:
-    first_day = today.replace(day=1)
-    previous = first_day - timedelta(days=1)
-    return previous.strftime("%Y-%m")
+from login.monthly_mailer import previous_month, send_monthly_analysis_batch
 
 
 class Command(BaseCommand):
@@ -41,7 +32,7 @@ class Command(BaseCommand):
         force = options["force"]
 
         if not month:
-            month = local_now.strftime("%Y-%m") if send_now else _previous_month(local_now.date())
+            month = local_now.strftime("%Y-%m") if send_now else previous_month(local_now.date())
 
         if not force and not setting.enabled:
             self.stdout.write(self.style.WARNING("Monthly analysis emails are disabled in admin."))
@@ -68,30 +59,13 @@ class Command(BaseCommand):
                 )
                 return
 
-        users = User.objects.filter(is_active=True, email__gt="").order_by("id")
-        sent = 0
-        failed = 0
-
-        for user in users:
-            try:
-                recipient = send_monthly_analysis_email(user, month)
-            except Exception as exc:
-                failed += 1
-                self.stderr.write(
-                    self.style.ERROR(f"Failed for user {user.id} ({user.email}): {exc}")
-                )
-                continue
-
-            sent += 1
-            self.stdout.write(f"Sent {month} monthly analysis to {recipient}")
-
-        if sent:
-            setting.last_sent_month = month
-            setting.last_sent_at = timezone.now()
-            setting.save(update_fields=["last_sent_month", "last_sent_at", "updated_at"])
+        result = send_monthly_analysis_batch(month)
+        for failure in result["failures"]:
+            self.stderr.write(self.style.ERROR(f"Failed: {failure}"))
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Monthly analysis batch complete. Month={month}, sent={sent}, failed={failed}."
+                "Monthly analysis batch complete. "
+                f"Month={month}, sent={result['sent']}, failed={result['failed']}."
             )
         )
