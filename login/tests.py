@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -86,6 +87,43 @@ class LoginTests(TestCase):
         )
 
         self.assertRedirects(response, reverse('dashboard'))
+
+
+class MonthlyAnalysisMailAdminTests(TestCase):
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser(
+            username='admin@example.com',
+            email='admin@example.com',
+            password='StrongPass123!',
+        )
+        self.client.force_login(self.admin_user)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend')
+    def test_send_now_admin_button_triggers_batch_sender(self):
+        url = reverse('admin:login_monthlyanalysismailsetting_send_now')
+        current_month = timezone.localtime().strftime('%Y-%m')
+        with patch('login.admin.send_monthly_analysis_batch') as sender:
+            sender.return_value = {
+                'month': current_month,
+                'sent': 2,
+                'failed': 0,
+                'failures': [],
+            }
+            response = self.client.post(url, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        sender.assert_called_once_with(current_month)
+        self.assertContains(response, 'Sent 2 monthly analysis email')
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend')
+    def test_send_now_admin_button_warns_when_smtp_is_not_configured(self):
+        url = reverse('admin:login_monthlyanalysismailsetting_send_now')
+        with patch('login.admin.send_monthly_analysis_batch') as sender:
+            response = self.client.post(url, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        sender.assert_not_called()
+        self.assertContains(response, 'SMTP is not configured')
 
 
 class DashboardInsightsTests(TestCase):

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
@@ -131,13 +132,25 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
         if request.method != 'POST':
             return redirect('admin:login_monthlyanalysismailsetting_changelist')
 
+        if settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
+            self.message_user(
+                request,
+                "SMTP is not configured for this service. Emails are only printing to logs.",
+                level=messages.ERROR,
+            )
+            return redirect('admin:login_monthlyanalysismailsetting_changelist')
+
         month = timezone.localtime().strftime('%Y-%m')
         result = send_monthly_analysis_batch(month)
         if result['failed']:
+            first_error = result['failures'][0] if result['failures'] else 'Unknown error'
             self.message_user(
                 request,
-                f"Sent {result['sent']} monthly analysis email(s) for {month}; {result['failed']} failed.",
-                level=messages.WARNING,
+                (
+                    f"Sent {result['sent']} monthly analysis email(s) for {month}; "
+                    f"{result['failed']} failed. First error: {first_error}"
+                ),
+                level=messages.ERROR,
             )
         else:
             self.message_user(
