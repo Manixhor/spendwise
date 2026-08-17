@@ -5,9 +5,87 @@ from decimal import Decimal
 from django.core import mail
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
+from django.utils import timezone
 from django.urls import reverse
 
 from .models import SavingsGoal, Transaction, UserProfile
+
+
+class SignupOtpTests(TestCase):
+    def test_signup_sends_otp_and_waits_for_verification(self):
+        response = self.client.post(
+            reverse('signup'),
+            {
+                'name': 'Mani Gururam',
+                'email': 'newuser@example.com',
+                'password': 'StrongPass123!',
+                'confirm_password': 'StrongPass123!',
+            },
+        )
+
+        self.assertRedirects(response, reverse('signup_verify'))
+        user = User.objects.get(email='newuser@example.com')
+        profile = UserProfile.objects.get(user=user)
+        self.assertFalse(user.is_active)
+        self.assertFalse(profile.email_is_verified)
+        self.assertRegex(profile.email_verification_code, r'^\d{6}$')
+        self.assertEqual(self.client.session['pending_signup_user_id'], user.id)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['newuser@example.com'])
+        self.assertIn(profile.email_verification_code, mail.outbox[0].body)
+
+    def test_signup_verify_activates_user_and_logs_in(self):
+        user = User.objects.create_user(
+            username='verify@example.com',
+            email='verify@example.com',
+            password='StrongPass123!',
+            first_name='Verify',
+            is_active=False,
+        )
+        profile = UserProfile.objects.create(user=user)
+        code = '123456'
+        profile.email_verification_code = code
+        profile.email_verification_sent_at = timezone.now()
+        profile.email_is_verified = False
+        profile.save()
+        session = self.client.session
+        session['pending_signup_user_id'] = user.id
+        session.save()
+
+        response = self.client.post(reverse('signup_verify'), {'otp': code})
+
+        self.assertRedirects(response, reverse('dashboard'))
+        user.refresh_from_db()
+        profile.refresh_from_db()
+        self.assertTrue(user.is_active)
+        self.assertTrue(profile.email_is_verified)
+        self.assertEqual(profile.email_verification_code, '')
+        self.assertNotIn('pending_signup_user_id', self.client.session)
+
+
+class LoginTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='login@example.com',
+            email='login@example.com',
+            password='StrongPass123!',
+            first_name='Login',
+        )
+        self.profile = UserProfile.objects.create(
+            user=self.user,
+            email_is_verified=True,
+        )
+
+    def test_password_login_still_works(self):
+        response = self.client.post(
+            reverse('login'),
+            {
+                'email': 'login@example.com',
+                'password': 'StrongPass123!',
+            },
+        )
+
+        self.assertRedirects(response, reverse('dashboard'))
 
 
 class DashboardInsightsTests(TestCase):

@@ -1,5 +1,8 @@
-from django.db import models
+import datetime
+
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 
 
 class ExcessIncome(models.Model):
@@ -41,6 +44,38 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} – profile"
+
+
+class MonthlyAnalysisMailSetting(models.Model):
+    enabled = models.BooleanField(
+        default=True,
+        help_text="Send monthly analysis emails automatically.",
+    )
+    send_day = models.PositiveSmallIntegerField(
+        default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(28)],
+        help_text="Day of the month to send. Use 1 for the first day.",
+    )
+    send_time = models.TimeField(
+        default=datetime.time(9, 0),
+        help_text="Local time to send the monthly analysis.",
+    )
+    last_sent_month = models.CharField(
+        max_length=7,
+        blank=True,
+        default="",
+        help_text="YYYY-MM report month last sent by the scheduled command.",
+    )
+    last_sent_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Monthly Analysis Mail Setting"
+        verbose_name_plural = "Monthly Analysis Mail Settings"
+
+    def __str__(self):
+        status = "Enabled" if self.enabled else "Disabled"
+        return f"{status} - day {self.send_day} at {self.send_time:%H:%M}"
 
 
 class Transaction(models.Model):

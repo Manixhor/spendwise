@@ -1086,6 +1086,33 @@ def _build_monthly_analysis_email_context(user, profile, analysis: dict) -> dict
     }
 
 
+def send_monthly_analysis_email(user: User, month_value: str | None = None) -> str:
+    recipient = (user.email or "").strip()
+    if not recipient:
+        raise ValueError("User does not have an email address.")
+
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    analysis = _build_monthly_analysis(
+        user,
+        profile,
+        _parse_month_param(month_value),
+    )
+    email_context = _build_monthly_analysis_email_context(user, profile, analysis)
+    subject = f"SpendWise Monthly Analysis - {analysis['selected_month_label']}"
+    html_body = render_to_string("login/emails/monthly_analysis.html", email_context)
+    text_body = strip_tags(html_body)
+
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[recipient],
+    )
+    email.attach_alternative(html_body, "text/html")
+    email.send(fail_silently=False)
+    return recipient
+
+
 
 
 
@@ -1363,7 +1390,7 @@ def signup(request: HttpRequest) -> HttpResponse:
             user.first_name = name.split()[0]
             user.last_name = " ".join(name.split()[1:]) if len(name.split()) > 1 else ""
             user.set_password(password)
-            user.is_active = True
+            user.is_active = False
             user.save(
                 update_fields=[
                     "username",
@@ -1383,22 +1410,22 @@ def signup(request: HttpRequest) -> HttpResponse:
                 password=password,
                 first_name=name.split()[0],
                 last_name=" ".join(name.split()[1:]) if len(name.split()) > 1 else "",
-                is_active=True,
+                is_active=False,
             )
             profile = UserProfile.objects.create(user=user)
 
-        # OTP signup is paused for now. To re-enable it, make users inactive,
-        # call _issue_signup_otp(profile), send _send_signup_otp_email(...),
-        # store pending_signup_user_id in session, then redirect to signup_verify.
-        profile.email_is_verified = True
-        profile.email_verification_code = ""
-        profile.save(update_fields=["email_is_verified", "email_verification_code"])
-        login(request, user)
-        messages.success(
-            request,
-            f"Welcome to SpendWise, {user.first_name}! Your account is ready.",
-        )
-        return redirect("dashboard")
+        code = _issue_signup_otp(profile)
+        request.session["pending_signup_user_id"] = user.id
+        try:
+            _send_signup_otp_email(user, code)
+        except Exception:
+            errors["general"] = "We could not send the OTP. Please check SMTP settings."
+            return render(
+                request, "login/signup.html", {"errors": errors, "form": request.POST}
+            )
+
+        messages.success(request, f"We sent a 6-digit OTP to {user.email}.")
+        return redirect("signup_verify")
 
     return render(request, "login/signup.html")
 
@@ -1488,6 +1515,7 @@ def login_view(request: HttpRequest) -> HttpResponse:
                 validate_email(email)
             except ValidationError:
                 errors["email"] = "Enter a valid email address."
+
         if not password:
             errors["password"] = "Password is required."
 
@@ -1496,8 +1524,7 @@ def login_view(request: HttpRequest) -> HttpResponse:
             if user is not None:
                 login(request, user)
                 return redirect("dashboard")
-            else:
-                errors["general"] = "Invalid email or password."
+            errors["general"] = "Invalid email or password."
 
         return render(
             request, "login/login.html", {"errors": errors, "form": request.POST}
@@ -2234,8 +2261,6 @@ def api_email_monthly_analysis(request: HttpRequest) -> JsonResponse:
             status=400,
         )
 
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
-
     # POST endpoints should receive the month in the body, not the query string.
     month_value = request.POST.get("month")
     if not month_value and request.content_type == "application/json":
@@ -2246,27 +2271,8 @@ def api_email_monthly_analysis(request: HttpRequest) -> JsonResponse:
     if not month_value:
         month_value = request.GET.get("month")
 
-    analysis = _build_monthly_analysis(
-        request.user,
-        profile,
-        _parse_month_param(month_value),
-    )
-    email_context = _build_monthly_analysis_email_context(
-        request.user, profile, analysis
-    )
-    subject = f"SpendWise Monthly Analysis - {analysis['selected_month_label']}"
-    html_body = render_to_string("login/emails/monthly_analysis.html", email_context)
-    text_body = strip_tags(html_body)
-
-    email = EmailMultiAlternatives(
-        subject=subject,
-        body=text_body,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[recipient],
-    )
-    email.attach_alternative(html_body, "text/html")
     try:
-        email.send(fail_silently=False)
+        send_monthly_analysis_email(request.user, month_value)
     except Exception:
         return JsonResponse(
             {"error": "Email could not be sent. Please check SMTP settings."},

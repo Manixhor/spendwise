@@ -39,6 +39,75 @@ services:
           type: pserv
           name: spendwise-mysql
           property: port
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: SMTP_USE_TLS
+        value: "True"
+      - key: SMTP_USE_SSL
+        value: "False"
+
+  - type: cron
+    name: spendwise-monthly-analysis-mail
+    runtime: python
+    schedule: "0 * * * *"
+    buildCommand: ./build.sh
+    startCommand: python manage.py send_monthly_analysis_emails
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+      - key: USE_WHITENOISE
+        value: "1"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DB_NAME
+        fromService:
+          type: pserv
+          name: spendwise-mysql
+          envVarKey: MYSQL_DATABASE
+      - key: DB_USER
+        fromService:
+          type: pserv
+          name: spendwise-mysql
+          envVarKey: MYSQL_USER
+      - key: DB_PASSWORD
+        fromService:
+          type: pserv
+          name: spendwise-mysql
+          envVarKey: MYSQL_PASSWORD
+      - key: DB_HOST
+        fromService:
+          type: pserv
+          name: spendwise-mysql
+          property: host
+      - key: DB_PORT
+        fromService:
+          type: pserv
+          name: spendwise-mysql
+          property: port
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: SMTP_USE_TLS
+        value: "True"
+      - key: SMTP_USE_SSL
+        value: "False"
 
   - type: pserv
     name: spendwise-mysql

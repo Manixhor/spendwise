@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.html import format_html
 
-from .models import Transaction, UserProfile, SavingsGoal
+from .models import MonthlyAnalysisMailSetting, Transaction, UserProfile, SavingsGoal
 
 
 # ── Custom admin site ──────────────────────────────────────
@@ -83,6 +83,34 @@ class UserProfileAdmin(admin.ModelAdmin):
     @admin.display(description='Email')
     def get_email(self, obj):
         return obj.user.email
+
+
+@admin.register(MonthlyAnalysisMailSetting)
+class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
+    list_display = (
+        'enabled',
+        'send_day',
+        'send_time',
+        'last_sent_month',
+        'last_sent_at',
+        'updated_at',
+    )
+    readonly_fields = ('last_sent_month', 'last_sent_at', 'updated_at')
+
+    fieldsets = (
+        ('Schedule', {
+            'fields': ('enabled', 'send_day', 'send_time')
+        }),
+        ('Last Run', {
+            'fields': ('last_sent_month', 'last_sent_at', 'updated_at'),
+            'classes': ('collapse',),
+        }),
+    )
+
+    def has_add_permission(self, request):
+        if MonthlyAnalysisMailSetting.objects.exists():
+            return False
+        return super().has_add_permission(request)
 
 
 # ── Transaction admin ──────────────────────────────────────
