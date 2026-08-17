@@ -147,3 +147,12 @@
 - 704 | skipped | Michelle Joseph | michelle.joseph@gupshup.io | Gupshup | duplicate company; Gupshup already contacted earlier
 - 705 | sent via Gmail | Mili Panicker | mili.panicker@webengage.com | WebEngage | subject: WebEngage + Backend APIs = Better Engagement Tools | no attachment | text/plain | 90-second gap batch
 - 706 | sent via Gmail | Minal Vilekar | minal.vilekar@theimperative.in | Imperative Business Ventures | subject: Imperative + Full Stack = Reliable Delivery | no attachment | text/plain | 90-second gap batch
+
+## 2026-08-17 queue continuation 707-712
+
+- 707 | sent via Gmail | Minal Wadlawala | minal@protechmanize.com | ProTechmanize Solutions | subject: ProTechmanize + Full Stack = Reliable Software | no attachment | text/plain | 90-second gap batch
+- 708 | sent via Gmail | Miriam Shaju | miriam.shaju@avanzegroup.com | Avanze | subject: Avanze + Backend APIs = Reliable Operations | no attachment | text/plain | 90-second gap batch
+- 709 | sent via Gmail | Mirunalini Mothilal | mirunalini@volantetech.com | Volante Technologies | subject: Volante + Backend APIs = Reliable FinTech | no attachment | text/plain | 90-second gap batch
+- 710 | sent via Gmail | Mithun Jose | mithun.jose@savantis.com | Savantis Solutions | subject: Savantis + Full Stack = Faster Delivery | no attachment | text/plain | 90-second gap batch
+- 711 | sent via Gmail | Mittal Patel | m.patel@easternenterprise.com | Eastern Enterprise | subject: Eastern Enterprise + Full Stack = Reliable Products | no attachment | text/plain | 90-second gap batch
+- 712 | sent via Gmail | Mohamed Hussain | mhussain@trimaxamericas.com | Data Glove | subject: Data Glove + Backend APIs = Reliable Systems | no attachment | text/plain | 90-second gap batch

@@ -115,13 +115,18 @@ ALLOWED_HOSTS = list(dict.fromkeys([
     *env_list('ALLOWED_HOSTS'),
 ]))
 
-# Allow ngrok forwarded headers
+# Allow ngrok forwarded headers — any ngrok subdomain is treated as trusted.
 CSRF_TRUSTED_ORIGINS = [
     "https://*.ngrok-free.app",
     "https://*.ngrok.io",
     "https://*.ngrok-free.dev",
-    "https://dispersed-stump-retype.ngrok-free.dev",
+    "https://*.ngrok.app",
+    "https://*.ngrok.dev",
+    "http://localhost",
+    "http://127.0.0.1",
 ]
+# Keep the previously pinned host for backward compatibility.
+CSRF_TRUSTED_ORIGINS.append("https://dispersed-stump-retype.ngrok-free.dev")
 render_external_hostname = os.getenv('RENDER_EXTERNAL_HOSTNAME', '').strip()
 if render_external_hostname:
     CSRF_TRUSTED_ORIGINS.append(f'https://{render_external_hostname}')

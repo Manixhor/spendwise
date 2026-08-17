@@ -22,3 +22,7 @@
 - Sent via Gmail to `steffis.stw@gmail.com` for Developer role, Hyderabad. Attached `manikanta_gururam_resume.pdf`.
 - Sent via Gmail to `hafsa@fourthd.io` for FourthD MERN Stack Developer, Remote. Attached `manikanta_gururam_resume.pdf`.
 - Sent via Gmail to `careers@beamx.co` for BeamX Developer Intern roles, Hyderabad. Attached `manikanta_gururam_resume.pdf`.
+
+## 2026-08-17
+
+- Sent via Gmail to `diya.agarwal@walkingtree.tech` for WalkingTree Technologies Trainee Python Engineer, Agra/Hyderabad. Attached `manikanta_gururam_resume.pdf`.
