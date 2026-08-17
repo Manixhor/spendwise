@@ -679,6 +679,58 @@ body[data-theme="dark"] .filter-tab:hover:not(.active) {
   gap: 14px;
 }
 
+/* Charts row — trend + overview stacked full width */
+.charts-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  margin-top: 14px;
+}
+
+/* ── Category tiles ─────────────────────────────────────── */
+.cat-tiles-card {
+  margin-top: 14px;
+}
+
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.tile {
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tile-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+}
+
+.tile-amount {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0;
+}
+
+.tile-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0;
+}
+
 /* Savings card — full width strip above top-row */
 .savings-card {
   background:
@@ -3053,11 +3105,15 @@ body.ios-modal-keyboard-open .modal-overlay.active .modal-card {
 }
 
 .motivation-quote {
-  font-size: 0.92rem;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 0.86rem;
   font-weight: 500;
   font-style: italic;
   color: var(--ink);
-  line-height: 1.55;
+  line-height: 1.4;
   margin: 0;
 }
 
@@ -3074,6 +3130,26 @@ body.ios-modal-keyboard-open .modal-overlay.active .modal-card {
 .motivation-almost_there .motivation-author { color: #d97706; }
 .motivation-goal_reached .motivation-author { color: #059669; }
 .motivation-no_goals     .motivation-author { color: var(--muted); }
+
+.motivation-badge {
+  align-self: flex-start;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(124,58,237,0.14);
+  color: #7c3aed;
+  border: 1px solid rgba(124,58,237,0.22);
+}
+
+.motivation-meta {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0;
+}
 
 /* ── Target Savings Widget ──────────────────────────────── */
 .set-target-btn {

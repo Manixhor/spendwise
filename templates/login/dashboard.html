@@ -115,7 +115,7 @@
 
     </div>
 
-    <!-- ── Trend + Overview charts ────────────────────────── -->
+    <!-- ── Trend chart ────────────────────────────────────── -->
     <div class="charts-row">
 
       <!-- Sparkline: expense vs saved trend -->
@@ -149,56 +149,7 @@
         <div class="spark-x-axis" id="sparkXAxis"></div>
       </div>
 
-      <!-- Overview: monthly expenses -->
-      <div class="card chart-card">
-        <div class="chart-header">
-          <h2 class="chart-title">Overview</h2>
-          <div class="legend">
-            <span class="leg-dot purple"></span><span class="leg-txt">Expenses</span>
-          </div>
-        </div>
-        <div class="chart-body">
-          <div class="y-axis" id="chartYAxis">
-            <span>—</span><span></span><span></span><span></span><span>₹0</span>
-          </div>
-          <div class="chart-svg-wrap">
-            <svg viewBox="0 0 680 230" class="chart-svg" preserveAspectRatio="xMidYMid meet" id="overviewSvg" aria-label="Monthly expenses overview chart">
-              <defs>
-                <linearGradient id="expG2" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="rgba(167,139,250,0.60)"/>
-                  <stop offset="100%" stop-color="rgba(167,139,250,0.12)"/>
-                </linearGradient>
-              </defs>
-              <!-- Bars rendered by JS -->
-            </svg>
-            <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
-          </div>
-        </div>
-        <div class="x-axis" id="chartXAxis"></div>
-      </div>
-
     </div>
-
-    <!-- ── Category breakdown ─────────────────────────────── -->
-    <section class="card cat-tiles-card">
-      <div class="chart-header">
-        <h2 class="chart-title">Category Breakdown</h2>
-        <div class="legend">
-          <span class="leg-dot purple"></span><span class="leg-txt">By spend</span>
-        </div>
-      </div>
-      <div class="tile-grid" id="categoryTiles">
-        {% for cat in cat_tiles %}
-        <div class="tile" style="background:{{ cat.color }}20; border:1px solid {{ cat.color }}40;">
-          <div class="tile-icon" style="background:{{ cat.color }}40;">{{ cat.icon }}</div>
-          <p class="tile-amount">{{ cat.amount|indian_currency }}</p>
-          <p class="tile-name">{{ cat.label }}</p>
-        </div>
-        {% empty %}
-        <p class="txn-empty">No spending yet this month. Add an expense to see your breakdown.</p>
-        {% endfor %}
-      </div>
-    </section>
 
     <!-- ── Add Expense + Latest Transactions ──────────────── -->
     <section class="card txn-section">
@@ -1808,22 +1759,20 @@ try {
   async function fetchMotivationMessage(savedAmount, expenseAmount) {
     const requestId = ++motivationRequestId;
     try {
-      const res = await fetch('/api/motivation-message/', {
-        method: 'POST',
+      const res = await fetch('/api/motivation-quote/', {
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'X-CSRFToken': '{{ csrf_token }}',
         },
-        body: JSON.stringify({
-          saved_amount: savedAmount,
-          expense_amount: expenseAmount,
-        }),
       });
       if (!res.ok) return null;
       const data = await res.json();
       if (requestId !== motivationRequestId) return null;
-      if (data && data.success && typeof data.quote === 'string' && data.quote.trim()) {
-        return data;
+      if (data && data.success && typeof data.text === 'string' && data.text.trim()) {
+        return {
+          quote: data.text.trim(),
+          author: data.author || '',
+        };
       }
     } catch (error) {
       // Keep fallback quote if API is unavailable.
@@ -1833,6 +1782,7 @@ try {
 
   async function updateMotivationCard(savedAmount, expenseAmount) {
     const quoteEl = document.getElementById('motivationQuote');
+    const authorEl = document.querySelector('.motivation-author');
     const badgeEl = document.getElementById('motivationBadge');
     const metaEl = document.getElementById('motivationMeta');
     const cardEl = document.getElementById('motivationCard');
@@ -1842,7 +1792,6 @@ try {
     const spent = Number(expenseAmount || 0);
     const ratio = saved / Math.max(spent, 1);
 
-    let quote = 'Saving starts with one clear decision. Track one expense today and keep one promise to your future self.';
     let badge = 'Start';
     let tone = 'start';
 
@@ -1868,9 +1817,6 @@ try {
       tone = 'clean';
     }
 
-    quote = buildAiStyleMotivationMessage(saved, spent, ratio, tone);
-
-    quoteEl.textContent = quote;
     badgeEl.textContent = badge;
     metaEl.textContent = `Saved: ${formatCurrency(saved)} · Spent: ${formatCurrency(spent)}`;
     cardEl.dataset.tone = tone;
@@ -1881,12 +1827,11 @@ try {
     metaEl.style.opacity = '1';
     metaEl.style.display = 'block';
 
-    const aiData = await fetchMotivationMessage(saved, spent);
-    if (!aiData) return;
+    const quoteData = await fetchMotivationMessage(saved, spent);
+    if (!quoteData) return;
 
-    quoteEl.textContent = aiData.quote;
-    badgeEl.textContent = aiData.badge || badge;
-    cardEl.dataset.tone = aiData.tone || tone;
+    quoteEl.textContent = `"${quoteData.quote}"`;
+    if (authorEl) authorEl.textContent = quoteData.author ? `— ${quoteData.author}` : '';
   }
 
   updateMotivationCard({{ total_saved|default:0 }}, {{ total_expense|default:0 }});

@@ -122,3 +122,26 @@
 - skipped | Replied/active threads | Haemologix, Love HR, Mark Boyer, Amrut Software | reason: already replied or active conversation; avoid duplicate follow-up
 - skipped | Aug 8 cold PDF batch | Apolis, ZapCom Group, SugarBox Networks, DhanInfo, C-Square Info Solutions | reason: too recent or bounced; avoid unsafe repeat
 - verified in Gmail | Harpreet Kaur | harpreetqore@gmail.com | thread: Application for Data Analyst Role - Manikanta Gururam | note: follow-ups already sent on 2026-08-05 and 2026-08-06
+
+## 2026-08-12
+
+- sent via Gmail | Vylera Labs | hrga@vyleralabs.com | thread: Application for Junior Full Stack Developer Role - Manikanta Gururam | note: first follow-up, no attachment
+- sent via Gmail | CaratSense AI | careers@caratsense.in, cc: akshat@caratsense.in | thread: Application for Software Developer Intern Role - Manikanta Gururam | note: first follow-up, no attachment
+- sent via Gmail | Wealth Zone Technologies | admin@wealthzonetech.com | thread: Application for Python Developer Role - Manikanta Gururam | note: first follow-up, no attachment
+- sent via Gmail | CleverBooks | tech@getcleverbooks.com | thread: SDE Intern - Manikanta Gururam | note: first follow-up, no attachment
+- sent via Gmail | Stacko Tech Solutions | stackotechsolutions.career@gmail.com | thread: Application for Full Stack Developer Role - Manikanta Gururam | note: first follow-up, no attachment
+- sent via Gmail | Technokrate Hire | support@technokratehire.com | thread: Application for Testing Intern Role - Manikanta Gururam | note: follow-up sent as text/plain; verified has_attachment=false
+- sent via Gmail | Retail Sols | careers@retailsols.com | thread: Application for Trainee Software Engineer Role - Manikanta Gururam | note: one follow-up only despite two original applications; verified has_attachment=false
+- sent via Gmail | McMillan | hr@mcmwg.com | thread: Application for AI Developer Role - Manikanta Gururam | note: follow-up sent as text/plain; verified has_attachment=false
+- sent via Gmail | Landskill | diana.guzun@landskill.com | thread: Application for Software Developer Opportunity - Manikanta Gururam | note: follow-up sent as text/plain; verified has_attachment=false
+- sent via Gmail | CLK Edge | careers@clkedge.com | thread: Ref 26-48414 - Application Developer Cloud FullStack - Manikanta Gururam | note: follow-up sent as text/plain; verified has_attachment=false
+- skipped | Confluxaa | careers@confluxaa.com | reason: incoming reply says internship application process is closed
+
+## 2026-08-13
+
+- sent via Gmail | Manatanu Infotech | info@manatanuinfotech.com | thread: Application for Software Developer / Software Intern Role - Manikanta Gururam | note: follow-up sent as text/plain; verified has_attachment=false
+- sent via Gmail | SS Talent Advisor | careers@sstalentadvisor.com | thread: Application for QA Automation Engineer Role - Manikanta Gururam | note: follow-up sent as text/plain; verified has_attachment=false
+- sent via Gmail | Ubique Systems | qudsiya.makhduma@ubique-systems.com | thread: Application for Backend Developer - AI Platform Services | note: follow-up sent as text/plain; verified has_attachment=false
+- sent via Gmail | Saiket | support@saiket.in | thread: Application for Python Developer / Software Development Internship - Manikanta Gururam | note: follow-up sent as text/plain; verified has_attachment=false
+- skipped | Remote software roles contact | officialsangeetavishwakarma@gmail.com | reason: recipient replied; do not send duplicate follow-up
+- skipped | Wealth Zone Technologies | all Wealth Zone recipients | reason: user explicitly requested no Wealth Zone follow-ups

@@ -82,6 +82,18 @@ body[data-theme="dark"] .mobile-back-btn:hover {
   font-weight: 600;
 }
 
+.pf-error {
+  background: rgba(255,59,48,0.10);
+  border: 1px solid rgba(255,59,48,0.30);
+  color: #b42318;
+}
+
+body[data-theme="dark"] .pf-error {
+  background: linear-gradient(135deg, rgba(127,29,29,0.55) 0%, rgba(153,27,27,0.30) 100%);
+  border-color: rgba(248,113,113,0.28);
+  color: #fecaca;
+}
+
 body[data-theme="dark"] .pf-success {
   background: linear-gradient(135deg, rgba(20,83,45,0.62) 0%, rgba(21,128,61,0.34) 100%);
   border-color: rgba(74,222,128,0.24);

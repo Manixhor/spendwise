@@ -200,6 +200,32 @@ def _get_motivation_quote(
     return {"quote": quote, "author": author, "bucket": bucket}
 
 
+def _compact_public_motivation_quote(last_quote: str | None = None) -> dict:
+    """Return a short rotating quote suitable for the dashboard card."""
+    fallback = {
+        "text": "A budget gives every rupee a job.",
+        "author": "SpendWise",
+    }
+
+    quote = fallback
+    for _ in range(4):
+        candidate = fetch_motivation()
+        text = " ".join(str(candidate.get("text", "")).split()).strip().strip('"')
+        author = " ".join(str(candidate.get("author", "")).split()).strip()
+        if not text:
+            continue
+        quote = {"text": text, "author": author or "Unknown"}
+        if text != last_quote and len(text) <= 120 and len(text.split()) <= 18:
+            return quote
+
+    text = quote["text"]
+    words = text.split()
+    if len(text) > 120 or len(words) > 18:
+        shortened = " ".join(words[:18]).rstrip(".,;:")
+        quote["text"] = f"{shortened}..."
+    return quote
+
+
 # ── Helpers ───────────────────────────────────────────────
 CATEGORY_ICONS = {
     "rent": "🏠",
@@ -1254,7 +1280,7 @@ def onboarding(request: HttpRequest) -> HttpResponse:
         return redirect("dashboard")
     return render(request, "login/onboarding.html")
 
-
+#try it 
 def _issue_signup_otp(profile: UserProfile) -> str:
     code = f"{random.randint(100000, 999999)}"
     profile.email_verification_code = code
@@ -1517,7 +1543,15 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 
     # Context-aware motivation quote, no repeats between page loads
     last_quote = request.session.get("last_dash_motivation_quote", None)
-    motivation = _get_motivation_quote(monthly_saved, goals_data, last_quote)
+    quote = _compact_public_motivation_quote(last_quote)
+    motivation_bucket = _get_motivation_quote(monthly_saved, goals_data, last_quote)[
+        "bucket"
+    ]
+    motivation = {
+        "quote": quote["text"],
+        "author": f"— {quote['author']}",
+        "bucket": motivation_bucket,
+    }
     request.session["last_dash_motivation_quote"] = motivation["quote"]
 
     return render(
@@ -1604,12 +1638,17 @@ def api_dad_joke(request: HttpRequest) -> JsonResponse:
 @login_required(login_url="/login/")
 @require_http_methods(["GET"])
 def api_motivation_quote(request: HttpRequest) -> JsonResponse:
-    quote = fetch_motivation()
+    last_quote = request.session.get("last_motivation_quote") or request.session.get(
+        "last_dash_motivation_quote", None
+    )
+    quote = _compact_public_motivation_quote(last_quote)
+    request.session["last_motivation_quote"] = quote["text"]
+    request.session["last_dash_motivation_quote"] = quote["text"]
     return JsonResponse(
         {
             "success": True,
-            "text": quote.get("text", ""),
-            "author": quote.get("author", "Unknown"),
+            "text": quote["text"],
+            "author": quote["author"],
         }
     )
 

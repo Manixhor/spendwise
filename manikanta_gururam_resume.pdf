@@ -1,0 +1,114 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Length 2594 >>
+stream
+BT
+/F2 18 Tf
+54 744 Td (Manikanta Gururam) Tj
+-54 -22 Td
+/F1 10 Tf
+54 722 Td (Software Engineer | Full Stack / Python Developer) Tj
+-54 -14 Td
+/F1 9 Tf
+54 708 Td (Email: manigururam06@gmail.com | Portfolio: https://mani-portfolio-production.up.railway.app/) Tj
+-54 -13 Td
+/F1 9 Tf
+54 695 Td (LinkedIn: https://www.linkedin.com/in/manikanta-gururam | GitHub: https://github.com/Manixhor) Tj
+-54 -13 Td
+/F2 11 Tf
+54 672 Td (SUMMARY) Tj
+-54 -15 Td
+/F1 9 Tf
+54 657 Td (Computer Science graduate currently working as a Full Stack/Python Developer Intern at Lagran Software Solutions,) Tj
+-54 -13 Td
+/F1 9 Tf
+54 644 Td (with production experience in Django, REST APIs, MySQL, and full-stack web applications.) Tj
+-54 -13 Td
+/F1 9 Tf
+54 631 Td (Interested in Software Engineer, Backend Developer, Full Stack Developer, Python Developer, and QA/API-focused roles.) Tj
+-54 -13 Td
+/F2 11 Tf
+54 608 Td (TECHNICAL SKILLS) Tj
+-54 -15 Td
+/F1 9 Tf
+54 593 Td (Languages: Python, JavaScript, SQL) Tj
+-54 -13 Td
+/F1 9 Tf
+54 580 Td (Backend: Django, Django REST Framework, FastAPI, REST APIs, JWT authentication) Tj
+-54 -13 Td
+/F1 9 Tf
+54 567 Td (Frontend: HTML, CSS, JavaScript, responsive web application development) Tj
+-54 -13 Td
+/F1 9 Tf
+54 554 Td (Databases/Tools: MySQL, PostgreSQL, Git, GitHub, deployment workflows, API testing/debugging) Tj
+-54 -13 Td
+/F2 11 Tf
+54 531 Td (EXPERIENCE) Tj
+-54 -15 Td
+/F2 10 Tf
+54 516 Td (Full Stack/Python Developer Intern - Lagran Software Solutions) Tj
+-54 -14 Td
+/F1 9 Tf
+54 502 Td (- Worked on production HRMS modules using Django and MySQL, supporting daily internal staff workflows.) Tj
+-54 -13 Td
+/F1 9 Tf
+54 489 Td (- Built, debugged, and maintained backend APIs and application features across active projects.) Tj
+-54 -13 Td
+/F1 9 Tf
+54 476 Td (- Supported end-to-end development, deployment coordination, issue fixing, and production stability.) Tj
+-54 -13 Td
+/F2 11 Tf
+54 453 Td (PROJECTS) Tj
+-54 -15 Td
+/F2 10 Tf
+54 438 Td (SpendWise - Personal Finance Tracking PWA) Tj
+-54 -14 Td
+/F1 9 Tf
+54 424 Td (- Independently built and deployed a finance tracking app with JWT authentication and production hosting.) Tj
+-54 -13 Td
+/F1 9 Tf
+54 411 Td (- Live: https://site--spendwise--m9lhjm5ftxzt.code.run/) Tj
+-54 -13 Td
+/F2 10 Tf
+54 398 Td (Full-Stack Property Web Application) Tj
+-54 -14 Td
+/F1 9 Tf
+54 384 Td (- Built and deployed a full-stack web application end to end, covering backend, frontend, database, and deployment.) Tj
+-54 -13 Td
+/F2 11 Tf
+54 361 Td (EDUCATION) Tj
+-54 -15 Td
+/F1 9 Tf
+54 346 Td (B.Tech in Computer Science Engineering) Tj
+-54 -13 Td
+ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000321 00000 n 
+0000000396 00000 n 
+trailer << /Size 7 /Root 1 0 R >>
+startxref
+3042
+%%EOF
