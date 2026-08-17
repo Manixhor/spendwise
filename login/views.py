@@ -866,6 +866,9 @@ def _build_top_spending_days(user, month_start: date, month_end: date) -> list[d
 
 def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
     month_start, month_end = _month_bounds(selected_month)
+    today = date.today()
+    if selected_month.year == today.year and selected_month.month == today.month:
+        month_end = min(month_end, today)
     prev_month_start = _add_months(month_start, -1)
     prev_month_end = month_start - timedelta(days=1)
     current_month_str = month_start.strftime("%Y-%m")
@@ -1030,13 +1033,25 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
 
 
 def _build_monthly_analysis_email_context(user, profile, analysis: dict) -> dict:
+    donut_segments = analysis.get("donut_segments", [])
+    weekly_data = analysis["weekly_chart"]["weeks"]
+    max_weekly = max(
+        max((w["expense"] for w in weekly_data), default=0),
+        max((w["income"] for w in weekly_data), default=0),
+        1,
+    )
+
     weekly_rows = [
         {
             "label": week["range_label"],
             "expense": indian_currency(week["expense"]),
+            "income": indian_currency(week["income"]),
+            "expense_pct": round(float(week["expense"]) / max_weekly * 100, 1) if max_weekly else 0,
+            "income_pct": round(float(week["income"]) / max_weekly * 100, 1) if max_weekly else 0,
+            "has_expense": float(week["expense"]) > 0,
+            "has_income": float(week["income"]) > 0,
         }
-        for week in analysis["weekly_chart"]["weeks"]
-        if float(week["expense"]) > 0
+        for week in weekly_data
     ]
     top_days = [
         {
@@ -1051,9 +1066,22 @@ def _build_monthly_analysis_email_context(user, profile, analysis: dict) -> dict
             "label": category["label"],
             "amount": indian_currency(category["amount"]),
             "share_pct": category["share_pct"],
+            "color": category.get("color", "#e2e8f0"),
+            "icon": CATEGORY_ICONS.get(category.get("key", ""), "📦"),
         }
         for category in analysis["categories"]
     ]
+
+    # Build cumulative donut segments for CSS conic-gradient
+    donut_gradient_parts = []
+    cumulative_pct = 0
+    for seg in donut_segments[:6]:
+        start_pct = cumulative_pct
+        cumulative_pct += seg["share_pct"]
+        color = seg.get("color", "#e2e8f0")
+        donut_gradient_parts.append(f"{color} {start_pct}% {cumulative_pct}%")
+    if cumulative_pct < 100:
+        donut_gradient_parts.append(f"#f3f0f9 {cumulative_pct}% 100%")
 
     return {
         "user": user,
@@ -1083,6 +1111,8 @@ def _build_monthly_analysis_email_context(user, profile, analysis: dict) -> dict
         "categories": categories,
         "weekly_rows": weekly_rows,
         "top_days": top_days,
+        "donut_segments": donut_segments[:6],
+        "donut_gradient": ",".join(donut_gradient_parts),
     }
 
 
@@ -1307,6 +1337,7 @@ def onboarding(request: HttpRequest) -> HttpResponse:
         return redirect("dashboard")
     return render(request, "login/onboarding.html")
 
+
 #try it 
 def _issue_signup_otp(profile: UserProfile) -> str:
     code = f"{random.randint(100000, 999999)}"
@@ -1326,18 +1357,27 @@ def _issue_signup_otp(profile: UserProfile) -> str:
 def _send_signup_otp_email(user: User, code: str) -> None:
     expiry_minutes = getattr(settings, "EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES", 10)
     name = user.first_name or user.username or "there"
-    body = (
+    text_body = (
         f"Hi {name},\n\n"
         f"Use this 6-digit OTP to verify your SpendWise account: {code}\n\n"
         f"This OTP expires in {expiry_minutes} minutes.\n\n"
         "If you did not create this account, you can ignore this email."
     )
+    html_body = render_to_string("login/emails/otp_email.html", {
+        "email_subject": "Verify your SpendWise account",
+        "email_heading": "Verify Your Account",
+        "email_subheading": f"Hi {name}, use the OTP below to verify your SpendWise account.",
+        "otp_code": code,
+        "expiry_minutes": expiry_minutes,
+        "email_footer": "If you did not create this account, you can ignore this email.",
+    })
     email = EmailMultiAlternatives(
         subject="Verify your SpendWise account",
-        body=body,
+        body=text_body,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[user.email],
     )
+    email.attach_alternative(html_body, "text/html")
     email.send(fail_silently=False)
 
 
@@ -1494,6 +1534,177 @@ def signup_verify(request: HttpRequest) -> HttpResponse:
         "login/signup_verify.html",
         {"errors": errors, "email": user.email},
     )
+
+
+# ── Forgot Password ───────────────────────────────────────
+def _issue_password_reset_otp(profile: UserProfile) -> str:
+    code = f"{random.randint(100000, 999999)}"
+    profile.password_reset_code = code
+    profile.password_reset_sent_at = timezone.now()
+    profile.save(update_fields=["password_reset_code", "password_reset_sent_at"])
+    return code
+
+
+def _send_password_reset_otp_email(user: User, code: str) -> None:
+    expiry_minutes = getattr(settings, "EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES", 10)
+    name = user.first_name or user.username or "there"
+    text_body = (
+        f"Hi {name},\n\n"
+        f"Use this 6-digit OTP to reset your SpendWise password: {code}\n\n"
+        f"This OTP expires in {expiry_minutes} minutes.\n\n"
+        "If you did not request a password reset, you can ignore this email."
+    )
+    html_body = render_to_string("login/emails/otp_email.html", {
+        "email_subject": "Reset your SpendWise password",
+        "email_heading": "Reset Password",
+        "email_subheading": f"Hi {name}, use the OTP below to reset your SpendWise password.",
+        "otp_code": code,
+        "expiry_minutes": expiry_minutes,
+        "email_footer": "If you did not request a password reset, you can ignore this email.",
+    })
+    email = EmailMultiAlternatives(
+        subject="Reset your SpendWise password",
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user.email],
+    )
+    email.attach_alternative(html_body, "text/html")
+    email.send(fail_silently=False)
+
+
+def forgot_password(request: HttpRequest) -> HttpResponse:
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        email = request.POST.get("email", "").strip().lower()
+        errors = {}
+        if not email:
+            errors["email"] = "Email is required."
+        else:
+            try:
+                validate_email(email)
+            except ValidationError:
+                errors["email"] = "Enter a valid email address."
+
+        if not errors:
+            user = User.objects.filter(email=email, is_active=True).first()
+            if user:
+                profile, _ = UserProfile.objects.get_or_create(user=user)
+                code = _issue_password_reset_otp(profile)
+                try:
+                    _send_password_reset_otp_email(user, code)
+                except Exception:
+                    errors["general"] = "We could not send the OTP. Please try again."
+                    return render(
+                        request, "login/forgot_password.html", {"errors": errors, "form": request.POST}
+                    )
+                request.session["password_reset_user_id"] = user.id
+                messages.success(request, f"We sent a 6-digit OTP to {user.email}.")
+                return redirect("forgot_password_verify")
+            else:
+                errors["general"] = "No account found with that email."
+
+        return render(
+            request, "login/forgot_password.html", {"errors": errors, "form": request.POST}
+        )
+
+    return render(request, "login/forgot_password.html")
+
+
+def forgot_password_verify(request: HttpRequest) -> HttpResponse:
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    user_id = request.session.get("password_reset_user_id")
+    user = User.objects.filter(id=user_id, is_active=True).first()
+    if not user:
+        messages.error(request, "Your reset session expired. Please try again.")
+        return redirect("forgot_password")
+
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    errors = {}
+
+    if request.method == "POST":
+        action = request.POST.get("action", "verify")
+
+        if action == "resend":
+            code = _issue_password_reset_otp(profile)
+            try:
+                _send_password_reset_otp_email(user, code)
+                messages.success(request, f"A fresh OTP was sent to {user.email}.")
+            except Exception:
+                errors["general"] = "We could not resend the OTP. Please try again."
+            return render(
+                request,
+                "login/forgot_password_verify.html",
+                {"errors": errors, "email": user.email},
+            )
+
+        code = request.POST.get("otp", "").strip()
+        expiry_minutes = getattr(settings, "EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES", 10)
+        sent_at = profile.password_reset_sent_at
+
+        if not code:
+            errors["otp"] = "Enter the 6-digit OTP."
+        elif code != profile.password_reset_code:
+            errors["otp"] = "That OTP is incorrect."
+        elif not sent_at or timezone.now() > sent_at + timedelta(minutes=expiry_minutes):
+            errors["otp"] = "That OTP expired. Please resend a new one."
+
+        if not errors:
+            request.session["password_reset_verified"] = True
+            return redirect("forgot_password_reset")
+
+    return render(
+        request,
+        "login/forgot_password_verify.html",
+        {"errors": errors, "email": user.email},
+    )
+
+
+def forgot_password_reset(request: HttpRequest) -> HttpResponse:
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    user_id = request.session.get("password_reset_user_id")
+    verified = request.session.get("password_reset_verified")
+    user = User.objects.filter(id=user_id, is_active=True).first()
+    if not user or not verified:
+        messages.error(request, "Your reset session expired. Please try again.")
+        return redirect("forgot_password")
+
+    errors = {}
+
+    if request.method == "POST":
+        password = request.POST.get("password", "")
+        confirm_password = request.POST.get("confirm_password", "")
+
+        if not password:
+            errors["password"] = "Password is required."
+        else:
+            try:
+                validate_password(password)
+            except ValidationError as exc:
+                errors["password"] = exc.messages[0]
+        if not confirm_password:
+            errors["confirm_password"] = "Please confirm your password."
+        elif password and password != confirm_password:
+            errors["confirm_password"] = "Passwords do not match."
+
+        if not errors:
+            user.set_password(password)
+            user.save(update_fields=["password"])
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            profile.password_reset_code = ""
+            profile.password_reset_sent_at = None
+            profile.save(update_fields=["password_reset_code", "password_reset_sent_at"])
+            request.session.pop("password_reset_user_id", None)
+            request.session.pop("password_reset_verified", None)
+            messages.success(request, "Your password has been reset. Please log in.")
+            return redirect("login")
+
+    return render(request, "login/forgot_password_reset.html")
 
 
 

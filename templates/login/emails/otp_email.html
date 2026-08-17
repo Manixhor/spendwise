@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ email_subject }}</title>
+</head>
+<body style="margin:0;background:#f6f4fb;color:#1f2937;font-family:Arial,sans-serif;">
+  <div style="max-width:480px;margin:0 auto;padding:28px 18px;">
+    <div style="background:#ffffff;border:1px solid #e7e2f3;border-radius:14px;padding:32px 28px;text-align:center;">
+      <h1 style="margin:0 0 8px;color:#191724;font-size:22px;font-weight:800;">{{ email_heading }}</h1>
+      <p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.5;">{{ email_subheading }}</p>
+
+      <div style="background:#f6f4fb;border:1px solid #ede9f7;border-radius:10px;padding:18px;margin-bottom:24px;">
+        <p style="margin:0;color:#6b7280;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Your OTP</p>
+        <p style="margin:8px 0 0;color:#191724;font-size:32px;font-weight:800;letter-spacing:6px;">{{ otp_code }}</p>
+        <p style="margin:8px 0 0;color:#6b7280;font-size:12px;">Expires in {{ expiry_minutes }} minutes</p>
+      </div>
+
+      <p style="margin:0;color:#9ca3af;font-size:12px;line-height:1.5;">{{ email_footer }}</p>
+    </div>
+    <p style="text-align:center;color:#9ca3af;font-size:11px;margin-top:16px;">SpendWise &middot; Smart budgeting for everyone</p>
+  </div>
+</body>
+</html>

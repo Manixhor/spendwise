@@ -40,6 +40,8 @@ class UserProfile(models.Model):
     email_is_verified = models.BooleanField(default=False)
     email_verification_code = models.CharField(max_length=6, blank=True, default="")
     email_verification_sent_at = models.DateTimeField(null=True, blank=True)
+    password_reset_code = models.CharField(max_length=6, blank=True, default="")
+    password_reset_sent_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

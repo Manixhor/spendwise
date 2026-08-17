@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from login.models import MonthlyAnalysisMailSetting
-from login.monthly_mailer import previous_month, send_monthly_analysis_batch
+from login.monthly_mailer import send_monthly_analysis_batch
 
 
 class Command(BaseCommand):
@@ -11,7 +11,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--month",
-            help="Report month in YYYY-MM format. Defaults to current month for --now, previous month for scheduled runs.",
+            help="Report month in YYYY-MM format. Defaults to current month.",
         )
         parser.add_argument(
             "--now",
@@ -32,7 +32,7 @@ class Command(BaseCommand):
         force = options["force"]
 
         if not month:
-            month = local_now.strftime("%Y-%m") if send_now else previous_month(local_now.date())
+            month = local_now.strftime("%Y-%m")
 
         if not force and not setting.enabled:
             self.stdout.write(self.style.WARNING("Monthly analysis emails are disabled in admin."))
