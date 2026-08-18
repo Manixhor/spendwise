@@ -26,3 +26,13 @@
 ## 2026-08-17
 
 - Sent via Gmail to `diya.agarwal@walkingtree.tech` for WalkingTree Technologies Trainee Python Engineer, Agra/Hyderabad. Attached `manikanta_gururam_resume.pdf`.
+
+## 2026-08-18
+
+- Sent via Gmail to `prachi.mittal@agasty.ai` for Agastya Backend Developer. Attached `manikanta_gururam_resume.pdf`.
+- Sent via Gmail to `jobs@sadhanaitsolutions.com` for Sadhana IT Solutions Software Engineer - Fresher. Attached `manikanta_gururam_resume.pdf`.
+- Sent via Gmail to `kalyan@intellisofttech.com` for Software Engineer I - Fresher, Hyderabad. Attached `manikanta_gururam_resume.pdf`.
+- Sent via Gmail to `hr@streamwaytechnologies.com` for Streamway Technologies Software Developer, ECIL Hyderabad. Attached `manikanta_gururam_resume.pdf`.
+- Held `careers@wyreflow.com` for Wyreflow Technologies because the post is specifically for 2027 batch graduates and joining in August 2027; needs user confirmation before applying.
+- Sent via Gmail to `contact@sapvista.com` for Software Engineer / Software Developer opportunity. Attached `manikanta_gururam_resume.pdf`.
+- Sent via Gmail to `ohr@quadratyx.com` for Quadratyx Software Engineer opportunity. Attached `manikanta_gururam_resume.pdf`.
