@@ -44,11 +44,16 @@
         window.requestAnimationFrame(() => {
           const fieldRect = target.getBoundingClientRect();
           const parentRect = scrollParent.getBoundingClientRect();
-          const topOverflow = fieldRect.top - parentRect.top - 18;
-          const bottomOverflow = fieldRect.bottom - parentRect.bottom + 18;
+          const gap = 20;
+          const topOverflow = fieldRect.top - parentRect.top - gap;
+          const bottomOverflow = fieldRect.bottom - parentRect.bottom + gap;
 
           if (keyboardOpen) {
-            target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+            /* In constrained keyboard mode, scroll within the card */
+            if (scrollParent.scrollHeight > scrollParent.clientHeight) {
+              const scrollTarget = fieldRect.top - parentRect.top - (parentRect.height / 2) + (fieldRect.height / 2);
+              scrollParent.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
+            }
           } else if (topOverflow < 0) {
             scrollParent.scrollBy({ top: topOverflow, behavior: 'smooth' });
           } else if (bottomOverflow > 0) {

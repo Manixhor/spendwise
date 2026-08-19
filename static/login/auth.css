@@ -53,6 +53,10 @@ body {
     radial-gradient(ellipse at 20% 10%, rgba(120,100,255,0.12) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 90%, rgba(100,180,255,0.10) 0%, transparent 50%),
     linear-gradient(160deg, #dfe0ea 0%, #e8e8ed 50%, #dde4f0 100%);
+  /* Prevent pull-to-refresh in PWA */
+  overscroll-behavior-y: contain;
+  /* Smooth scrolling for PWA */
+  scroll-behavior: smooth;
 }
 
 .desktop-layout {
@@ -84,36 +88,55 @@ select {
   }
 }
 
+/* ── Keyboard open: pin everything to visual viewport ──── */
 body.ios-keyboard-open {
-  min-height: var(--app-visual-height, 100dvh);
+  height: var(--app-visual-height, 100dvh);
+  min-height: unset;
+  max-height: var(--app-visual-height, 100dvh);
   overflow: hidden;
+  /* Reset any body-level padding — safe areas handled by .right-panel */
+  padding: 0 !important;
 }
 
 body.ios-keyboard-open .desktop-layout {
-  min-height: var(--app-visual-height, 100dvh);
-  height: var(--app-visual-height, 100dvh);
+  height: 100%;
+  min-height: unset;
+  max-height: 100%;
   overflow: hidden;
+  padding: 0;
+  grid-template-columns: 1fr;
+}
+
+body.ios-keyboard-open .left-panel {
+  display: none;
 }
 
 body.ios-keyboard-open .right-panel {
-  align-items: flex-start;
-  justify-content: flex-start;
-  min-height: var(--app-visual-height, 100dvh);
-  height: var(--app-visual-height, 100dvh);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+  height: 100%;
+  min-height: unset;
   overflow: hidden;
-  padding-top: max(14px, env(safe-area-inset-top, 0px));
-  padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 body.ios-keyboard-open .right-panel .card,
 body.ios-keyboard-open .card {
-  max-height: calc(var(--app-visual-height, 100dvh) - max(14px, env(safe-area-inset-top, 0px)) - max(10px, env(safe-area-inset-bottom, 0px)));
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  scroll-padding: 18px;
+  scroll-behavior: smooth;
   transform: none;
-  transition: max-height 0.2s ease;
+}
+
+body.ios-keyboard-open .brand {
+  display: none;
 }
 
 .brand-large,
@@ -599,19 +622,15 @@ body.ios-keyboard-open .card {
     height: 48px;
   }
 
+  /* ── Mobile keyboard-open overrides ────────────────────── */
   body.ios-keyboard-open .right-panel {
-    padding: max(10px, env(safe-area-inset-top, 0px)) 12px max(8px, env(safe-area-inset-bottom, 0px));
-    align-items: stretch;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 
   body.ios-keyboard-open .card {
     border-radius: 18px;
     padding: 18px 18px 16px;
-    max-height: calc(var(--app-visual-height, 100dvh) - max(10px, env(safe-area-inset-top, 0px)) - max(8px, env(safe-area-inset-bottom, 0px)));
-  }
-
-  body.ios-keyboard-open .brand {
-    display: none;
   }
 
   body.ios-keyboard-open .form-title {
@@ -673,6 +692,109 @@ body.ios-keyboard-open .card {
 
   .hero-title { font-size: 1.35rem; }
   .form-title { font-size: 1.4rem; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   PWA STANDALONE MODE
+   ════════════════════════════════════════════════════════════ */
+
+/* When running as installed PWA (standalone mode) */
+@media (display-mode: standalone) {
+  body {
+    /* Account for status bar in standalone mode */
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .desktop-layout {
+    min-height: 100dvh;
+    /* Prevent overscroll bounce in PWA */
+    overscroll-behavior: none;
+  }
+
+  .right-panel {
+    /* More padding for PWA status bar */
+    padding-top: max(24px, env(safe-area-inset-top, 0px));
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .card {
+    /* Slightly more compact for PWA */
+    max-width: 100%;
+    border-radius: var(--radius-md);
+  }
+
+  /* Ensure touch targets are at least 44px for PWA */
+  .field-group {
+    min-height: 48px;
+  }
+
+  .cta-btn {
+    min-height: 52px;
+  }
+
+  /* Better spacing for PWA on mobile */
+  @media (max-width: 640px) {
+    .right-panel {
+      padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(12px, env(safe-area-inset-bottom, 0px));
+    }
+
+    .card {
+      padding: 24px 20px 22px;
+    }
+
+    .field-group {
+      height: 50px;
+      padding: 0 14px;
+    }
+
+    .cta-btn {
+      height: 54px;
+    }
+  }
+}
+
+/* PWA on iOS with notch (iPhone X and later) */
+@supports (padding: env(safe-area-inset-top)) {
+  .desktop-layout {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .right-panel {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+}
+
+/* PWA landscape mode handling */
+@media (display-mode: standalone) and (orientation: landscape) and (max-height: 500px) {
+  .right-panel {
+    padding: 8px 24px;
+  }
+
+  .card {
+    padding: 16px 24px 14px;
+    max-height: 90dvh;
+    overflow-y: auto;
+  }
+
+  .form-title {
+    font-size: 1.4rem;
+    margin-top: 8px;
+  }
+
+  .form-sub {
+    font-size: 0.82rem;
+    margin-bottom: 16px;
+  }
+
+  .field-group {
+    height: 44px;
+  }
+
+  .cta-btn {
+    height: 46px;
+    margin-top: 4px;
+  }
 }
 
 /* ── Alerts & field errors ──────────────────────────────── */
