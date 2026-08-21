@@ -63,17 +63,6 @@
                 <polyline points="10 9 9 9 8 9"/>
               </svg>
               Export as CSV
-            </button>
-	            <button class="download-option" role="menuitem" data-export="xlsx" type="button">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-                <rect x="9" y="10" width="7" height="9"/>
-              </svg>
-              Export as Excel
-            </button>
           </div>
         </div>
         <button type="button" class="email-btn" id="emailReportBtn" title="Email this month's analysis to you" aria-label="Email monthly analysis">
@@ -393,13 +382,6 @@
           <small>Spreadsheet-friendly data</small>
         </span>
       </button>
-      <button class="export-format" type="button" data-export-choice="xlsx" role="radio" aria-checked="false">
-        <span class="export-format__icon"><i class="fa-solid fa-file-excel"></i></span>
-        <span>
-          <strong>Excel</strong>
-          <small>Formatted .xlsx workbook</small>
-        </span>
-      </button>
     </div>
 
     <div class="export-modal__actions">
@@ -429,7 +411,6 @@ const SELECTED_MONTH = '{{ selected_month_param }}';
     const map = {
       pdf: '/monthly/export/pdf/',
       csv: '/monthly/export/csv/',
-      xlsx: '/monthly/export/xlsx/',
     };
     return `${map[format] || map.pdf}?month=${encodeURIComponent(SELECTED_MONTH)}`;
   };

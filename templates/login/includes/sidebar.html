@@ -41,6 +41,12 @@
         <path d="M12 6v6l4 2"/>
       </svg>
     </a>
+    <a href="{% url 'compare' %}" class="nav-icon {% if active_nav == 'compare' %}active{% endif %}" aria-label="Compare Months" title="Compare Months">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="3" y="3" width="7" height="18" rx="1"/>
+        <rect x="14" y="8" width="7" height="13" rx="1"/>
+      </svg>
+    </a>
     <form method="post" action="{% url 'logout' %}" class="logout-form">
       {% csrf_token %}
       <button type="submit" class="nav-icon" aria-label="Logout" title="Logout">

@@ -1,0 +1,223 @@
+{% load static %}
+{% load currency_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  {% include "login/includes/pwa_meta.html" %}
+  <title>SpendWise – Compare Months</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}" />
+  <link rel="stylesheet" href="{% static 'login/monthly.css' %}" />
+  <link rel="stylesheet" href="{% static 'login/compare.css' %}" />
+</head>
+<body>
+<div class="app">
+  {% include "login/includes/sidebar.html" %}
+
+  <main class="main monthly-main">
+    <header class="main-header">
+      <div>
+        <p class="monthly-eyebrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" style="vertical-align:-1px;margin-right:4px;">
+            <rect x="3" y="3" width="7" height="18" rx="1"/>
+            <rect x="14" y="8" width="7" height="13" rx="1"/>
+          </svg>
+          Month Comparison
+        </p>
+      </div>
+    </header>
+
+    <!-- Month selectors -->
+    <div class="cmp-selector-row">
+      <div class="cmp-selector">
+        <label class="cmp-selector-label" for="monthA">Month A</label>
+        <select id="monthA" class="cmp-month-select">
+          {% for opt in month_options %}
+            <option value="{{ opt.value }}" {% if opt.value == selected_a %}selected{% endif %}>{{ opt.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <span class="cmp-vs">vs</span>
+      <div class="cmp-selector">
+        <label class="cmp-selector-label" for="monthB">Month B</label>
+        <select id="monthB" class="cmp-month-select">
+          {% for opt in month_options %}
+            <option value="{{ opt.value }}" {% if opt.value == selected_b %}selected{% endif %}>{{ opt.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Stats comparison row -->
+    <div class="cmp-stats-row">
+      <div class="card cmp-stat-card">
+        <span class="cmp-stat-label">EXPENSE</span>
+        <div class="cmp-stat-pair">
+          <div class="cmp-stat-month">
+            <span class="cmp-stat-month-label">{{ month_a.short_label }}</span>
+            <span class="cmp-stat-amount">{{ month_a.expense|indian_currency }}</span>
+          </div>
+          <div class="cmp-stat-delta {% if expense_delta > 0 %}negative{% elif expense_delta < 0 %}positive{% endif %}">
+            {% if expense_delta > 0 %}+{% endif %}{{ expense_delta|indian_currency }}
+            <span class="cmp-stat-pct">({% if expense_pct > 0 %}+{% endif %}{{ expense_pct|floatformat:1 }}%)</span>
+          </div>
+          <div class="cmp-stat-month">
+            <span class="cmp-stat-month-label">{{ month_b.short_label }}</span>
+            <span class="cmp-stat-amount">{{ month_b.expense|indian_currency }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="card cmp-stat-card">
+        <span class="cmp-stat-label">INCOME</span>
+        <div class="cmp-stat-pair">
+          <div class="cmp-stat-month">
+            <span class="cmp-stat-month-label">{{ month_a.short_label }}</span>
+            <span class="cmp-stat-amount">{{ month_a.income|indian_currency }}</span>
+          </div>
+          <div class="cmp-stat-delta {% if income_delta > 0 %}positive{% elif income_delta < 0 %}negative{% endif %}">
+            {% if income_delta > 0 %}+{% endif %}{{ income_delta|indian_currency }}
+            <span class="cmp-stat-pct">({% if income_pct > 0 %}+{% endif %}{{ income_pct|floatformat:1 }}%)</span>
+          </div>
+          <div class="cmp-stat-month">
+            <span class="cmp-stat-month-label">{{ month_b.short_label }}</span>
+            <span class="cmp-stat-amount">{{ month_b.income|indian_currency }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="card cmp-stat-card">
+        <span class="cmp-stat-label">SAVED</span>
+        <div class="cmp-stat-pair">
+          <div class="cmp-stat-month">
+            <span class="cmp-stat-month-label">{{ month_a.short_label }}</span>
+            <span class="cmp-stat-amount {% if month_a.saved >= 0 %}positive{% else %}negative{% endif %}">{{ month_a.saved|indian_currency:True }}</span>
+          </div>
+          <div class="cmp-stat-delta {% if saved_delta > 0 %}positive{% elif saved_delta < 0 %}negative{% endif %}">
+            {% if saved_delta > 0 %}+{% endif %}{{ saved_delta|indian_currency }}
+            <span class="cmp-stat-pct">({% if saved_pct > 0 %}+{% endif %}{{ saved_pct|floatformat:1 }}%)</span>
+          </div>
+          <div class="cmp-stat-month">
+            <span class="cmp-stat-month-label">{{ month_b.short_label }}</span>
+            <span class="cmp-stat-amount {% if month_b.saved >= 0 %}positive{% else %}negative{% endif %}">{{ month_b.saved|indian_currency:True }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts row: side-by-side weekly bars -->
+    <div class="cmp-charts-row">
+      <div class="card cmp-chart-card">
+        <div class="cmp-chart-header">
+          <span class="card-label">{{ month_a.short_label }}</span>
+          <span class="cmp-chart-sub">Weekly breakdown</span>
+        </div>
+        <div class="cmp-bar-chart" id="chartMonthA">
+          {% for week in month_a.weeks %}
+            <div class="cmp-bar-group">
+              <div class="cmp-bar-stack">
+                {% if week.income > 0 %}
+                  <div class="cmp-bar cmp-bar-income" style="height: {% widthratio week.income 1 1 %}px;" title="Income: {{ week.income|indian_currency }}"></div>
+                {% endif %}
+                <div class="cmp-bar cmp-bar-expense" style="height: {% widthratio week.expense 1 1 %}px;" title="Expense: {{ week.expense|indian_currency }}"></div>
+              </div>
+              <span class="cmp-bar-label">{{ week.label }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="card cmp-chart-card">
+        <div class="cmp-chart-header">
+          <span class="card-label">{{ month_b.short_label }}</span>
+          <span class="cmp-chart-sub">Weekly breakdown</span>
+        </div>
+        <div class="cmp-bar-chart" id="chartMonthB">
+          {% for week in month_b.weeks %}
+            <div class="cmp-bar-group">
+              <div class="cmp-bar-stack">
+                {% if week.income > 0 %}
+                  <div class="cmp-bar cmp-bar-income" style="height: {% widthratio week.income 1 1 %}px;" title="Income: {{ week.income|indian_currency }}"></div>
+                {% endif %}
+                <div class="cmp-bar cmp-bar-expense" style="height: {% widthratio week.expense 1 1 %}px;" title="Expense: {{ week.expense|indian_currency }}"></div>
+              </div>
+              <span class="cmp-bar-label">{{ week.label }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Category comparison -->
+    <div class="card cmp-category-card">
+      <div class="cmp-cat-header">
+        <span class="card-label">Category Comparison</span>
+        <div class="cmp-cat-legend">
+          <span class="cmp-legend-item"><i style="background:#a78bfa;"></i>{{ month_a.short_label }}</span>
+          <span class="cmp-legend-item"><i style="background:#34d399;"></i>{{ month_b.short_label }}</span>
+        </div>
+      </div>
+
+      {% if category_deltas %}
+      <div class="cmp-cat-list">
+        {% for cat in category_deltas %}
+          <div class="cmp-cat-row">
+            <span class="cmp-cat-name">{{ cat.label }}</span>
+            <div class="cmp-cat-bars">
+              <div class="cmp-cat-bar-wrap">
+                <div class="cmp-cat-bar cmp-bar-a" style="width: {% if month_a.expense > 0 %}{% widthratio cat.month_a month_a.expense 100 %}{% else %}0{% endif %}%;" title="{{ month_a.short_label }}: {{ cat.month_a|indian_currency }}"></div>
+              </div>
+              <div class="cmp-cat-bar-wrap">
+                <div class="cmp-cat-bar cmp-bar-b" style="width: {% if month_b.expense > 0 %}{% widthratio cat.month_b month_b.expense 100 %}{% else %}0{% endif %}%;" title="{{ month_b.short_label }}: {{ cat.month_b|indian_currency }}"></div>
+              </div>
+            </div>
+            <div class="cmp-cat-values">
+              <span class="cmp-cat-val">{{ cat.month_a|indian_currency }}</span>
+              <span class="cmp-cat-delta {% if cat.direction == 'up' %}negative{% elif cat.direction == 'down' %}positive{% endif %}">
+                {% if cat.delta > 0 %}+{% endif %}{{ cat.delta|indian_currency }}
+              </span>
+              <span class="cmp-cat-val">{{ cat.month_b|indian_currency }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      {% else %}
+        <p class="cmp-empty">No overlapping categories between these months. Add some transactions to compare!</p>
+      {% endif %}
+    </div>
+
+  </main>
+</div>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+const monthASelect = document.getElementById('monthA');
+const monthBSelect = document.getElementById('monthB');
+
+function syncMonths() {
+  const a = monthASelect.value;
+  const b = monthBSelect.value;
+  window.location.href = '/compare/?a=' + encodeURIComponent(a) + '&b=' + encodeURIComponent(b);
+}
+
+monthASelect.addEventListener('change', syncMonths);
+monthBSelect.addEventListener('change', syncMonths);
+
+// Normalize bar chart heights
+(function normalizeBars() {
+  ['chartMonthA', 'chartMonthB'].forEach(id => {
+    const container = document.getElementById(id);
+    if (!container) return;
+    const bars = container.querySelectorAll('.cmp-bar');
+    let maxH = 0;
+    bars.forEach(b => { const h = parseInt(b.style.height) || 0; if (h > maxH) maxH = h; });
+    if (maxH > 0) {
+      bars.forEach(b => {
+        const h = parseInt(b.style.height) || 0;
+        b.style.height = Math.max(2, (h / maxH) * 140) + 'px';
+      });
+    }
+  });
+})();
+</script>
+{% include "login/includes/expense_chatbot.html" %}
+</body>
+</html>

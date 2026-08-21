@@ -115,37 +115,6 @@
 
     </div>
 
-    <!-- ── Trend chart ────────────────────────────────────── -->
-    <div class="charts-row">
-
-      <!-- Sparkline: expense vs saved trend -->
-      <div class="card sparkline-card">
-        <div class="spark-header">
-          <div class="spark-meta">
-            <span class="spark-label">Saved this month</span>
-            <span class="spark-amount spark-saved" id="sparkSavedAmount">{{ total_saved|indian_currency }}</span>
-            <span class="spark-change" id="sparkSavedChange"></span>
-          </div>
-        </div>
-        <div class="spark-chart-wrap">
-          <svg viewBox="0 0 600 100" class="spark-svg" id="sparkSvg" preserveAspectRatio="xMidYMid meet" aria-label="Expense and savings trend over the last 6 months">
-            <defs>
-              <linearGradient id="expSparkGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="rgba(255,107,107,0.30)"/>
-                <stop offset="100%" stop-color="rgba(255,107,107,0.02)"/>
-              </linearGradient>
-              <linearGradient id="savedSparkGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="rgba(52,211,153,0.30)"/>
-                <stop offset="100%" stop-color="rgba(52,211,153,0.02)"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        <div class="spark-x-axis" id="sparkXAxis"></div>
-      </div>
-
-    </div>
-
     <!-- ── Add Expense + Latest Transactions ──────────────── -->
     <section class="card txn-section">
       <div class="txn-header-row">
