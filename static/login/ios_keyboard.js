@@ -30,25 +30,31 @@
     document.documentElement.style.setProperty('--app-keyboard-shift', '0px');
     document.body.classList.toggle('ios-keyboard-open', keyboardOpen);
     document.body.classList.toggle('ios-modal-keyboard-open', keyboardOpen && Boolean(activeModal));
+
+    return keyboardOpen;
   };
 
   const keepFocusedFieldVisible = (target) => {
     if (!target?.matches?.(focusableSelector)) return;
 
     window.setTimeout(() => {
-      syncKeyboardState();
+      const keyboardOpen = syncKeyboardState();
       const scrollParent = target.closest('.modal-card, .export-modal__card, .expense-chatbot-messages, .expense-chatbot-panel, .card');
       if (scrollParent) {
-        const fieldRect = target.getBoundingClientRect();
-        const parentRect = scrollParent.getBoundingClientRect();
-        const topOverflow = fieldRect.top - parentRect.top - 18;
-        const bottomOverflow = fieldRect.bottom - parentRect.bottom + 18;
+        window.requestAnimationFrame(() => {
+          const fieldRect = target.getBoundingClientRect();
+          const parentRect = scrollParent.getBoundingClientRect();
+          const topOverflow = fieldRect.top - parentRect.top - 18;
+          const bottomOverflow = fieldRect.bottom - parentRect.bottom + 18;
 
-        if (topOverflow < 0) {
-          scrollParent.scrollBy({ top: topOverflow, behavior: 'smooth' });
-        } else if (bottomOverflow > 0) {
-          scrollParent.scrollBy({ top: bottomOverflow, behavior: 'smooth' });
-        }
+          if (keyboardOpen) {
+            target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+          } else if (topOverflow < 0) {
+            scrollParent.scrollBy({ top: topOverflow, behavior: 'smooth' });
+          } else if (bottomOverflow > 0) {
+            scrollParent.scrollBy({ top: bottomOverflow, behavior: 'smooth' });
+          }
+        });
         return;
       }
 
@@ -56,9 +62,17 @@
     }, 150);
   };
 
-  window.visualViewport?.addEventListener('resize', syncKeyboardState);
+  const syncAndKeepFocusVisible = () => {
+    const keyboardOpen = syncKeyboardState();
+    const activeElement = document.activeElement;
+    if (keyboardOpen && activeElement?.matches?.(focusableSelector)) {
+      keepFocusedFieldVisible(activeElement);
+    }
+  };
+
+  window.visualViewport?.addEventListener('resize', syncAndKeepFocusVisible);
   window.visualViewport?.addEventListener('scroll', syncKeyboardState);
-  window.addEventListener('resize', syncKeyboardState);
+  window.addEventListener('resize', syncAndKeepFocusVisible);
   window.addEventListener('orientationchange', () => window.setTimeout(syncKeyboardState, 250));
 
   document.addEventListener('focusin', (event) => {
