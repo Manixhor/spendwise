@@ -288,6 +288,21 @@ body.ios-keyboard-open .brand {
   flex-direction: column;
 }
 
+.card-form {
+  position: relative;
+}
+
+.card-form::before {
+  content: "";
+  display: none;
+  width: 42px;
+  height: 4px;
+  margin: 0 auto 18px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #667eea, #f472b6);
+  opacity: 0.72;
+}
+
 /* ── Brand ──────────────────────────────────────────────── */
 .brand {
   font-size: 1.05rem;
@@ -440,6 +455,17 @@ body.ios-keyboard-open .brand {
 .footer-copy.center { text-align: center; }
 .footer-copy.muted  { color: var(--muted); }
 
+.auth-secondary-action {
+  margin-top: 12px;
+}
+
+.auth-switch-copy {
+  padding: 10px 12px;
+  border: 1px solid rgba(200,200,210,0.45);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.36);
+}
+
 .link-accent {
   color: var(--accent);
   font-weight: 600;
@@ -571,16 +597,43 @@ body.ios-keyboard-open .brand {
 
 /* ── Mobile (≤640px) ────────────────────────────────────── */
 @media (max-width: 640px) {
+  body {
+    min-height: 100svh;
+  }
+
+  .desktop-layout {
+    min-height: 100svh;
+    padding-top: 0;
+  }
+
   .right-panel {
-    padding: 24px 16px;
+    justify-content: flex-start;
+    min-height: 100svh;
+    padding: max(14px, env(safe-area-inset-top, 0px)) 14px max(14px, env(safe-area-inset-bottom, 0px));
     align-items: stretch;
   }
 
   .card {
     max-width: 100%;
     border-radius: var(--radius-md);
-    padding: 28px 22px 24px;
+    padding: 22px 20px 20px;
     overflow: visible;
+  }
+
+  .card-form {
+    min-height: 0;
+    box-shadow:
+      0 1px 0 var(--border) inset,
+      0 18px 48px rgba(75, 86, 130, 0.16);
+  }
+
+  .card-form::before {
+    display: block;
+  }
+
+  .brand {
+    font-size: 1rem;
+    margin-bottom: 8px;
   }
 
   .brand-large {
@@ -609,49 +662,83 @@ body.ios-keyboard-open .brand {
   }
 
   .cta-btn {
-    height: 50px;
+    height: 48px;
     font-size: 0.95rem;
   }
 
   .form-title {
-    font-size: 1.6rem;
+    font-size: 1.82rem;
+    line-height: 1.05;
+    margin-top: 6px;
+    margin-bottom: 7px;
+  }
+
+  .form-sub {
+    font-size: 0.88rem;
+    line-height: 1.42;
+    margin-bottom: 18px;
+  }
+
+  .auth-form {
+    gap: 10px;
   }
 
   .field-group {
-    height: 48px;
+    height: 50px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.78);
+  }
+
+  .footer-copy {
+    margin-top: 12px;
+  }
+
+  .auth-switch-copy {
+    margin-top: 14px;
+    font-size: 0.82rem;
   }
 
   /* ── Mobile keyboard-open overrides ────────────────────── */
   body.ios-keyboard-open .right-panel {
+    justify-content: flex-start;
+    align-items: stretch;
+    padding-top: max(8px, env(safe-area-inset-top, 0px));
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
     padding-left: 12px;
     padding-right: 12px;
   }
 
   body.ios-keyboard-open .card {
     border-radius: 18px;
-    padding: 18px 18px 16px;
+    padding: 14px 16px 14px;
+    max-height: calc(var(--app-visual-height, 100dvh) - max(8px, env(safe-area-inset-top, 0px)) - max(8px, env(safe-area-inset-bottom, 0px)));
+  }
+
+  body.ios-keyboard-open .card-form::before,
+  body.ios-keyboard-open .brand {
+    display: none;
   }
 
   body.ios-keyboard-open .form-title {
-    font-size: 1.42rem;
+    font-size: 1.34rem;
     margin-top: 0;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
   }
 
   body.ios-keyboard-open .form-sub {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     line-height: 1.35;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
   body.ios-keyboard-open .auth-form {
-    gap: 8px;
+    gap: 7px;
   }
 
   body.ios-keyboard-open .field-group {
-    height: 44px;
-    border-radius: 13px;
-    padding: 0 13px;
+    height: 42px;
+    border-radius: 12px;
+    padding: 0 12px;
   }
 
   body.ios-keyboard-open .field-icon {
@@ -663,8 +750,8 @@ body.ios-keyboard-open .brand {
   }
 
   body.ios-keyboard-open .cta-btn {
-    height: 46px;
-    margin-top: 4px;
+    height: 44px;
+    margin-top: 3px;
   }
 
   body.ios-keyboard-open .divider {
@@ -673,8 +760,12 @@ body.ios-keyboard-open .brand {
 
   body.ios-keyboard-open .footer-copy,
   body.ios-keyboard-open .terms-copy {
-    font-size: 0.72rem;
-    margin-top: 8px;
+    font-size: 0.7rem;
+    margin-top: 7px;
+  }
+
+  body.ios-keyboard-open .auth-switch-copy {
+    padding: 7px 10px;
   }
 }
 
@@ -700,12 +791,12 @@ body.ios-keyboard-open .brand {
 /* When running as installed PWA (standalone mode) */
 @media (display-mode: standalone) {
   body {
-    /* Account for status bar in standalone mode */
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: 0;
+    min-height: 100svh;
   }
 
   .desktop-layout {
-    min-height: 100dvh;
+    min-height: 100svh;
     /* Prevent overscroll bounce in PWA */
     overscroll-behavior: none;
   }
@@ -734,20 +825,22 @@ body.ios-keyboard-open .brand {
   /* Better spacing for PWA on mobile */
   @media (max-width: 640px) {
     .right-panel {
-      padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(12px, env(safe-area-inset-bottom, 0px));
+      justify-content: flex-start;
+      min-height: 100svh;
+      padding: max(12px, env(safe-area-inset-top, 0px)) 14px max(10px, env(safe-area-inset-bottom, 0px));
     }
 
     .card {
-      padding: 24px 20px 22px;
+      padding: 20px 18px 18px;
     }
 
     .field-group {
-      height: 50px;
+      height: 48px;
       padding: 0 14px;
     }
 
     .cta-btn {
-      height: 54px;
+      height: 50px;
     }
   }
 }
@@ -755,7 +848,7 @@ body.ios-keyboard-open .brand {
 /* PWA on iOS with notch (iPhone X and later) */
 @supports (padding: env(safe-area-inset-top)) {
   .desktop-layout {
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: 0;
   }
 
   .right-panel {

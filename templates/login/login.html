@@ -44,12 +44,10 @@
     <button type="submit" class="cta-btn">Login &rarr;</button>
   </form>
 
-  <p class="footer-copy center">
+  <p class="footer-copy center auth-secondary-action">
     <a href="{% url 'forgot_password' %}" class="link-accent">Forgot password?</a>
   </p>
-  <p class="footer-copy center">
+  <p class="footer-copy center auth-switch-copy">
     Don't have an account? <a href="{% url 'signup' %}" class="link-accent">Sign up</a>
   </p>
-  <hr class="divider" />
-  <a href="{% url 'signup' %}" class="cta-btn cta-dark">Create account &rarr;</a>
 {% endblock %}
