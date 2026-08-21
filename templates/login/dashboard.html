@@ -204,24 +204,6 @@
     </div>
     <p class="form-sub" style="margin-bottom: 20px;">Help us track your savings by setting your monthly income.</p>
 
-    <label class="modal-field-label">Currency</label>
-    <div class="pf-currency-picker" id="setupCurrencyPicker" style="margin-bottom:18px;">
-      <button type="button" class="pf-currency-card is-active" data-currency="inr">
-        <span class="pf-currency-icon">₹</span>
-        <span class="pf-currency-name">INR</span>
-        <span class="pf-currency-check">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        </span>
-      </button>
-      <button type="button" class="pf-currency-card" data-currency="usd">
-        <span class="pf-currency-icon">$</span>
-        <span class="pf-currency-name">USD</span>
-        <span class="pf-currency-check">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        </span>
-      </button>
-    </div>
-
     <label class="modal-field-label" for="salaryInput">Monthly Salary</label>
     <div class="modal-field-wrap">
       <span class="modal-currency" data-curr>₹</span>
@@ -546,22 +528,6 @@ try {
   const salarySkipBtn = document.getElementById('salarySkipBtn');
   const salaryInput = document.getElementById('salaryInput');
   const salaryError = document.getElementById('salaryError');
-  const setupCurrencyPicker = document.getElementById('setupCurrencyPicker');
-  let setupCurrency = 'inr';
-
-  if (setupCurrencyPicker) {
-    setupCurrencyPicker.querySelectorAll('.pf-currency-card').forEach(card => {
-      card.addEventListener('click', () => {
-        setupCurrencyPicker.querySelectorAll('.pf-currency-card').forEach(c => c.classList.remove('is-active'));
-        card.classList.add('is-active');
-        setupCurrency = card.dataset.currency;
-        // Update salary input symbol
-        const sym = setupCurrency === 'usd' ? '$' : '₹';
-        document.querySelectorAll('#salarySetupModal [data-curr]').forEach(el => el.textContent = sym);
-        if (typeof setSpendWiseCurrency === 'function') setSpendWiseCurrency(setupCurrency);
-      });
-    });
-  }
 
   if (salarySaveBtn && salaryInput && salaryError) {
     salarySaveBtn.addEventListener('click', async () => {
@@ -575,21 +541,6 @@ try {
       salarySaveBtn.disabled = true;
       salarySaveBtn.textContent = 'Saving…';
       salaryError.textContent = '';
-
-      // Save currency first, then salary
-      try {
-        const currRes = await fetch('/api/currency/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-          },
-          body: JSON.stringify({ currency: setupCurrency })
-        });
-        if (currRes.ok && typeof setSpendWiseCurrency === 'function') {
-          setSpendWiseCurrency(setupCurrency);
-        }
-      } catch (e) { /* continue even if currency save fails */ }
 
       try {
         const res = await fetch('/api/salary/', {
