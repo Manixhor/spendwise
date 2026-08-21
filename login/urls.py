@@ -12,7 +12,6 @@ from .views import (
     dashboard,
     lend,
     monthly,
-    compare,
     savings,
     profile_view,
     api_email_monthly_analysis,
@@ -36,8 +35,6 @@ from .views import (
     api_delete_goal,
     api_contribute_goal,
     api_goal_allocations,
-    api_weekly_insights,
-    api_compare,
 )
 
 urlpatterns = [
@@ -100,9 +97,5 @@ urlpatterns = [
         name="api_contribute_goal",
     ),
     path("api/goals/allocations/", api_goal_allocations, name="api_goal_allocations"),
-    # Weekly Insights
-    path("api/weekly-insights/", api_weekly_insights, name="api_weekly_insights"),
-    # Compare
-    path("compare/", compare, name="compare"),
-    path("api/compare/", api_compare, name="api_compare"),
+
 ]
