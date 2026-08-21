@@ -177,3 +177,100 @@
 - 725 | sent via Gmail | Monika Save | monika@bridgelabz.com | BridgeLabz | subject: BridgeLabz + Full Stack = Faster Learning Products | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
 - 726 | sent via Gmail | Monika Soutiyal | monika@techretail.in | Tech Connect Services | subject: Tech Connect + Full Stack = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
 - 727 | sent via Gmail | Monila Gupta | mgupta@helm360.com | HELM360 | subject: HELM360 + Backend APIs = Reliable Platforms | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+
+## 2026-08-20 queue continuation 728-733
+
+- 728 | skipped | Monila Gupta | mgupta@helm360.com | HELM360 | reason: duplicate of row 727, already contacted
+- 729 | sent via Gmail | Moumi Chatterjee | moumi@spartanpoker.com | QUADRIFIC MEDIA | subject: Quadrific + Backend APIs = Reliable Gaming Platforms | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 730 | sent via Gmail | Mrudhula Guda | mrudhula.g@feuji.com | Feuji Inc | subject: Feuji + Full Stack = Faster Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 731 | sent via Gmail | Mrudul Godavarthi | mrudul.k@fssglobal.in | Federal Soft Systems | subject: Federal Soft + Backend Engineering = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 732 | sent via Gmail | Mruga Dave | mruga.dave@vagaro.com | Vagaro Inc | subject: Vagaro + Backend APIs = Reliable Products | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 733 | sent via Gmail | Mrugesh Maisuriya | mrugesh.maisuriya@procuretiger.com | eProcurement Technologies | subject: eProcurement + Backend APIs = Reliable Platforms | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+
+## 2026-08-20 queue continuation 734-741
+
+- 734 | sent via Gmail | Mrugesh Raval | mrugesh.raval@nascentinfo.com | Nascent Info Technologies | subject: Nascent Info + Full Stack = Faster Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 735 | sent via Gmail | Mugdha Wagh | mugdha.wagh@ellicium.com | Ellicium Solutions | subject: Ellicium + Python APIs = Better Data Workflows | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 736 | skipped | Muhammed Rafi | payable@awign.com | Awign | reason: risky finance/payables inbox, not suitable for cold outreach
+- 737 | skipped | Mujeeb Khan | mujeeb@panzertechnologies.net | Panzer Technologies | reason: duplicate company already contacted earlier at row 717
+- 738 | sent via Gmail | Mukesh Tiwary | mukesh.t@lrsservices.in | LRS Services | subject: LRS Services + Backend APIs = Reliable Operations | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 739 | sent via Gmail | Mukta Dar | mukta.dar@absolutdata.com | Absolutdata Analytics | subject: Absolutdata + Python APIs = Better Data Workflows | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 740 | sent via Gmail | Mukta Dewan | mukta.dewan@caeliusconsulting.com | Caelius Consulting | subject: Caelius + Backend APIs = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 741 | sent via Gmail | Murali Krishnamoorthy | murali.k@excelacom.in | Excelacom Technologies | subject: Excelacom + Backend Engineering = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+
+## 2026-08-20 queue continuation 742-745
+
+- 742 | sent via Gmail | Murali Nagarajan | murali@softlogicsys.in | Softlogic Systems | subject: Softlogic + Full Stack = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 743 | sent via Gmail | Murugessan Panchatcharam | pmurugesan@corenttech.com | Corent Technology | subject: Corent + Backend APIs = Reliable Platforms | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 744 | sent via Gmail | Muthukumar K | muthukumar.k@technogeninc.com | TechnoGen | subject: TechnoGen + Backend Engineering = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 745 | sent via Gmail | Muthyala Manasa | muthyala.manasa@absyz.com | ABSYZ Inc | subject: ABSYZ + Backend APIs = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+
+## 2026-08-20 queue continuation 746-755
+
+- 746 | sent via Gmail | Naga Siddharth | n.siddharth@urbanpiper.com | UrbanPiper | subject: UrbanPiper + Backend APIs = Reliable Platforms | no attachment | text/plain | included production/API contribution sentence
+- 747 | sent via Gmail | Nagamani Yerneni | nagamani.yerneni@softsol.com | SoftSol | subject: SoftSol + Full Stack = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence
+- 748 | sent via Gmail | Naganagouda J | naganagouda.sj@globaledgesoft.com | GlobalEdge | subject: GlobalEdge + Backend Engineering = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence
+- 749 | sent via Gmail | Naindeep Kaur | naindeep.kaur@bpktechmail.com | BPK Technologies | subject: BPK Technologies + Backend APIs = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence
+- 750 | sent via Gmail | Nalini Panwar | nalini@amresearch.in | AM Research | subject: AM Research + Python APIs = Better Data Workflows | no attachment | text/plain | included production/API contribution sentence
+- 751 | sent via Gmail | Namita Sinha | namita.sinha@sunlife.com | Sun Life | subject: Sun Life + Backend Engineering = Reliable Systems | no attachment | text/plain | included production/API contribution sentence
+- 752 | sent via Gmail | Namrata Kamrushi | namrata.k@inspiredgeit.com | Inspiredge IT Solutions | subject: Inspiredge + Full Stack = Faster Delivery | no attachment | text/plain | included production/API contribution sentence
+- 753 | sent via Gmail | Nancy Andrews | nancy.andrews@ideas2it.com | Ideas2IT Technologies | subject: Ideas2IT + Backend APIs = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence
+- 754 | sent via Gmail | Nancy Varghese | nancy.varghese@inflowtechnologies.com | Inflow Technologies | subject: Inflow Technologies + Full Stack = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence
+- 755 | skipped | Nandakishore Padmanabhan | nandakishore.padmanabhan@crmnext.com | CRMNEXT | reason: duplicate company already contacted earlier at row 694
+
+## 2026-08-20 queue continuation 756-758
+
+- 756 | sent via Gmail | Nandini Aggarwal | nandini.aggarwal@enhancesys.com | Enhancesys Innovations | subject: Enhancesys + Backend APIs = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 757 | sent via Gmail | Nandini Tandon | nandini.tandon@indusface.com | Indusface | subject: Indusface + Backend Engineering = Reliable Systems | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 758 | sent via Gmail | Nandita Singh | nandita.singh@selp.in | SELP | subject: SELP + Backend APIs = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+
+## 2026-08-20 queue continuation 759-761
+
+- 759 | sent via Gmail | Nandni Bhatnagar | nbhatnagar@e-emphasys.com | e-Emphasys Technologies | subject: e-Emphasys + Backend APIs = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 760 | sent via Gmail | Narasimhan | narasimhan@opsera.io | Opsera | subject: Opsera + Backend APIs = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 761 | sent via Gmail | Narayana Bvs | narayana@smartedgesolutions.co.uk | Smartedge Solutions | subject: Smartedge + Backend Engineering = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+
+## 2026-08-20 queue continuation 762-765
+
+- 762 | sent via Gmail | Narayana Pawar | narayana.pawar@privafy.com | Privafy | subject: Privafy + Backend APIs = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 763 | sent via Gmail | Narender Thatipalli | narender@lsarecruit.co.uk | LSA Recruit | subject: LSA Recruit + Backend Engineering = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 764 | sent via Gmail | Narendra S | narendra.s@netenrich.com | Netenrich | subject: Netenrich + Backend APIs = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+- 765 | sent via Gmail | Naresh Kumar | naresh@ncsus.net | National Computer Systems | subject: National Computer Systems + Backend Engineering = Reliable Delivery | no attachment | text/plain | included production/API contribution sentence | 90-second gap batch
+
+## 2026-08-21 queue continuation 766-800
+
+- 766 | sent via Gmail | Natarajan Perumal | natarajan@uniquehire.in | UniqueHire Consulting LLP | subject: UniqueHire + Backend Engineering = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 767 | sent via Gmail | Naveen Kumar | naveen@primusglobal.com | PRIMUS Global Technologies | subject: Primus Global + Backend Engineering = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 768 | sent via Gmail | Naveen Pillai | naveen@crayondata.com | Crayon Data | subject: Crayon Data + Python APIs = Better Data Products | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 769 | sent via Gmail | Naveen Shankar | naveen.shankar@estuate.com | Estuate | subject: Estuate + Backend APIs = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 770 | sent via Gmail | Naveen Sounderrajan | naveen.s@bourntec.com | Bourntec Solutions Inc | subject: Bourntec + Backend Engineering = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 771 | sent via Gmail | Naveen Wadhawan | naveen@dynpro.com | DynPro | subject: DynPro + Backend Engineering = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 772 | sent via Gmail | Navleen Bhatia | navleen.bhatia@tcs.com | Tata Digital | subject: Tata Digital + Backend APIs = Reliable Product Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 773 | sent via Gmail | Navneet Murthy | navneet@inventechinfo.com | Inventech Info Solutions | subject: Inventech + Backend Engineering = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 774 | sent via Gmail | Nawaaz Hafeez | nawaaz.hafeez@ivlglobal.com | InfoVision Labs | subject: InfoVision Labs + Backend APIs = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 775 | sent via Gmail | Nayaki Naidu | nayaki@numerictech.com | Numeric Technologies | subject: Numeric Technologies + Backend APIs = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 776 | sent via Gmail | Nayana Martin | nayanam@aditiconsulting.com | Aditi Consulting | subject: Aditi Consulting + Full Stack = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 777 | sent via Gmail | Nayazuddin Meer | nayazuddin.meer@slkgroup.com | VFI SLK | subject: VFI SLK + Backend Engineering = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 778 | sent via Gmail | Neelakanteshwar Rao | neel.rao@serole.com | Serole Technologies | subject: Serole + Backend APIs = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 779 | sent via Gmail | Neelam Sharma | neelam.sharma@provartesting.com | Provar Testing | subject: Provar Testing + Backend APIs = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 780 | sent via Gmail | Neelima Vaka | neelima.vaka@minfytech.com | Minfy | subject: Minfy + Backend APIs = Reliable Cloud Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 781 | sent via Gmail | Neena Nagle | nagle@valethi.com | Valethi Technologies | subject: Valethi + Backend Engineering = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 782 | sent via Gmail | Neena Rajdev | neena@fintinc.com | Fint Solutions | subject: Fint Solutions + Backend APIs = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 783 | sent via Gmail | Neeraj Sharma | neerajsharma@cavistatech.com | Cavista | subject: Cavista + Backend APIs = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 784 | sent via Gmail | Neeraj Sharma | neeraj@fourkites.com | FourKites | subject: FourKites + Backend APIs = Reliable Logistics Platforms | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 785 | sent via Gmail | Neetu Choudhary | neetu.choudhary@idsnext.com | IDS NEXT Business Solutions | subject: IDS NEXT + Backend APIs = Reliable Product Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 786 | sent via Gmail | Neha Bhandari | neha.bhandari@vmock.com | VMock | subject: VMock + Backend APIs = Reliable Career Platforms | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 787 | sent via Gmail | Neha Bhise | nbhise@tracelink.com | TraceLink | subject: TraceLink + Backend APIs = Reliable Platforms | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 788 | sent via Gmail | Neha Bhushan | neha@thinkbridge.com | thinkbridge | subject: thinkbridge + Full Stack = Reliable Product Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 789 | sent via Gmail | Neha Chaudhary | neha.c@greyorange.com | GreyOrange | subject: GreyOrange + Backend APIs = Reliable Automation Platforms | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 790 | sent via Gmail | Neha Chaughule | neha@aistechnolabs.com | AIS Technolabs | subject: AIS Technolabs + Full Stack = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 791 | sent via Gmail | Neha Choudhary | nchoudhary@tractionondemand.com | Trineo | subject: Trineo + Backend APIs = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 792 | sent via Gmail | Neha Kohli | neha.kohli@benq.com | BenQ India | subject: BenQ India + Backend APIs = Reliable Product Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 793 | sent via Gmail | Neha Mishra | neha@i2k2.com | i2k2 Networks | subject: i2k2 Networks + Backend APIs = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 794 | sent via Gmail | Neha Sahi | neha@trell.in | Trell | subject: Trell + Backend APIs = Reliable Consumer Platforms | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 795 | sent via Gmail | Neha Sharma | nehasharma@freeskout.com | freeskout | subject: freeskout + Backend APIs = Reliable Creator Platforms | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 796 | sent via Gmail | Neha Sharma | neha.sharma@infodartmail.com | Infodart Technologies | subject: Infodart Technologies + Backend APIs = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 797 | sent via Gmail | Neha Sharna | neha.sharma@cavisson.com | Cavisson Systems | subject: Cavisson Systems + Backend APIs = Reliable Platforms | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 798 | sent via Gmail | Neha Thakker | neha@multiqos.com | MultiQoS Technologies | subject: MultiQoS + Backend APIs = Reliable Product Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 799 | sent via Gmail | Neha Velankar | neha@dynalogindia.com | Dynalog India | subject: Dynalog India + Backend APIs = Reliable Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch
+- 800 | sent via Gmail | Neville Postwalla | neville.postwalla@harbingergroup.com | Harbinger Group | subject: Harbinger Group + Backend APIs = Reliable Product Delivery | no attachment | text/plain | included portfolio/LinkedIn/GitHub | 90-second gap batch

@@ -1,16 +1,24 @@
-const CACHE_NAME = 'spendwise-shell-v4';
-const SHELL_ASSETS = [
+const CACHE_NAME = 'spendwise-shell-v5';
+const NEVER_CACHE_PATHS = [
   '/',
-  '/dashboard/',
+  '/signup/',
+  '/signup/verify/',
+  '/login/',
+  '/logout/',
+  '/forgot-password/',
+  '/forgot-password/verify/',
+  '/forgot-password/reset/',
 ];
 
+const isNeverCacheRequest = (request) => {
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return false;
+  if (request.mode === 'navigate') return true;
+  return NEVER_CACHE_PATHS.some((path) => url.pathname === path);
+};
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(SHELL_ASSETS))
-      .then(() => self.skipWaiting())
-      .catch(() => undefined)
-  );
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', (event) => {
@@ -29,13 +37,21 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
+  if (isNeverCacheRequest(request)) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   event.respondWith(
     fetch(request)
       .then((response) => {
+        if (!response || !response.ok || response.type !== 'basic') {
+          return response;
+        }
         const clone = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         return response;
       })
-      .catch(() => caches.match(request).then((cached) => cached || caches.match('/dashboard/')))
+      .catch(() => caches.match(request))
   );
 });

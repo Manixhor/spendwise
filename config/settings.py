@@ -143,6 +143,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'login',
 ]
 
@@ -153,6 +158,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'login.middleware.PageViewMiddleware',
@@ -184,6 +190,44 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/login/'
+SITE_ID = int(os.getenv('SITE_ID', '1'))
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*']
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_ADAPTER = 'login.adapters.SpendWiseSocialAccountAdapter'
+SOCIALACCOUNT_LOGIN_ON_GET = False
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'VERIFIED_EMAIL': True,
+        'EMAIL_AUTHENTICATION': True,
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+            'prompt': 'select_account',
+        },
+        'APPS': [
+            {
+                'name': 'Google',
+                'client_id': os.getenv('GOOGLE_CLIENT_ID', '').strip(),
+                'secret': os.getenv('GOOGLE_CLIENT_SECRET', '').strip(),
+                'key': '',
+            },
+        ],
+    }
+}
 
 
 # Database

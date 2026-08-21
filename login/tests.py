@@ -43,7 +43,7 @@ class SignupOtpTests(TestCase):
             first_name='Verify',
             is_active=False,
         )
-        profile = UserProfile.objects.create(user=user)
+        profile = UserProfile.objects.get(user=user)
         code = '123456'
         profile.email_verification_code = code
         profile.email_verification_sent_at = timezone.now()
@@ -72,10 +72,9 @@ class LoginTests(TestCase):
             password='StrongPass123!',
             first_name='Login',
         )
-        self.profile = UserProfile.objects.create(
-            user=self.user,
-            email_is_verified=True,
-        )
+        self.profile = UserProfile.objects.get(user=self.user)
+        self.profile.email_is_verified = True
+        self.profile.save(update_fields=['email_is_verified'])
 
     def test_password_login_still_works(self):
         response = self.client.post(
@@ -87,6 +86,22 @@ class LoginTests(TestCase):
         )
 
         self.assertRedirects(response, reverse('dashboard'))
+
+
+class PwaCsrfCacheTests(TestCase):
+    def test_auth_pages_are_never_cached(self):
+        for route_name in ('signup', 'signup_verify', 'login'):
+            response = self.client.get(reverse(route_name))
+            self.assertIn('no-store', response.headers.get('Cache-Control', ''))
+
+    def test_service_worker_does_not_cache_auth_navigations(self):
+        response = self.client.get(reverse('service_worker'))
+        content = response.content.decode()
+
+        self.assertContains(response, "spendwise-shell-v5")
+        self.assertIn("request.mode === 'navigate'", content)
+        self.assertIn("event.respondWith(fetch(request));", content)
+        self.assertNotIn("cache.addAll(SHELL_ASSETS)", content)
 
 
 class MonthlyAnalysisMailAdminTests(TestCase):
@@ -134,11 +149,10 @@ class DashboardInsightsTests(TestCase):
             password='secret123',
             first_name='Mani',
         )
-        self.profile = UserProfile.objects.create(
-            user=self.user,
-            salary=Decimal('10000.00'),
-            target_savings=Decimal('6000.00'),
-        )
+        self.profile = UserProfile.objects.get(user=self.user)
+        self.profile.salary = Decimal('10000.00')
+        self.profile.target_savings = Decimal('6000.00')
+        self.profile.save(update_fields=['salary', 'target_savings'])
         self.client.force_login(self.user)
 
     def test_dashboard_context_uses_live_category_breakdown_for_insights(self):
@@ -367,11 +381,10 @@ class SavingsGoalAllocationTests(TestCase):
             password='secret123',
             first_name='Goalie',
         )
-        self.profile = UserProfile.objects.create(
-            user=self.user,
-            salary=Decimal('50000.00'),
-            target_savings=Decimal('10000.00'),
-        )
+        self.profile = UserProfile.objects.get(user=self.user)
+        self.profile.salary = Decimal('50000.00')
+        self.profile.target_savings = Decimal('10000.00')
+        self.profile.save(update_fields=['salary', 'target_savings'])
         self.client.force_login(self.user)
 
     def test_completed_auto_allocated_goal_is_capped_and_frozen(self):
@@ -439,11 +452,10 @@ class MonthlyAnalysisTests(TestCase):
             password='secret123',
             first_name='Monthy',
         )
-        self.profile = UserProfile.objects.create(
-            user=self.user,
-            salary=Decimal('12000.00'),
-            target_savings=Decimal('5000.00'),
-        )
+        self.profile = UserProfile.objects.get(user=self.user)
+        self.profile.salary = Decimal('12000.00')
+        self.profile.target_savings = Decimal('5000.00')
+        self.profile.save(update_fields=['salary', 'target_savings'])
         self.client.force_login(self.user)
 
     def test_monthly_page_uses_real_month_data(self):

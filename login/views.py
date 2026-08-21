@@ -22,6 +22,7 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.html import strip_tags
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
@@ -1383,6 +1384,7 @@ def _send_signup_otp_email(user: User, code: str) -> None:
 
 
 # ── Sign Up ───────────────────────────────────────────────
+@never_cache
 @ensure_csrf_cookie
 def signup(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
@@ -1454,7 +1456,7 @@ def signup(request: HttpRequest) -> HttpResponse:
                 last_name=" ".join(name.split()[1:]) if len(name.split()) > 1 else "",
                 is_active=False,
             )
-            profile = UserProfile.objects.create(user=user)
+            profile, _ = UserProfile.objects.get_or_create(user=user)
 
         code = _issue_signup_otp(profile)
         request.session["pending_signup_user_id"] = user.id
@@ -1472,6 +1474,7 @@ def signup(request: HttpRequest) -> HttpResponse:
     return render(request, "login/signup.html")
 
 
+@never_cache
 @ensure_csrf_cookie
 def signup_verify(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
@@ -1525,7 +1528,7 @@ def signup_verify(request: HttpRequest) -> HttpResponse:
             user.is_active = True
             user.save(update_fields=["is_active"])
             request.session.pop("pending_signup_user_id", None)
-            login(request, user)
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             messages.success(
                 request,
                 f"Welcome to SpendWise, {user.first_name}! Your account is verified.",
@@ -1575,6 +1578,7 @@ def _send_password_reset_otp_email(user: User, code: str) -> None:
     email.send(fail_silently=False)
 
 
+@never_cache
 @ensure_csrf_cookie
 def forgot_password(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
@@ -1616,6 +1620,7 @@ def forgot_password(request: HttpRequest) -> HttpResponse:
     return render(request, "login/forgot_password.html")
 
 
+@never_cache
 @ensure_csrf_cookie
 def forgot_password_verify(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
@@ -1668,6 +1673,7 @@ def forgot_password_verify(request: HttpRequest) -> HttpResponse:
     )
 
 
+@never_cache
 @ensure_csrf_cookie
 def forgot_password_reset(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
@@ -1716,6 +1722,7 @@ def forgot_password_reset(request: HttpRequest) -> HttpResponse:
 
 
 # ── Login ─────────────────────────────────────────────────
+@never_cache
 @ensure_csrf_cookie
 def login_view(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:

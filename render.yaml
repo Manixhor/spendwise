@@ -53,6 +53,10 @@ services:
         value: "True"
       - key: SMTP_USE_SSL
         value: "False"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
 
   - type: cron
     name: spendwise-monthly-analysis-mail

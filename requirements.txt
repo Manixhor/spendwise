@@ -4,6 +4,7 @@ cffi==2.0.0
 charset-normalizer==3.4.7
 cryptography==49.0.0
 Django==6.0.4
+django-allauth==65.19.1
 django-unfold==0.92.0
 gunicorn==26.0.0
 idna==3.18

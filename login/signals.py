@@ -2,8 +2,10 @@ import os
 
 from django.apps import apps
 from django.contrib.auth import get_user_model
-from django.db.models.signals import post_migrate
+from django.db.models.signals import post_migrate, post_save
 from django.dispatch import receiver
+
+from .models import UserProfile
 
 
 def _env_enabled(name: str) -> bool:
@@ -58,3 +60,9 @@ def ensure_deploy_superuser(sender, **kwargs):
     print(
         f"Auto superuser {'created' if created else 'updated'} for username='{username}'."
     )
+
+
+@receiver(post_save, sender=get_user_model())
+def ensure_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.get_or_create(user=instance)
