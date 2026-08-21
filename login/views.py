@@ -33,7 +33,20 @@ from .spending_coach import (
     fetch_motivation,
     get_spending_message,
 )
-from .templatetags.currency_filters import indian_currency
+from .templatetags.currency_filters import indian_currency, _format_with_symbol
+
+
+def _fmt_currency(value, profile, show_plus=False):
+    """Format a value using the user's preferred currency."""
+    code = getattr(profile, 'currency', 'inr') or 'inr'
+    symbol = UserProfile.CURRENCY_SYMBOLS.get(code, '₹')
+    use_indian = code == 'inr'
+    return _format_with_symbol(value, symbol=symbol, show_plus=show_plus, use_indian_commas=use_indian)
+
+
+def _fmt_currency_short(value, profile):
+    """Format with symbol only, no Indian comma grouping for USD."""
+    return _fmt_currency(value, profile)
 
 
 # ── Smart Savings Motivation ──────────────────────────────
@@ -531,10 +544,10 @@ def _chatbot_savings_message(profile, stats, previous_variant=None):
         ]
     else:
         spend_ratio = spent / salary
-        remaining_text = indian_currency(max(saved, Decimal("0")))
+        remaining_text = _fmt_currency(max(saved, Decimal("0")), profile)
 
         if saved < 0:
-            over_text = indian_currency(abs(saved))
+            over_text = _fmt_currency(abs(saved), profile)
             choices = [
                 f"You are −{over_text} over budget. No judgement — noticing it gives you a way back.",
                 f"The balance is −{over_text}. Pause, reset, and let the next small choice help.",
@@ -957,7 +970,7 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
             else 0
         )
         wealth_title = priority_goal.name
-        wealth_amount_label = f"₹{priority_goal.target_amount:,.2f} target"
+        wealth_amount_label = f"{_fmt_currency(priority_goal.target_amount, profile)} target"
         wealth_progress_pct = goal_progress_pct
         wealth_sub = f"{goal_progress_pct:.1f}% of your goal reached" if priority_goal.target_amount > 0 else "Set a target"
         wealth_badge = "HIGH PRIORITY"
@@ -973,7 +986,7 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
             else 0
         )
         wealth_title = "Wealth"
-        wealth_amount_label = f"₹{target:,.2f} target" if target > 0 else "No goal set"
+        wealth_amount_label = f"{_fmt_currency(target, profile)} target" if target > 0 else "No goal set"
         wealth_sub = (
             f"{wealth_progress_pct:.1f}% of your savings goal reached"
             if target > 0
@@ -1046,8 +1059,8 @@ def _build_monthly_analysis_email_context(user, profile, analysis: dict) -> dict
     weekly_rows = [
         {
             "label": week["range_label"],
-            "expense": indian_currency(week["expense"]),
-            "income": indian_currency(week["income"]),
+            "expense": _fmt_currency(week["expense"], profile),
+            "income": _fmt_currency(week["income"], profile),
             "expense_pct": round(float(week["expense"]) / max_weekly * 100, 1) if max_weekly else 0,
             "income_pct": round(float(week["income"]) / max_weekly * 100, 1) if max_weekly else 0,
             "has_expense": float(week["expense"]) > 0,
@@ -1059,14 +1072,14 @@ def _build_monthly_analysis_email_context(user, profile, analysis: dict) -> dict
         {
             "label": day["label"],
             "summary": day["summary"],
-            "amount": indian_currency(day["amount"]),
+            "amount": _fmt_currency(day["amount"], profile),
         }
         for day in analysis["top_spending_days"]
     ]
     categories = [
         {
             "label": category["label"],
-            "amount": indian_currency(category["amount"]),
+            "amount": _fmt_currency(category["amount"], profile),
             "share_pct": category["share_pct"],
             "color": category.get("color", "#e2e8f0"),
             "icon": CATEGORY_ICONS.get(category.get("key", ""), "📦"),
@@ -1091,13 +1104,13 @@ def _build_monthly_analysis_email_context(user, profile, analysis: dict) -> dict
         "selected_month_label": analysis["selected_month_label"],
         "month_period_label": analysis["month_period_label"],
         "account_subtitle": analysis["account_subtitle"],
-        "total_income": indian_currency(analysis["total_income"]),
-        "salary": indian_currency(profile.salary) if profile.salary else "Not set",
-        "excess_income": indian_currency(analysis["excess_income"]),
+        "total_income": _fmt_currency(analysis["total_income"], profile),
+        "salary": _fmt_currency(profile.salary, profile) if profile.salary else "Not set",
+        "excess_income": _fmt_currency(analysis["excess_income"], profile),
         "has_excess_income": analysis["has_excess_income"],
-        "total_expense": indian_currency(analysis["total_expense"]),
-        "total_saved": indian_currency(analysis["total_saved"], True),
-        "total_balance": indian_currency(analysis["total_balance"]),
+        "total_expense": _fmt_currency(analysis["total_expense"], profile),
+        "total_saved": _fmt_currency(analysis["total_saved"], profile, show_plus=True),
+        "total_balance": _fmt_currency(analysis["total_balance"], profile),
         "balance_change_pct": analysis["balance_change_pct"],
         "balance_change_positive": analysis["balance_change_positive"],
         "spend_ratio_pct": analysis["spend_ratio_pct"],
@@ -1395,6 +1408,9 @@ def signup(request: HttpRequest) -> HttpResponse:
         email = request.POST.get("email", "").strip().lower()
         password = request.POST.get("password", "")
         confirm_password = request.POST.get("confirm_password", "")
+        currency = request.POST.get("currency", "inr")
+        if currency not in ("inr", "usd"):
+            currency = "inr"
         existing_user = User.objects.filter(email=email).first() if email else None
 
         errors = {}
@@ -1446,6 +1462,8 @@ def signup(request: HttpRequest) -> HttpResponse:
                 ]
             )
             profile, _ = UserProfile.objects.get_or_create(user=user)
+            profile.currency = currency
+            profile.save(update_fields=["currency"])
         else:
             username = email
             user = User.objects.create_user(
@@ -1457,6 +1475,8 @@ def signup(request: HttpRequest) -> HttpResponse:
                 is_active=False,
             )
             profile, _ = UserProfile.objects.get_or_create(user=user)
+            profile.currency = currency
+            profile.save(update_fields=["currency"])
 
         code = _issue_signup_otp(profile)
         request.session["pending_signup_user_id"] = user.id
@@ -2549,17 +2569,21 @@ def api_export_monthly_pdf(request: HttpRequest) -> HttpResponse:
         total_income = analysis["total_income"]
     total_saved = total_income - total_expense
 
+    _curr_sym = profile.currency_symbol
+    _curr_label = '$' if profile.currency == 'usd' else 'Rs.'
+
     def pdf_text(value) -> str:
         return (
             str(value)
             .replace("\\", "\\\\")
             .replace("(", "\\(")
             .replace(")", "\\)")
-            .replace("₹", "Rs.")
+            .replace("₹", _curr_label)
+            .replace("$", _curr_label)
         )
 
     def money_pdf(value):
-        return f"Rs. {Decimal(str(value)):,.2f}"
+        return f"{_curr_label} {Decimal(str(value)):,.2f}"
 
     page_height = 792
     top_y = 760
@@ -2983,6 +3007,29 @@ def api_mark_lend_paid(request: HttpRequest, txn_id: int) -> JsonResponse:
         return JsonResponse({"error": str(e)}, status=500)
 
 
+# ── API: Set Currency ─────────────────────────────────────
+@login_required(login_url="/login/")
+@require_POST
+def api_set_currency(request: HttpRequest) -> JsonResponse:
+    try:
+        data = json.loads(request.body)
+        currency = data.get("currency", "inr")
+        if currency not in ("inr", "usd"):
+            return JsonResponse({"error": "Invalid currency. Choose inr or usd."}, status=400)
+
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        profile.currency = currency
+        profile.save(update_fields=["currency"])
+
+        return JsonResponse({
+            "success": True,
+            "currency": profile.currency,
+            "currency_symbol": profile.currency_symbol,
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
 # ── API: Set Salary ───────────────────────────────────────
 @login_required(login_url="/login/")
 @require_POST
@@ -3000,6 +3047,10 @@ def api_set_salary(request: HttpRequest) -> JsonResponse:
 
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         profile.salary = salary
+        # Accept currency update if provided
+        currency = data.get("currency")
+        if currency in ("inr", "usd"):
+            profile.currency = currency
         profile.save()
         stats = _dashboard_stats(request.user, profile)
 

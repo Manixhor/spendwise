@@ -23,6 +23,7 @@ from .views import (
     api_mark_lend_paid,
     api_update_transaction,
     api_set_salary,
+    api_set_currency,
     api_excess_income,
     api_set_target_savings,
     api_dashboard_summary,
@@ -76,7 +77,8 @@ urlpatterns = [
         api_mark_lend_paid,
         name="api_mark_lend_paid",
     ),
-    # Salary / target
+    # Salary / target / currency
+    path("api/currency/", api_set_currency, name="api_set_currency"),
     path("api/salary/", api_set_salary, name="api_set_salary"),
     path("api/excess-income/", api_excess_income, name="api_excess_income"),
     path("api/target-savings/", api_set_target_savings, name="api_set_target_savings"),

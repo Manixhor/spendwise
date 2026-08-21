@@ -14,6 +14,8 @@
   const input = document.getElementById('expenseChatbotInput');
   const sendButton = document.getElementById('expenseChatbotSend');
   const currency = document.getElementById('expenseChatbotCurrency');
+  const CURR_SYMBOL = currency?.textContent?.trim() || '₹';
+  const CURR_LOCALE = CURR_SYMBOL === '$' ? 'en-US' : 'en-IN';
   const orb = document.getElementById('expenseChatbotOrb');
 
   let step = 'amount';
@@ -203,7 +205,7 @@
 
       addedExpense = true;
       step = 'complete';
-      addMessage(`Thank you. ₹${pendingAmount.toLocaleString('en-IN')} for ${title || 'Daily expense'} is added for today.`);
+      addMessage(`Thank you. ${CURR_SYMBOL}${pendingAmount.toLocaleString(CURR_LOCALE)} for ${title || 'Daily expense'} is added for today.`);
       addMessage(data.saving_message || 'Tracked money behaves better than mystery money. Nice catch.');
       input.value = '';
       input.placeholder = 'Choose an option below';
@@ -230,17 +232,18 @@
     if (!value || isSaving) return;
 
     if (step === 'amount') {
-      const match = value.replace(/,/g, '').match(/(?:₹|rs\.?\s*)?(\d+(?:\.\d{1,2})?)/i);
+      const symPattern = CURR_SYMBOL === '$' ? '\\$' : '₹';
+      const match = value.replace(/,/g, '').match(new RegExp(`(?:${symPattern}|rs\.?\\s*)?(\\d+(?:\\.\\d{1,2})?)`, 'i'));
       const amount = match ? Number(match[1]) : 0;
       if (!amount || amount <= 0) {
         addMessage(value, 'user');
-        addMessage('Give me an amount greater than zero, for example ₹250.');
+        addMessage(`Give me an amount greater than zero, for example ${CURR_SYMBOL}250.`);
         return;
       }
 
       pendingAmount = amount;
       orb?.classList.add('is-hidden');
-      addMessage(`₹${amount.toLocaleString('en-IN')}`, 'user');
+      addMessage(`${CURR_SYMBOL}${amount.toLocaleString(CURR_LOCALE)}`, 'user');
       const possibleTitle = value.replace(match[0], '').trim();
       input.value = '';
       if (possibleTitle) {

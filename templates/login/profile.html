@@ -106,6 +106,31 @@
 
     </form>
 
+    <!-- Currency section -->
+    <div class="card pf-fields-card">
+      <h2 class="pf-section-title">Currency</h2>
+      <p class="pf-hint" style="margin-top:-10px;margin-bottom:16px;">Choose how amounts are displayed across SpendWise</p>
+      <div class="pf-currency-picker" id="currencyPicker">
+        <button type="button" class="pf-currency-card {% if profile.currency != 'usd' %}is-active{% endif %}" data-currency="inr">
+          <span class="pf-currency-icon">₹</span>
+          <span class="pf-currency-name">Indian Rupee</span>
+          <span class="pf-currency-code">INR</span>
+          <span class="pf-currency-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </span>
+        </button>
+        <button type="button" class="pf-currency-card {% if profile.currency == 'usd' %}is-active{% endif %}" data-currency="usd">
+          <span class="pf-currency-icon">$</span>
+          <span class="pf-currency-name">US Dollar</span>
+          <span class="pf-currency-code">USD</span>
+          <span class="pf-currency-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </span>
+        </button>
+      </div>
+      <p class="pf-currency-status" id="currencyStatus"></p>
+    </div>
+
     <!-- Salary section -->
     <div class="card pf-fields-card">
       <h2 class="pf-section-title">Financial Settings</h2>
@@ -114,7 +139,7 @@
         <div class="pf-salary-info">
           <label class="modal-field-label">Monthly Salary</label>
           <p class="pf-salary-display" id="salaryDisplay">
-            {% if profile.salary %}₹{{ profile.salary|floatformat:2 }}{% else %}Not set{% endif %}
+            {% if profile.salary %}<span data-curr>{{ profile.currency_symbol }}</span>{{ profile.salary|floatformat:2 }}{% else %}Not set{% endif %}
           </p>
           <p class="pf-hint">Used to calculate your monthly savings and spending percentage</p>
         </div>
@@ -135,10 +160,9 @@
     <div class="modal-header">
       <h2 class="modal-title" id="modalTitle">Set Your Salary</h2>
       <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
-    </div>
-    <p class="modal-sub">Enter your monthly salary to track your budget accurately.</p>
+    </div>      <p class="modal-sub">Enter your monthly salary to track your budget accurately.</p>
     <div class="modal-field-wrap">
-      <span class="modal-currency">₹</span>
+      <span class="modal-currency" id="modalCurrencySymbol" data-curr>{{ profile.currency_symbol }}</span>
       <input type="number" id="salaryInput" class="modal-input"
              placeholder="e.g. 5000" min="0" step="0.01"
              value="{{ profile.salary|default:'' }}" />
@@ -215,6 +239,76 @@
   });
   syncProfileVisualViewport();
 
+  const currencySymbol = document.getElementById('modalCurrencySymbol');
+  const currencyMap = { inr: '₹', usd: '$' };
+
+  function csrfToken() {
+    const match = document.cookie.split('; ').find(c => c.startsWith('csrftoken='));
+    return match ? decodeURIComponent(match.split('=').slice(1).join('=')) : '';
+  }
+
+  // ── Currency Picker ──────────────────────────────────────
+  const currencyPicker = document.getElementById('currencyPicker');
+  const currencyStatus = document.getElementById('currencyStatus');
+  let currentCurrency = (function() { try { return localStorage.getItem('spendwise-currency') || '{{ profile.currency|default:"inr" }}'; } catch { return '{{ profile.currency|default:"inr" }}'; } })();
+
+  if (currencyPicker) {
+    currencyPicker.querySelectorAll('.pf-currency-card').forEach(card => {
+      card.addEventListener('click', async () => {
+        const newCurrency = card.dataset.currency;
+        if (newCurrency === currentCurrency) return;
+
+        const SYM = { inr: '₹', usd: '$' };
+        const newSymbol = SYM[newCurrency] || '₹';
+
+        // Optimistic UI — update everything immediately via shared function
+        currencyPicker.querySelectorAll('.pf-currency-card').forEach(c => c.classList.remove('is-active'));
+        card.classList.add('is-active');
+        if (typeof setSpendWiseCurrency === 'function') {
+          setSpendWiseCurrency(newCurrency);
+        }
+        currentCurrency = newCurrency;
+
+        if (currencyStatus) {
+          currencyStatus.textContent = 'Saving…';
+          currencyStatus.style.color = 'var(--muted)';
+        }
+
+        try {
+          const res = await fetch('/api/currency/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken(),
+            },
+            body: JSON.stringify({ currency: newCurrency }),
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            if (currencyStatus) {
+              currencyStatus.textContent = `Currency set to ${data.currency_symbol} ${data.currency.toUpperCase()}`;
+              currencyStatus.style.color = '#16a34a';
+            }
+          } else {
+            throw new Error(data.error || 'Failed');
+          }
+        } catch (err) {
+          // Revert
+          const oldCurrency = newCurrency === 'usd' ? 'inr' : 'usd';
+          if (typeof setSpendWiseCurrency === 'function') setSpendWiseCurrency(oldCurrency);
+          currentCurrency = oldCurrency;
+          currencyPicker.querySelectorAll('.pf-currency-card').forEach(c => {
+            c.classList.toggle('is-active', c.dataset.currency === currentCurrency);
+          });
+          if (currencyStatus) {
+            currencyStatus.textContent = 'Failed to update. Try again.';
+            currencyStatus.style.color = '#dc2626';
+          }
+        }
+      });
+    });
+  }
+
   function openModal()  {
     if (!modal || !input) return;
     modal.classList.add('active');
@@ -267,7 +361,9 @@
         // Update salary display
         const salaryDisplay = document.getElementById('salaryDisplay');
         if (salaryDisplay) {
-          salaryDisplay.textContent = '₹' + parseFloat(data.salary).toLocaleString('en-IN', {minimumFractionDigits: 2});
+          const currSymbol = currencyMap[currentCurrency] || '₹';
+          const locale = currentCurrency === 'usd' ? 'en-US' : 'en-IN';
+          salaryDisplay.textContent = currSymbol + parseFloat(data.salary).toLocaleString(locale, {minimumFractionDigits: 2});
         }
         if (openBtn) openBtn.textContent = 'Edit Salary';
         closeModal();
@@ -284,5 +380,6 @@
   }
 </script>
 {% include "login/includes/expense_chatbot.html" %}
+<script src="{% static 'login/currency_sync.js' %}" defer></script>
 </body>
 </html>

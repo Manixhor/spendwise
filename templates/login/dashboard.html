@@ -33,12 +33,12 @@
     <div class="card savings-card">
       <div class="savings-content">
         <span class="card-label">Savings</span>
-        <p class="savings-amount{% if total_saved < 0 %} is-negative{% elif total_saved > 0 %} is-positive{% endif %}" id="savingsAmount">{{ total_saved|indian_currency:True }}</p>
-        <p class="savings-sub{% if total_saved < 0 %} is-negative{% elif total_saved > 0 %} is-positive{% endif %}" id="savingsSubAmount">{{ total_saved|indian_currency }}</p>
+        <p class="savings-amount{% if total_saved < 0 %} is-negative{% elif total_saved > 0 %} is-positive{% endif %}" id="savingsAmount" data-amount="{{ total_saved }}" data-curr>{{ total_saved|currency_plus:profile.currency }}</p>
+        <p class="savings-sub{% if total_saved < 0 %} is-negative{% elif total_saved > 0 %} is-positive{% endif %}" id="savingsSubAmount" data-amount="{{ total_saved }}" data-curr>{{ total_saved|currency:profile.currency }}</p>
         <p class="savings-desc">
           {% if profile.salary %}
             {% if has_excess_income %}
-              Salary (₹{{ profile.salary|floatformat:0 }}) + Excess Income (₹{{ excess_income|floatformat:0 }}) − Expenses
+              Salary ({{ profile.salary|currency_short:profile.currency }}) + Excess Income ({{ excess_income|currency_short:profile.currency }}) − Expenses
             {% else %}
               Salary − Expenses
             {% endif %}
@@ -80,7 +80,7 @@
         <div class="insights-body">
           <div class="insight-stock-copy">
             <span class="ig-title" id="insightStockTitle">{{ insight_stock.title }}</span>
-            <span class="insight-stock-amount" id="insightStockAmount">{{ insight_stock.amount|indian_currency }}</span>
+            <span class="insight-stock-amount" id="insightStockAmount" data-amount="{{ insight_stock.amount }}" data-curr>{{ insight_stock.amount|currency:profile.currency }}</span>
             <span class="insight-stock-change {% if insight_stock.is_up %}up{% else %}down{% endif %}" id="insightStockChange">
               {% if insight_stock.is_up %}↑{% else %}↓{% endif %} {{ insight_stock.change_pct|floatformat:1 }}%
             </span>
@@ -145,7 +145,7 @@
             {% elif txn.category == 'shopping' %}🛍️
             {% elif txn.category == 'food' %}🍽️
             {% elif txn.category == 'utilities' %}💡
-            {% elif txn.category == 'lend' %}₹
+            {% elif txn.category == 'lend' %}<span data-curr>₹</span>
             {% else %}📦{% endif %}
           </div>
           <div class="txn-info">
@@ -155,7 +155,7 @@
             </span>
           </div>
           <span class="txn-amt {% if txn.txn_type == 'expense' %}neg{% endif %}{% if txn.category == 'lend' and txn.is_settled %} settled{% endif %}">
-            {% if txn.txn_type == 'income' %}+{% else %}−{% endif %}{{ txn.amount|indian_currency }}
+            {% if txn.txn_type == 'income' %}+{% else %}−{% endif %}<span data-amount="{{ txn.amount }}" data-curr>{{ txn.amount|currency:profile.currency }}</span>
           </span>
           <div class="txn-actions">
             {% if txn.category == 'lend' and not txn.is_settled %}
@@ -204,9 +204,27 @@
     </div>
     <p class="form-sub" style="margin-bottom: 20px;">Help us track your savings by setting your monthly income.</p>
 
+    <label class="modal-field-label">Currency</label>
+    <div class="pf-currency-picker" id="setupCurrencyPicker" style="margin-bottom:18px;">
+      <button type="button" class="pf-currency-card is-active" data-currency="inr">
+        <span class="pf-currency-icon">₹</span>
+        <span class="pf-currency-name">INR</span>
+        <span class="pf-currency-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </span>
+      </button>
+      <button type="button" class="pf-currency-card" data-currency="usd">
+        <span class="pf-currency-icon">$</span>
+        <span class="pf-currency-name">USD</span>
+        <span class="pf-currency-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </span>
+      </button>
+    </div>
+
     <label class="modal-field-label" for="salaryInput">Monthly Salary</label>
     <div class="modal-field-wrap">
-      <span class="modal-currency">₹</span>
+      <span class="modal-currency" data-curr>₹</span>
       <input type="number" id="salaryInput" class="modal-input" placeholder="0.00" min="1" step="0.01" />
     </div>
 
@@ -234,7 +252,7 @@
 
     <label class="modal-field-label" for="txnAmount">Amount</label>
     <div class="modal-field-wrap">
-      <span class="modal-currency">₹</span>
+      <span class="modal-currency" data-curr>₹</span>
       <input type="number" id="txnAmount" class="modal-input" placeholder="0.00" min="1" step="0.01" enterkeyhint="next" />
     </div>
 
@@ -265,7 +283,7 @@
 
     <label class="modal-field-label" for="excessIncomeAmount">Amount</label>
     <div class="modal-field-wrap">
-      <span class="modal-currency">₹</span>
+      <span class="modal-currency" data-curr>₹</span>
       <input type="number" id="excessIncomeAmount" class="modal-input" placeholder="0.00" min="1" step="0.01" value="{{ excess_income|default:'' }}" />
     </div>
 
@@ -458,10 +476,20 @@
     }
   }
 
+  // Initialize from localStorage (currency_sync.js may override)
+  window.USER_CURRENCY = (function() { try { return localStorage.getItem('spendwise-currency') || '{{ profile.currency|default:"inr" }}'; } catch { return '{{ profile.currency|default:"inr" }}'; } })();
+  window.CURRENCY_SYMBOLS_JS = { inr: '₹', usd: '$' };
+  window.CURRENCY_LOCALES_JS = { inr: 'en-IN', usd: 'en-US' };
+  const USER_CURRENCY = window.USER_CURRENCY;
+  const CURRENCY_SYMBOLS_JS = window.CURRENCY_SYMBOLS_JS;
+  const CURRENCY_LOCALES_JS = window.CURRENCY_LOCALES_JS;
+
   function formatCurrency(value, { showPlus = false } = {}) {
     const number = Number(value || 0);
+    const sym = CURRENCY_SYMBOLS_JS[USER_CURRENCY] || '₹';
+    const locale = CURRENCY_LOCALES_JS[USER_CURRENCY] || 'en-IN';
     const prefix = number < 0 ? '−' : (showPlus && number > 0 ? '+' : '');
-    return `${prefix}₹${Math.abs(number).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `${prefix}${sym}${Math.abs(number).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
   if ('serviceWorker' in navigator) {
@@ -518,6 +546,22 @@ try {
   const salarySkipBtn = document.getElementById('salarySkipBtn');
   const salaryInput = document.getElementById('salaryInput');
   const salaryError = document.getElementById('salaryError');
+  const setupCurrencyPicker = document.getElementById('setupCurrencyPicker');
+  let setupCurrency = 'inr';
+
+  if (setupCurrencyPicker) {
+    setupCurrencyPicker.querySelectorAll('.pf-currency-card').forEach(card => {
+      card.addEventListener('click', () => {
+        setupCurrencyPicker.querySelectorAll('.pf-currency-card').forEach(c => c.classList.remove('is-active'));
+        card.classList.add('is-active');
+        setupCurrency = card.dataset.currency;
+        // Update salary input symbol
+        const sym = setupCurrency === 'usd' ? '$' : '₹';
+        document.querySelectorAll('#salarySetupModal [data-curr]').forEach(el => el.textContent = sym);
+        if (typeof setSpendWiseCurrency === 'function') setSpendWiseCurrency(setupCurrency);
+      });
+    });
+  }
 
   if (salarySaveBtn && salaryInput && salaryError) {
     salarySaveBtn.addEventListener('click', async () => {
@@ -531,6 +575,21 @@ try {
       salarySaveBtn.disabled = true;
       salarySaveBtn.textContent = 'Saving…';
       salaryError.textContent = '';
+
+      // Save currency first, then salary
+      try {
+        const currRes = await fetch('/api/currency/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({ currency: setupCurrency })
+        });
+        if (currRes.ok && typeof setSpendWiseCurrency === 'function') {
+          setSpendWiseCurrency(setupCurrency);
+        }
+      } catch (e) { /* continue even if currency save fails */ }
 
       try {
         const res = await fetch('/api/salary/', {
@@ -762,7 +821,9 @@ try {
     if (xAxis) xAxis.innerHTML = data.map(d => `<span>${d.label}</span>`).join('');
 
     // Header amounts (latest month) + change vs previous month
-    const fmt = v => '₹' + Number(v).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    const _sym = CURRENCY_SYMBOLS_JS[USER_CURRENCY] || '₹';
+    const _locale = CURRENCY_LOCALES_JS[USER_CURRENCY] || 'en-IN';
+    const fmt = v => _sym + Number(v).toLocaleString(_locale, { maximumFractionDigits: 0 });
     const lastMonth = data[data.length - 1];
     const prevMonth = data[data.length - 2];
     if (lastMonth) {
@@ -1048,7 +1109,9 @@ try {
       bar.addEventListener('mouseenter', () => {
         bar.setAttribute('opacity', '0.75');
         if (tip) {
-          tip.textContent = `${m.label}: ₹${Number(m.expense).toLocaleString('en-IN', {minimumFractionDigits:2})}`;
+          const _tipSym = CURRENCY_SYMBOLS_JS[USER_CURRENCY] || '₹';
+          const _tipLocale = CURRENCY_LOCALES_JS[USER_CURRENCY] || 'en-IN';
+          tip.textContent = `${m.label}: ${_tipSym}${Number(m.expense).toLocaleString(_tipLocale, {minimumFractionDigits:2})}`;
           tip.style.display = 'block';
         }
       });
@@ -1068,10 +1131,11 @@ try {
 
     const yAxis = document.getElementById('chartYAxis');
     if (yAxis) {
-      const fmt = v => v >= 1000 ? '₹' + (v/1000).toFixed(1) + 'k' : '₹' + Math.round(v);
+      const _csym = CURRENCY_SYMBOLS_JS[USER_CURRENCY] || '₹';
+      const fmt = v => v >= 1000 ? _csym + (v/1000).toFixed(1) + 'k' : _csym + Math.round(v);
       yAxis.innerHTML =
         `<span>${fmt(maxVal)}</span><span>${fmt(maxVal*0.75)}</span>` +
-        `<span>${fmt(maxVal*0.5)}</span><span>${fmt(maxVal*0.25)}</span><span>₹0</span>`;
+        `<span>${fmt(maxVal*0.5)}</span><span>${fmt(maxVal*0.25)}</span><span>${_csym}0</span>`;
     }
 
     const xAxis = document.getElementById('chartXAxis');
@@ -1206,7 +1270,7 @@ try {
     icon.style.fontSize = '1rem';
     icon.title = categoryLabels[categoryClass] || 'Other';
     icon.setAttribute('aria-label', icon.title);
-    icon.textContent = categoryClass === 'lend' ? '₹' : '📦';
+    icon.textContent = categoryClass === 'lend' ? (CURRENCY_SYMBOLS_JS[USER_CURRENCY] || '₹') : '📦';
 
     const info = document.createElement('div');
     info.className = 'txn-info';
@@ -1265,7 +1329,7 @@ try {
       icon.className = `txn-icon ${categoryClass}`;
       icon.title = categoryLabels[categoryClass] || 'Other';
       icon.setAttribute('aria-label', icon.title);
-      icon.textContent = categoryClass === 'lend' ? '₹' : '📦';
+      icon.textContent = categoryClass === 'lend' ? (CURRENCY_SYMBOLS_JS[USER_CURRENCY] || '₹') : '📦';
     }
     markTransactionPending(item);
   }
@@ -1821,5 +1885,6 @@ try {
 } catch(e) { console.error('Dashboard init error:', e); }
  </script>
 {% include "login/includes/expense_chatbot.html" %}
+<script src="{% static 'login/currency_sync.js' %}" defer></script>
 </body>
 </html>

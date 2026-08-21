@@ -41,7 +41,7 @@
     <div class="expense-chatbot-suggestions" id="expenseChatbotSuggestions"></div>
 
     <form class="expense-chatbot-composer" id="expenseChatbotForm">
-      <span class="expense-chatbot-currency" id="expenseChatbotCurrency">₹</span>
+      <span class="expense-chatbot-currency" id="expenseChatbotCurrency">{{ profile.currency_symbol|default:'₹' }}</span>
       <input id="expenseChatbotInput" type="text" inputmode="decimal" autocomplete="off"
              aria-label="Your answer" placeholder="Enter amount" />
       <button id="expenseChatbotSend" type="submit" aria-label="Send">

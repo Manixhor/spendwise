@@ -35,12 +35,12 @@
     <section class="lend-summary-grid">
       <div class="card lend-summary-card">
         <span class="card-label">Pending Return</span>
-        <p class="lend-summary-amount negative">{{ pending_total|indian_currency }}</p>
+        <p class="lend-summary-amount negative" data-amount="{{ pending_total }}" data-curr>{{ pending_total|currency:profile.currency }}</p>
         <p class="lend-summary-sub">{{ pending_lends|length }} active lend{{ pending_lends|length|pluralize }}</p>
       </div>
       <div class="card lend-summary-card">
         <span class="card-label">Paid Back</span>
-        <p class="lend-summary-amount positive">{{ paid_total|indian_currency }}</p>
+        <p class="lend-summary-amount positive" data-amount="{{ paid_total }}" data-curr>{{ paid_total|currency:profile.currency }}</p>
         <p class="lend-summary-sub">{{ paid_lends|length }} settled lend{{ paid_lends|length|pluralize }}</p>
       </div>
       <div class="card lend-summary-card">
@@ -61,12 +61,12 @@
       <div class="lend-list">
         {% for txn in pending_lends %}
         <article class="lend-item" id="lend-{{ txn.id }}">
-          <div class="lend-icon">₹</div>
+          <div class="lend-icon">{{ profile.currency_symbol }}</div>
           <div class="lend-info">
             <h3>{{ txn.title }}</h3>
             <p>{{ txn.date|date:"M d, Y" }} · Pending return</p>
           </div>
-          <strong class="lend-amount negative">−{{ txn.amount|indian_currency }}</strong>
+          <strong class="lend-amount negative" data-amount="{{ txn.amount }}" data-curr>{{ txn.amount|currency:profile.currency }}</strong>
           <button class="lend-paid-btn" type="button" data-lend-id="{{ txn.id }}">Mark paid</button>
         </article>
         {% empty %}
@@ -86,12 +86,12 @@
       <div class="lend-list">
         {% for txn in paid_lends %}
         <article class="lend-item is-paid">
-          <div class="lend-icon">₹</div>
+          <div class="lend-icon">{{ profile.currency_symbol }}</div>
           <div class="lend-info">
             <h3>{{ txn.title }}</h3>
             <p>{{ txn.date|date:"M d, Y" }} · Paid back</p>
           </div>
-          <strong class="lend-amount">{{ txn.amount|indian_currency }}</strong>
+          <strong class="lend-amount" data-amount="{{ txn.amount }}" data-curr>{{ txn.amount|currency:profile.currency }}</strong>
           <span class="lend-paid-pill">Paid</span>
         </article>
         {% empty %}
@@ -116,7 +116,7 @@
 
     <label class="modal-field-label" for="lendAmount" style="margin-top: 10px;">Amount</label>
     <div class="modal-field-wrap">
-      <span class="modal-currency">₹</span>
+      <span class="modal-currency" data-curr>₹</span>
       <input type="number" id="lendAmount" class="modal-input" placeholder="0.00" min="1" step="0.01" enterkeyhint="next" />
     </div>
 
@@ -300,5 +300,6 @@
     });
   });
 </script>
+<script src="{% static 'login/currency_sync.js' %}" defer></script>
 </body>
 </html>

@@ -41,7 +41,7 @@
       <div class="sv-banner-left">
         <span class="card-label">This Month's Savings</span>
         <p class="sv-banner-amount {% if monthly_saved >= 0 %}positive{% else %}negative{% endif %}">
-          {{ monthly_saved|indian_currency:True }}
+          <span data-amount="{{ monthly_saved }}" data-curr>{{ monthly_saved|currency_plus:profile.currency }}</span>
         </p>
         <p class="sv-banner-sub">Your income minus expenses — this is what's being tracked against your goals</p>
       </div>
@@ -65,15 +65,15 @@
       <div class="allocation-summary" id="allocationSummary">
         <div class="allocation-row">
           <span>Salary</span>
-          <span class="alloc-value">{{ profile.salary|default:0|indian_currency }}</span>
+          <span class="alloc-value" data-amount="{{ profile.salary|default:0 }}" data-curr>{{ profile.salary|default:0|currency:profile.currency }}</span>
         </div>
         <div class="allocation-row">
           <span>Expenses</span>
-          <span class="alloc-value expense">{{ monthly_expenses|indian_currency }}</span>
+          <span class="alloc-value expense" data-amount="{{ monthly_expenses }}" data-curr>{{ monthly_expenses|currency:profile.currency }}</span>
         </div>
         <div class="allocation-row total">
           <span>Available</span>
-          <span class="alloc-value available{% if available_for_goals < 0 %} is-negative{% elif available_for_goals > 0 %} is-positive{% endif %}">{{ available_for_goals|indian_currency }}</span>
+          <span class="alloc-value available{% if available_for_goals < 0 %} is-negative{% elif available_for_goals > 0 %} is-positive{% endif %}" data-amount="{{ available_for_goals }}" data-curr>{{ available_for_goals|currency:profile.currency }}</span>
         </div>
       </div>
       <!-- <div class="allocation-breakdown" id="allocationBreakdown">
@@ -83,7 +83,7 @@
             <span class="alloc-goal-name">{{ alloc.name }}</span>
             <span class="alloc-goal-meta">{{ alloc.priority|title }} · {{ alloc.allocation_percentage }}%</span>
           </div>
-          <span class="alloc-goal-amount">{{ alloc.allocated|indian_currency }}</span>
+          <span class="alloc-goal-amount" data-amount="{{ alloc.allocated }}" data-curr>{{ alloc.allocated|currency:profile.currency }}</span>
         </div>
         {% empty %}
         <p class="alloc-empty">No active goals to allocate to</p>
@@ -156,11 +156,11 @@
           <div class="sv-goal-amounts">
             <div class="sv-amt-row">
               <span class="sv-amt-label">Saved so far</span>
-              <span class="sv-amt-val positive">{{ goal.saved_amount|indian_currency }}</span>
+              <span class="sv-amt-val positive" data-amount="{{ goal.saved_amount }}" data-curr>{{ goal.saved_amount|currency:profile.currency }}</span>
             </div>
             <div class="sv-amt-row">
               <span class="sv-amt-label">Target</span>
-              <span class="sv-amt-val">{{ goal.target_amount|indian_currency }}</span>
+              <span class="sv-amt-val" data-amount="{{ goal.target_amount }}" data-curr>{{ goal.target_amount|currency:profile.currency }}</span>
             </div>
             <div class="sv-progress-track">
               <div class="sv-progress-fill {% if goal.is_complete %}sv-fill-complete{% endif %}"
@@ -170,7 +170,7 @@
               {% if goal.is_complete %}
                 🎉 Goal complete!
               {% else %}
-                {{ goal.remaining|indian_currency }} more to reach target
+                <span data-amount="{{ goal.remaining }}" data-curr>{{ goal.remaining|currency:profile.currency }}</span> more to reach target
               {% endif %}
             </p>
           </div>
@@ -208,7 +208,7 @@
 
     <label class="modal-field-label" for="goalTarget">Target Amount</label>
     <div class="modal-field-wrap">
-      <span class="modal-currency">₹</span>
+      <span class="modal-currency" data-curr>₹</span>
       <input type="number" id="goalTarget" class="modal-input" placeholder="e.g. 50000" min="1" step="0.01" />
     </div>
 
@@ -414,18 +414,19 @@ function updateAllocationDisplay(data) {
   if (summary) {
     const available = Number(data.available || 0);
     const availableSign = available < 0 ? '−' : '';
+    const _f = (typeof formatStoredCurrency === 'function') ? formatStoredCurrency : (v, o) => '₹' + Number(v).toLocaleString('en-IN', {minimumFractionDigits: 2});
     summary.innerHTML = `
       <div class="allocation-row">
         <span>Salary</span>
-        <span class="alloc-value">₹${data.salary.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+        <span class="alloc-value">${_f(data.salary)}</span>
       </div>
       <div class="allocation-row">
         <span>Expenses</span>
-        <span class="alloc-value expense">₹${data.monthly_expenses.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+        <span class="alloc-value expense">${_f(data.monthly_expenses)}</span>
       </div>
       <div class="allocation-row total">
         <span>Available</span>
-        <span class="alloc-value available${available < 0 ? ' is-negative' : available > 0 ? ' is-positive' : ''}">${availableSign}₹${Math.abs(available).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+        <span class="alloc-value available${available < 0 ? ' is-negative' : available > 0 ? ' is-positive' : ''}">${availableSign}${_f(Math.abs(available))}</span>
       </div>
     `;
   }
@@ -441,7 +442,7 @@ function updateAllocationDisplay(data) {
             <span class="alloc-goal-name">${alloc.name}</span>
             <span class="alloc-goal-meta">${alloc.priority.charAt(0).toUpperCase() + alloc.priority.slice(1)} · ${alloc.allocation_percentage}%</span>
           </div>
-          <span class="alloc-goal-amount">₹${alloc.allocated_this_month.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+          <span class="alloc-goal-amount">${_f(alloc.allocated_this_month)}</span>
         </div>
       `).join('');
     }
@@ -469,5 +470,6 @@ if (refreshMotivationBtn) {
 }
 </script>
 {% include "login/includes/expense_chatbot.html" %}
+<script src="{% static 'login/currency_sync.js' %}" defer></script>
 </body>
 </html>

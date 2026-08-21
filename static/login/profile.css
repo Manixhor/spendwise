@@ -222,6 +222,22 @@ body[data-theme="dark"] .pf-avatar-initials {
   .pf-field-row { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 480px) {
+  .pf-currency-picker {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .pf-currency-card {
+    padding: 18px 12px 14px;
+  }
+  .pf-currency-icon {
+    font-size: 1.6rem;
+  }
+  .pf-currency-name {
+    font-size: 0.82rem;
+  }
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
   .pf-header-row {
@@ -247,6 +263,123 @@ body[data-theme="dark"] .pf-avatar-initials {
     width: 18px;
     height: 18px;
   }
+}
+
+/* ── Currency Picker ──────────────────────────────────── */
+.pf-currency-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pf-currency-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 22px 16px 18px;
+  border-radius: 16px;
+  border: 2px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.6);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  text-align: center;
+}
+
+.pf-currency-card:hover {
+  border-color: rgba(110,108,240,0.3);
+  background: rgba(110,108,240,0.04);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(110,108,240,0.12);
+}
+
+.pf-currency-card.is-active {
+  border-color: #6e6cf0;
+  background: linear-gradient(135deg, rgba(110,108,240,0.08) 0%, rgba(167,139,250,0.06) 100%);
+  box-shadow: 0 8px 28px rgba(110,108,240,0.18);
+}
+
+body[data-theme="dark"] .pf-currency-card {
+  border-color: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+
+body[data-theme="dark"] .pf-currency-card:hover {
+  border-color: rgba(139,92,246,0.4);
+  background: rgba(139,92,246,0.06);
+}
+
+body[data-theme="dark"] .pf-currency-card.is-active {
+  border-color: #8b5cf6;
+  background: linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(168,85,247,0.06) 100%);
+  box-shadow: 0 16px 32px rgba(88,28,135,0.22);
+}
+
+.pf-currency-icon {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.pf-currency-card.is-active .pf-currency-icon {
+  color: #6e6cf0;
+}
+
+body[data-theme="dark"] .pf-currency-card.is-active .pf-currency-icon {
+  color: #a78bfa;
+}
+
+.pf-currency-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.pf-currency-code {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+.pf-currency-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.pf-currency-check svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pf-currency-card.is-active .pf-currency-check {
+  opacity: 1;
+  background: #6e6cf0;
+  color: #fff;
+}
+
+body[data-theme="dark"] .pf-currency-card.is-active .pf-currency-check {
+  background: #8b5cf6;
+}
+
+.pf-currency-status {
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin-top: 10px;
+  min-height: 1.2em;
+  transition: color 0.2s ease;
 }
 
 /* ── Salary section ────────────────────────────────────── */

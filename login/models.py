@@ -27,8 +27,17 @@ class UserProfile(models.Model):
         ("medium", "Medium"),
         ("low", "Low"),
     ]
+    CURRENCY_CHOICES = [
+        ("inr", "₹ INR"),
+        ("usd", "$ USD"),
+    ]
+    CURRENCY_SYMBOLS = {
+        "inr": "₹",
+        "usd": "$",
+    }
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    currency = models.CharField(max_length=5, choices=CURRENCY_CHOICES, default="inr")
     salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     target_savings = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True
@@ -46,6 +55,14 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} – profile"
+
+    @property
+    def currency_symbol(self):
+        return self.CURRENCY_SYMBOLS.get(self.currency, "₹")
+
+    @property
+    def is_usd(self):
+        return self.currency == "usd"
 
 
 class MonthlyAnalysisMailSetting(models.Model):

@@ -104,7 +104,7 @@
       <div class="card ma-balance-card">
         <p class="ma-balance-label">TOTAL BALANCE</p>
         <div class="ma-balance-row">
-          <span class="ma-balance-amount">{{ total_balance|indian_currency }}</span>
+          <span class="ma-balance-amount" data-amount="{{ total_balance }}" data-curr>{{ total_balance|currency:profile.currency }}</span>
           <span class="ma-balance-change {% if balance_change_positive %}positive{% else %}negative{% endif %}">
             {% if balance_change_positive %}▲{% else %}▼{% endif %}
             {% if balance_change_positive %}+{% endif %}{{ balance_change_pct|floatformat:1 }}%
@@ -117,18 +117,18 @@
       <div class="card ma-stats-card">
         <div class="ma-stat">
           <span class="ma-stat-label">Salary</span>
-          <span class="ma-stat-val">{% if profile.salary %}{{ profile.salary|indian_currency }}{% else %}—{% endif %}</span>
+          <span class="ma-stat-val" data-amount="{{ profile.salary|default:0 }}" data-curr>{% if profile.salary %}{{ profile.salary|currency:profile.currency }}{% else %}—{% endif %}</span>
         </div>
         <div class="ma-stat-divider"></div>
         <div class="ma-stat">
           <span class="ma-stat-label">Expenses</span>
-          <span class="ma-stat-val negative">−{{ total_expense|indian_currency }}</span>
+          <span class="ma-stat-val negative" data-amount="{{ total_expense }}" data-curr>{{ total_expense|currency:profile.currency }}</span>
         </div>
         <div class="ma-stat-divider"></div>
         <div class="ma-stat">
           <span class="ma-stat-label">Saved</span>
           <span class="ma-stat-val {% if total_saved >= 0 %}accent{% else %}negative{% endif %}">
-            {{ total_saved|indian_currency:True }}
+            <span data-amount="{{ total_saved }}" data-curr>{{ total_saved|currency_plus:profile.currency }}</span>
           </span>
         </div>
       </div>
@@ -227,12 +227,18 @@
 
         <script>
         (function() {
+          const USER_CURRENCY = (function() { try { return localStorage.getItem('spendwise-currency') || '{{ profile.currency|default:"inr" }}'; } catch { return '{{ profile.currency|default:"inr" }}'; } })();
+          const CURRENCY_SYMBOLS_JS = { inr: '₹', usd: '$' };
+          const CURRENCY_LOCALES_JS = { inr: 'en-IN', usd: 'en-US' };
+
           const bars = document.querySelectorAll('.ma-bar');
           const tip  = document.getElementById('maBarTip');
           const wrap = document.querySelector('.ma-bars-wrap');
           if (!bars.length || !tip || !wrap) return;
 
-          const fmt = v => '₹' + Number(v).toLocaleString('en-IN', {minimumFractionDigits: 2});
+          const _mSym = CURRENCY_SYMBOLS_JS[USER_CURRENCY] || '₹';
+          const _mLoc = CURRENCY_LOCALES_JS[USER_CURRENCY] || 'en-IN';
+          const fmt = v => _mSym + Number(v).toLocaleString(_mLoc, {minimumFractionDigits: 2});
 
           bars.forEach(bar => {
             bar.addEventListener('mouseenter', () => {
@@ -260,7 +266,7 @@
 
         <div class="ma-cat-list">
           {% for category in categories %}
-            <div class="ma-cat-item" title="{{ category.label }} · {{ category.share_pct|floatformat:1 }}% · {{ category.amount|indian_currency }}">
+            <div class="ma-cat-item" title="{{ category.label }} · {{ category.share_pct|floatformat:1 }}% · {{ category.amount|currency:profile.currency }}">
               <div class="ma-cat-icon" style="background:{{ category.icon_bg }}; color:{{ category.icon_fg }};" title="{{ category.label }}" aria-label="{{ category.label }}">
                 {% if category.key == 'rent' %}
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -286,7 +292,7 @@
                 <span class="ma-cat-name">{{ category.label }}</span>
                 <div class="ma-cat-bar-track"><div class="ma-cat-bar-fill" style="width:{{ category.share_pct|floatformat:1 }}%; background:{{ category.color }};"></div></div>
               </div>
-              <span class="ma-cat-amt">{{ category.amount|indian_currency }}</span>
+              <span class="ma-cat-amt" data-amount="{{ category.amount }}" data-curr>{{ category.amount|currency:profile.currency }}</span>
             </div>
           {% empty %}
             <div class="txn-empty">No expense categories recorded for this month.</div>
@@ -336,7 +342,7 @@
             {% endfor %}
           </svg>
           <div class="ma-donut-center">
-            <span class="ma-donut-total">₹{{ total_expense|floatformat:2 }}</span>
+            <span class="ma-donut-total">{{ total_expense|currency:profile.currency }}</span>
             <span class="ma-donut-sub">total spent</span>
           </div>
         </div>
@@ -514,5 +520,6 @@ const SELECTED_MONTH = '{{ selected_month_param }}';
 })();
 </script>
 {% include "login/includes/expense_chatbot.html" %}
+<script src="{% static 'login/currency_sync.js' %}" defer></script>
 </body>
 </html>
