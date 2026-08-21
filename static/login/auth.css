@@ -710,7 +710,7 @@ body.ios-keyboard-open .brand {
 
   body.ios-keyboard-open .card {
     border-radius: 18px;
-    padding: 14px 16px 14px;
+    padding: 10px 14px 12px;
     max-height: calc(var(--app-visual-height, 100dvh) - max(8px, env(safe-area-inset-top, 0px)) - max(8px, env(safe-area-inset-bottom, 0px)));
   }
 
@@ -720,25 +720,24 @@ body.ios-keyboard-open .brand {
   }
 
   body.ios-keyboard-open .form-title {
-    font-size: 1.34rem;
+    font-size: 1.18rem;
     margin-top: 0;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
   }
 
   body.ios-keyboard-open .form-sub {
-    font-size: 0.76rem;
-    line-height: 1.35;
-    margin-bottom: 10px;
+    display: none;
   }
 
   body.ios-keyboard-open .auth-form {
-    gap: 7px;
+    gap: 5px;
   }
 
   body.ios-keyboard-open .field-group {
-    height: 42px;
-    border-radius: 12px;
-    padding: 0 12px;
+    height: 38px;
+    min-height: 38px;
+    border-radius: 11px;
+    padding: 0 10px;
   }
 
   body.ios-keyboard-open .field-icon {
@@ -750,8 +749,9 @@ body.ios-keyboard-open .brand {
   }
 
   body.ios-keyboard-open .cta-btn {
-    height: 44px;
-    margin-top: 3px;
+    height: 40px;
+    min-height: 40px;
+    margin-top: 2px;
   }
 
   body.ios-keyboard-open .divider {
@@ -760,12 +760,7 @@ body.ios-keyboard-open .brand {
 
   body.ios-keyboard-open .footer-copy,
   body.ios-keyboard-open .terms-copy {
-    font-size: 0.7rem;
-    margin-top: 7px;
-  }
-
-  body.ios-keyboard-open .auth-switch-copy {
-    padding: 7px 10px;
+    display: none;
   }
 }
 

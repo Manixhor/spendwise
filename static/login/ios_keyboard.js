@@ -42,6 +42,15 @@
       const scrollParent = target.closest('.modal-card, .export-modal__card, .expense-chatbot-messages, .expense-chatbot-panel, .card');
       if (scrollParent) {
         window.requestAnimationFrame(() => {
+          if (
+            keyboardOpen
+            && scrollParent.classList.contains('card')
+            && scrollParent.scrollHeight <= scrollParent.clientHeight + 4
+          ) {
+            scrollParent.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+          }
+
           const fieldRect = target.getBoundingClientRect();
           const parentRect = scrollParent.getBoundingClientRect();
           const gap = 20;
