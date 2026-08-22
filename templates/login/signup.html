@@ -123,6 +123,10 @@
           <span class="su-req-icon"></span>
           <span>One number</span>
         </div>
+        <div class="su-req" id="suReqSpec">
+          <span class="su-req-icon"></span>
+          <span>One special character (!@#$%...)</span>
+        </div>
       </div>
 
       <div class="field-group {% if errors.confirm_password %}field-error{% endif %}">
@@ -182,6 +186,7 @@
   const reqLen   = document.getElementById('suReqLen');
   const reqUpper = document.getElementById('suReqUpper');
   const reqNum   = document.getElementById('suReqNum');
+  const reqSpec  = document.getElementById('suReqSpec');
 
   const nameInput   = document.getElementById('suName');
   const emailInput  = document.getElementById('suEmail');
@@ -363,6 +368,7 @@
       setReq(reqLen, false);
       setReq(reqUpper, false);
       setReq(reqNum, false);
+      setReq(reqSpec, false);
       pwValid = false;
       pwGroup.classList.remove('su-fg-ok', 'su-fg-err');
       updateSubmitBtn();
@@ -371,36 +377,37 @@
 
     strWrap.style.display = 'flex';
 
-    /* Block anything that isn't letters or numbers */
-    if (/[^a-zA-Z0-9]/.test(pw)) {
-      pwInput.value = pw.replace(/[^a-zA-Z0-9]/g, '');
-      pw = pwInput.value;
-    }
-
     var hasLen   = pw.length >= 8;
     var hasUpper = /[A-Z]/.test(pw);
     var hasNum   = /[0-9]/.test(pw);
+    var hasSpec  = /[^a-zA-Z0-9]/.test(pw);
 
     setReq(reqLen, hasLen);
     setReq(reqUpper, hasUpper);
     setReq(reqNum, hasNum);
+    setReq(reqSpec, hasSpec);
 
     pwValid = hasLen && hasUpper && hasNum;
     pwGroup.classList.toggle('su-fg-ok', pwValid);
     pwGroup.classList.toggle('su-fg-err', pw.length >= 8 && !pwValid);
 
-    var score = (hasLen ? 1 : 0) + (hasUpper ? 1 : 0) + (hasNum ? 1 : 0);
+    var score = (hasLen ? 1 : 0) + (hasUpper ? 1 : 0) + (hasNum ? 1 : 0) + (hasSpec ? 1 : 0);
 
     if (score <= 1) {
-      strFill.style.width = '33%';
+      strFill.style.width = '25%';
       strFill.style.background = '#ff3b30';
       strLabel.textContent = 'Weak';
       strLabel.style.color = '#ff3b30';
     } else if (score === 2) {
-      strFill.style.width = '66%';
+      strFill.style.width = '50%';
       strFill.style.background = '#ff9500';
       strLabel.textContent = 'Fair';
       strLabel.style.color = '#ff9500';
+    } else if (score === 3) {
+      strFill.style.width = '75%';
+      strFill.style.background = '#ffcc00';
+      strLabel.textContent = 'Good';
+      strLabel.style.color = '#cc9900';
     } else {
       strFill.style.width = '100%';
       strFill.style.background = '#34c759';

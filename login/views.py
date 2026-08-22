@@ -1428,8 +1428,6 @@ def signup(request: HttpRequest) -> HttpResponse:
                     errors["email"] = "An account with this email already exists."
         if not password:
             errors["password"] = "Password is required."
-        elif not password.isalnum():
-            errors["password"] = "Password can only contain letters and numbers."
         elif len(password) < 8:
             errors["password"] = "Password must be at least 8 characters."
         else:
