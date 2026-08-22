@@ -32,6 +32,12 @@
 
 html {
   background: #0b1020;
+  min-height: 100%;
+}
+
+html, body {
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 body {
@@ -90,18 +96,25 @@ select {
 
 /* ── Keyboard open: pin everything to visual viewport ──── */
 body.ios-keyboard-open {
-  height: var(--app-visual-height, 100dvh);
-  min-height: unset;
-  max-height: var(--app-visual-height, 100dvh);
+  height: var(--app-visual-height, 100dvh) !important;
+  min-height: var(--app-visual-height, 100dvh) !important;
+  max-height: var(--app-visual-height, 100dvh) !important;
   overflow: hidden;
-  /* Reset any body-level padding — safe areas handled by .right-panel */
   padding: 0 !important;
 }
 
+html.ios-keyboard-open {
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(120,100,255,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(100,180,255,0.10) 0%, transparent 50%),
+    linear-gradient(160deg, #dfe0ea 0%, #e8e8ed 50%, #dde4f0 100%);
+}
+
 body.ios-keyboard-open .desktop-layout {
-  height: 100%;
-  min-height: unset;
-  max-height: 100%;
+  height: var(--app-visual-height, 100dvh);
+  min-height: var(--app-visual-height, 100dvh);
+  max-height: var(--app-visual-height, 100dvh);
   overflow: hidden;
   padding: 0;
   grid-template-columns: 1fr;
@@ -115,12 +128,18 @@ body.ios-keyboard-open .right-panel {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  justify-content: center;
-  height: 100%;
-  min-height: unset;
+  justify-content: flex-start;
+  height: var(--app-visual-height, 100dvh);
+  min-height: var(--app-visual-height, 100dvh);
+  max-height: var(--app-visual-height, 100dvh);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(120,100,255,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(100,180,255,0.10) 0%, transparent 50%),
+    linear-gradient(160deg, #dfe0ea 0%, #e8e8ed 50%, #dde4f0 100%);
 }
 
 body.ios-keyboard-open .right-panel .card,
@@ -704,14 +723,19 @@ body.ios-keyboard-open .brand {
     align-items: stretch;
     padding-top: max(8px, env(safe-area-inset-top, 0px));
     padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-left: 14px;
+    padding-right: 14px;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(120,100,255,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(100,180,255,0.10) 0%, transparent 50%),
+      linear-gradient(160deg, #dfe0ea 0%, #e8e8ed 50%, #dde4f0 100%);
   }
 
   body.ios-keyboard-open .card {
     border-radius: 18px;
     padding: 10px 14px 12px;
-    max-height: calc(var(--app-visual-height, 100dvh) - max(8px, env(safe-area-inset-top, 0px)) - max(8px, env(safe-area-inset-bottom, 0px)));
+    flex: 0 0 auto;
+    max-height: none;
   }
 
   body.ios-keyboard-open .card-form::before,

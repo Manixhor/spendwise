@@ -29,6 +29,7 @@
     document.documentElement.style.setProperty('--sw-keyboard-height', `${keyboardHeight}px`);
     document.documentElement.style.setProperty('--app-keyboard-shift', '0px');
     document.body.classList.toggle('ios-keyboard-open', keyboardOpen);
+    document.documentElement.classList.toggle('ios-keyboard-open', keyboardOpen);
     document.body.classList.toggle('ios-modal-keyboard-open', keyboardOpen && Boolean(activeModal));
 
     return keyboardOpen;
@@ -100,6 +101,7 @@
     window.setTimeout(() => {
       if (!document.activeElement?.matches?.(focusableSelector)) {
         document.body.classList.remove('ios-input-focused', 'ios-keyboard-open', 'ios-modal-keyboard-open');
+        document.documentElement.classList.remove('ios-keyboard-open');
       }
       syncKeyboardState();
     }, 180);
