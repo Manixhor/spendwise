@@ -5,8 +5,6 @@ from .views import (
     signup,
     signup_verify,
     login_view,
-    # login_otp,            # TODO: enable when OTP login is ready
-    # login_otp_verify,     # TODO: enable when OTP login is ready
     logout_view,
     forgot_password,
     forgot_password_verify,
@@ -45,8 +43,6 @@ urlpatterns = [
     path("signup/", signup, name="signup"),
     path("signup/verify/", signup_verify, name="signup_verify"),
     path("login/", login_view, name="login"),
-    # path("login/otp/", login_otp, name="login_otp"),            # TODO: enable when OTP login is ready
-    # path("login/otp/verify/", login_otp_verify, name="login_otp_verify"),  # TODO: enable when OTP login is ready
     path("logout/", logout_view, name="logout"),
     path("forgot-password/", forgot_password, name="forgot_password"),
     path("forgot-password/verify/", forgot_password_verify, name="forgot_password_verify"),
