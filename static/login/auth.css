@@ -922,3 +922,521 @@ body.ios-keyboard-open .brand {
   padding-left: 4px;
   font-weight: 500;
 }
+
+/* ════════════════════════════════════════════════════════════
+   SIGNUP – 2-STEP FLOW
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Progress bar ─────────────────────────────────────── */
+.su-progress {
+  margin-bottom: 18px;
+}
+
+.su-progress-track {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(200,200,210,0.45);
+  overflow: hidden;
+}
+
+.su-progress-fill {
+  width: 50%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #667eea, #f472b6);
+  transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.su-steps {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+  margin-top: 6px;
+}
+
+.su-step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(200,200,210,0.5);
+  transition: background 0.3s, transform 0.3s;
+}
+
+.su-step-dot.active {
+  background: linear-gradient(135deg, #667eea, #f472b6);
+  transform: scale(1.25);
+}
+
+/* ── Step panels ──────────────────────────────────────── */
+.su-step {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  animation: suSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.su-step-active {
+  display: flex;
+}
+
+@keyframes suSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ── Back button ──────────────────────────────────────── */
+.su-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 0;
+  margin-bottom: 4px;
+  align-self: flex-start;
+  transition: color 0.2s;
+}
+
+.su-back-btn:hover {
+  color: var(--ink);
+}
+
+/* ── Password strength ────────────────────────────────── */
+.su-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.su-strength-track {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(200,200,210,0.4);
+  overflow: hidden;
+}
+
+.su-strength-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: #ff3b30;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), background 0.35s;
+}
+
+.su-strength-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* ── Requirements checklist ───────────────────────────── */
+.su-reqs {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 12px;
+  background: rgba(200,200,210,0.15);
+  border-radius: 10px;
+  border: 1px solid rgba(200,200,210,0.2);
+}
+
+.su-req {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.74rem;
+  color: var(--muted);
+  transition: color 0.25s;
+}
+
+.su-req-met {
+  color: #34c759;
+}
+
+.su-req-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(200,200,210,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: border-color 0.25s, background 0.25s, color 0.25s;
+}
+
+.su-req-met .su-req-icon {
+  border-color: #34c759;
+  background: #34c759;
+  color: #fff;
+}
+
+/* ── Password toggle ──────────────────────────────────── */
+.su-toggle-pw {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 8px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.su-toggle-pw:hover {
+  color: var(--ink);
+  background: rgba(200,200,210,0.2);
+}
+
+/* ── Continue button (step 1) ─────────────────────────── */
+.su-next-btn {
+  margin-top: 16px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   SIGNUP RESPONSIVE – MOBILE
+   ════════════════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  /* Progress bar compact */
+  .su-progress {
+    margin-bottom: 14px;
+  }
+
+  .su-progress-track {
+    height: 3px;
+  }
+
+  .su-step-dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .su-steps {
+    margin-top: 4px;
+  }
+
+  /* Step panels */
+  .su-step {
+    gap: 10px;
+  }
+
+  /* Back button touch-friendly */
+  .su-back-btn {
+    padding: 6px 8px;
+    margin-bottom: 2px;
+    border-radius: 8px;
+    min-height: 36px;
+  }
+
+  /* Strength meter */
+  .su-strength {
+    gap: 8px;
+  }
+
+  .su-strength-track {
+    height: 4px;
+  }
+
+  .su-strength-label {
+    font-size: 0.68rem;
+    min-width: 36px;
+  }
+
+  /* Requirements compact */
+  .su-reqs {
+    padding: 6px 10px;
+    gap: 4px;
+  }
+
+  .su-req {
+    font-size: 0.7rem;
+    gap: 6px;
+  }
+
+  .su-req-icon {
+    width: 14px;
+    height: 14px;
+    font-size: 0.55rem;
+  }
+
+  /* Toggle button touch target */
+  .su-toggle-pw {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Continue button */
+  .su-next-btn {
+    margin-top: 12px;
+  }
+}
+
+/* ── Small mobile (≤390px) ────────────────────────────── */
+@media (max-width: 390px) {
+  .su-progress {
+    margin-bottom: 10px;
+  }
+
+  .su-step {
+    gap: 8px;
+  }
+
+  .su-reqs {
+    padding: 5px 8px;
+    gap: 3px;
+  }
+
+  .su-req {
+    font-size: 0.66rem;
+  }
+
+  .su-strength-label {
+    font-size: 0.64rem;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   SIGNUP PWA STANDALONE MODE
+   ════════════════════════════════════════════════════════════ */
+
+@media (display-mode: standalone) {
+  /* Progress bar */
+  .su-progress {
+    margin-bottom: 14px;
+  }
+
+  /* Field groups: 44px min touch target */
+  .su-step-active .field-group {
+    min-height: 48px;
+  }
+
+  /* Toggle buttons: 44px touch target */
+  .su-toggle-pw {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* CTA buttons: 48px min */
+  .su-step-active .cta-btn,
+  .su-step-active .su-next-btn {
+    min-height: 50px;
+  }
+
+  /* Back button: 44px touch */
+  .su-back-btn {
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+}
+
+/* PWA standalone + mobile */
+@media (display-mode: standalone) and (max-width: 640px) {
+  .su-progress {
+    margin-bottom: 12px;
+  }
+
+  .su-step-active .field-group {
+    min-height: 48px;
+    height: 50px;
+  }
+
+  .su-step-active .cta-btn,
+  .su-step-active .su-next-btn {
+    min-height: 48px;
+    height: 48px;
+  }
+
+  .su-toggle-pw {
+    width: 44px;
+    height: 44px;
+  }
+
+  .su-reqs {
+    padding: 6px 10px;
+  }
+}
+
+/* PWA landscape (short viewports) */
+@media (display-mode: standalone) and (orientation: landscape) and (max-height: 500px) {
+  .su-progress {
+    margin-bottom: 6px;
+  }
+
+  .su-progress-track {
+    height: 2px;
+  }
+
+  .su-steps {
+    display: none;
+  }
+
+  .su-step {
+    gap: 4px;
+  }
+
+  .su-step-active .field-group {
+    height: 38px;
+    min-height: 38px;
+  }
+
+  .su-back-btn {
+    margin-bottom: 0;
+    padding: 2px 4px;
+  }
+
+  .su-reqs {
+    padding: 3px 8px;
+    gap: 1px;
+  }
+
+  .su-req {
+    font-size: 0.62rem;
+  }
+
+  .su-strength {
+    gap: 6px;
+  }
+
+  .su-strength-track {
+    height: 3px;
+  }
+
+  .su-strength-label {
+    font-size: 0.6rem;
+  }
+
+  .su-step-active .cta-btn,
+  .su-step-active .su-next-btn {
+    height: 40px;
+    min-height: 40px;
+    margin-top: 2px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   SIGNUP KEYBOARD OPEN – FIELD SIZES STAY DEFAULT
+   ════════════════════════════════════════════════════════════ */
+
+body.ios-keyboard-open .su-step-active .field-group {
+  height: 48px;
+  min-height: 48px;
+}
+
+body.ios-keyboard-open .su-step-active .su-strength {
+  display: flex !important;
+}
+
+body.ios-keyboard-open .su-step-active .su-reqs {
+  padding: 5px 10px;
+  gap: 2px;
+}
+
+body.ios-keyboard-open .su-step-active .su-req {
+  font-size: 0.68rem;
+}
+
+body.ios-keyboard-open .su-step-active .su-next-btn,
+body.ios-keyboard-open .su-step-active .cta-btn {
+  height: 46px;
+  min-height: 46px;
+  margin-top: 4px;
+}
+
+body.ios-keyboard-open .su-step-active .su-back-btn {
+  display: none;
+}
+
+body.ios-keyboard-open .su-step-active .su-toggle-pw {
+  width: 44px;
+  height: 44px;
+}
+
+body.ios-keyboard-open .su-progress {
+  margin-bottom: 8px;
+}
+
+body.ios-keyboard-open .su-progress-track {
+  height: 3px;
+}
+
+body.ios-keyboard-open .su-steps {
+  margin-top: 3px;
+}
+
+body.ios-keyboard-open .su-step-dot {
+  width: 5px;
+  height: 5px;
+}
+
+body.ios-keyboard-open .form-title {
+  font-size: 1.18rem;
+  margin-top: 0;
+  margin-bottom: 2px;
+}
+
+body.ios-keyboard-open .form-sub {
+  display: none;
+}
+
+body.ios-keyboard-open .su-step {
+  gap: 6px;
+}
+
+body.ios-keyboard-open .footer-copy {
+  display: none;
+}
+
+/* ════════════════════════════════════════════════════════════
+   SIGNUP NOTCH / SAFE AREAS
+   ════════════════════════════════════════════════════════════ */
+
+@supports (padding: env(safe-area-inset-top)) {
+  .card-form .su-progress {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   SIGNUP DARK MODE
+   ════════════════════════════════════════════════════════════ */
+
+@media (prefers-color-scheme: dark) {
+  .su-reqs {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.08);
+  }
+
+  .su-req-icon {
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  .su-toggle-pw {
+    color: rgba(255,255,255,0.4);
+  }
+
+  .su-toggle-pw:hover {
+    background: rgba(255,255,255,0.08);
+  }
+}

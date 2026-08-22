@@ -1428,11 +1428,17 @@ def signup(request: HttpRequest) -> HttpResponse:
                     errors["email"] = "An account with this email already exists."
         if not password:
             errors["password"] = "Password is required."
+        elif not password.isalnum():
+            errors["password"] = "Password can only contain letters and numbers."
+        elif len(password) < 8:
+            errors["password"] = "Password must be at least 8 characters."
         else:
-            try:
-                validate_password(password)
-            except ValidationError as exc:
-                errors["password"] = exc.messages[0]
+            has_upper = any(c.isupper() for c in password)
+            has_digit = any(c.isdigit() for c in password)
+            if not has_upper:
+                errors["password"] = "Password must include an uppercase letter."
+            elif not has_digit:
+                errors["password"] = "Password must include a number."
         if not confirm_password:
             errors["confirm_password"] = "Please confirm your password."
         elif password and password != confirm_password:

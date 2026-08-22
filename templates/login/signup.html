@@ -6,71 +6,289 @@
 {% block card_class %}card-form{% endblock %}
 
 {% block card_content %}
-  <h2 class="form-title">Sign Up</h2>
-  <p class="form-sub">Create your account and start managing your finances.</p>
+
+  {# ── Step progress bar ── #}
+  <div class="su-progress">
+    <div class="su-progress-track">
+      <div class="su-progress-fill" id="suProgressFill"></div>
+    </div>
+    <div class="su-steps">
+      <span class="su-step-dot active" id="suDot1"></span>
+      <span class="su-step-dot" id="suDot2"></span>
+    </div>
+  </div>
+
+  <h2 class="form-title" id="suTitle">Sign Up</h2>
+  <p class="form-sub" id="suSub">Let's get you started in a few steps.</p>
 
   {% if errors.general %}
     <div class="alert alert-error">{{ errors.general }}</div>
   {% endif %}
 
-  <form method="post" action="{% url 'signup' %}" class="auth-form" novalidate>
+  <form method="post" action="{% url 'signup' %}" class="auth-form" novalidate id="suForm">
     {% csrf_token %}
 
-    <div class="field-group {% if errors.name %}field-error{% endif %}">
-      <span class="field-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-          <circle cx="12" cy="7" r="4"/>
-        </svg>
-      </span>
-      <input type="text" name="name" placeholder="Enter your name"
-             class="field-input" autocomplete="name" enterkeyhint="next"
-             value="{{ form.name|default:'' }}" />
-    </div>
-    {% if errors.name %}<p class="field-msg">{{ errors.name }}</p>{% endif %}
+    {# ══════════ STEP 1: Name + Email ══════════ #}
+    <div class="su-step su-step-active" id="suStep1">
 
-    <div class="field-group {% if errors.email %}field-error{% endif %}">
-      <span class="field-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-          <rect x="2" y="4" width="20" height="16" rx="2"/>
-          <path d="m2 7 10 7 10-7"/>
-        </svg>
-      </span>
-      <input type="email" name="email" placeholder="Enter your email"
-             class="field-input" autocomplete="email" enterkeyhint="next"
-             value="{{ form.email|default:'' }}" />
-    </div>
-    {% if errors.email %}<p class="field-msg">{{ errors.email }}</p>{% endif %}
+      <div class="field-group {% if errors.name %}field-error{% endif %}">
+        <span class="field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </span>
+        <input type="text" name="name" placeholder="Your full name"
+               class="field-input" autocomplete="name" enterkeyhint="next"
+               id="suName"
+               value="{{ form.name|default:'' }}" />
+      </div>
+      {% if errors.name %}<p class="field-msg">{{ errors.name }}</p>{% endif %}
 
-    <div class="field-group {% if errors.password %}field-error{% endif %}">
-      <span class="field-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-          <rect x="3" y="11" width="18" height="11" rx="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-      </span>
-      <input type="password" name="password" placeholder="Create a password (min 8 chars)"
-             class="field-input" autocomplete="new-password" enterkeyhint="next" />
-    </div>
-    {% if errors.password %}<p class="field-msg">{{ errors.password }}</p>{% endif %}
+      <div class="field-group {% if errors.email %}field-error{% endif %}">
+        <span class="field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="m2 7 10 7 10-7"/>
+          </svg>
+        </span>
+        <input type="email" name="email" placeholder="you@email.com"
+               class="field-input" autocomplete="email" enterkeyhint="next"
+               id="suEmail"
+               value="{{ form.email|default:'' }}" />
+      </div>
+      {% if errors.email %}<p class="field-msg">{{ errors.email }}</p>{% endif %}
 
-    <div class="field-group {% if errors.confirm_password %}field-error{% endif %}">
-      <span class="field-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-          <path d="M9 12 11 14 15 10"/>
-          <rect x="3" y="11" width="18" height="10" rx="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-      </span>
-      <input type="password" name="confirm_password" placeholder="Confirm your password"
-             class="field-input" autocomplete="new-password" enterkeyhint="done" />
-    </div>
-    {% if errors.confirm_password %}<p class="field-msg">{{ errors.confirm_password }}</p>{% endif %}
+      <button type="button" class="cta-btn su-next-btn" id="suNextBtn">
+        Continue &rarr;
+      </button>
 
-    <button type="submit" class="cta-btn">Create account &rarr;</button>
+    </div>
+
+    {# ══════════ STEP 2: Password + Confirm ══════════ #}
+    <div class="su-step" id="suStep2">
+
+      <button type="button" class="su-back-btn" id="suBackBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <path d="M19 12H5m7-7-7 7 7 7"/>
+        </svg>
+        Back
+      </button>
+
+      <div class="field-group {% if errors.password %}field-error{% endif %}">
+        <span class="field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </span>
+        <input type="password" name="password" placeholder="Create a password"
+               class="field-input" autocomplete="new-password" enterkeyhint="next"
+               id="suPassword" />
+        <button type="button" class="su-toggle-pw" data-target="suPassword" aria-label="Show password">
+          <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="18" height="18">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="18" height="18" style="display:none">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+          </svg>
+        </button>
+      </div>
+      {% if errors.password %}<p class="field-msg">{{ errors.password }}</p>{% endif %}
+
+      {# Password strength meter #}
+      <div class="su-strength" id="suStrength" style="display:none">
+        <div class="su-strength-track">
+          <div class="su-strength-fill" id="suStrengthFill"></div>
+        </div>
+        <span class="su-strength-label" id="suStrengthLabel"></span>
+      </div>
+
+      {# Requirements checklist #}
+      <div class="su-reqs" id="suReqs">
+        <div class="su-req" id="suReqLen">
+          <span class="su-req-icon"></span>
+          <span>At least 8 characters</span>
+        </div>
+        <div class="su-req" id="suReqUpper">
+          <span class="su-req-icon"></span>
+          <span>One uppercase letter</span>
+        </div>
+        <div class="su-req" id="suReqNum">
+          <span class="su-req-icon"></span>
+          <span>One number</span>
+        </div>
+      </div>
+
+      <div class="field-group {% if errors.confirm_password %}field-error{% endif %}">
+        <span class="field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M9 12 11 14 15 10"/>
+            <rect x="3" y="11" width="18" height="10" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </span>
+        <input type="password" name="confirm_password" placeholder="Confirm password"
+               class="field-input" autocomplete="new-password" enterkeyhint="done"
+               id="suConfirm" />
+        <button type="button" class="su-toggle-pw" data-target="suConfirm" aria-label="Show password">
+          <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="18" height="18">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="18" height="18" style="display:none">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+          </svg>
+        </button>
+      </div>
+      {% if errors.confirm_password %}<p class="field-msg">{{ errors.confirm_password }}</p>{% endif %}
+
+      <button type="submit" class="cta-btn" id="suSubmitBtn">
+        Create account &rarr;
+      </button>
+    </div>
   </form>
 
   <p class="footer-copy">
     Already have an account? <a href="{% url 'login' %}" class="link-accent">Sign in</a>
   </p>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  /* ── Elements ── */
+  const step1    = document.getElementById('suStep1');
+  const step2    = document.getElementById('suStep2');
+  const fill     = document.getElementById('suProgressFill');
+  const dot1     = document.getElementById('suDot1');
+  const dot2     = document.getElementById('suDot2');
+  const title    = document.getElementById('suTitle');
+  const sub      = document.getElementById('suSub');
+  const nextBtn  = document.getElementById('suNextBtn');
+  const backBtn  = document.getElementById('suBackBtn');
+  const pwInput  = document.getElementById('suPassword');
+  const strWrap  = document.getElementById('suStrength');
+  const strFill  = document.getElementById('suStrengthFill');
+  const strLabel = document.getElementById('suStrengthLabel');
+  const reqLen   = document.getElementById('suReqLen');
+  const reqUpper = document.getElementById('suReqUpper');
+  const reqNum   = document.getElementById('suReqNum');
+
+  let currentStep = 1;
+
+  /* ── Step navigation ── */
+  function goToStep(n) {
+    currentStep = n;
+    if (n === 1) {
+      step1.classList.add('su-step-active');
+      step2.classList.remove('su-step-active');
+      fill.style.width = '50%';
+      dot1.classList.add('active');
+      dot2.classList.remove('active');
+      title.textContent = 'Sign Up';
+      sub.textContent = "Let's get you started in a few steps.";
+    } else {
+      step1.classList.remove('su-step-active');
+      step2.classList.add('su-step-active');
+      fill.style.width = '100%';
+      dot1.classList.remove('active');
+      dot2.classList.add('active');
+      title.textContent = 'Secure Your Account';
+      sub.textContent = 'Choose a strong password to protect your data.';
+    }
+  }
+
+  nextBtn.addEventListener('click', function() {
+    goToStep(2);
+    pwInput.focus();
+  });
+
+  backBtn.addEventListener('click', function() {
+    goToStep(1);
+  });
+
+  /* ── Password toggle ── */
+  document.querySelectorAll('.su-toggle-pw').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var target = document.getElementById(btn.dataset.target);
+      var isPassword = target.type === 'password';
+      target.type = isPassword ? 'text' : 'password';
+      btn.querySelector('.eye-open').style.display  = isPassword ? 'none' : 'block';
+      btn.querySelector('.eye-closed').style.display = isPassword ? 'block' : 'none';
+    });
+  });
+
+  /* ── Password strength + requirements ── */
+  pwInput.addEventListener('input', function() {
+    var pw = pwInput.value;
+
+    if (pw.length === 0) {
+      strWrap.style.display = 'none';
+      setReq(reqLen, false);
+      setReq(reqUpper, false);
+      setReq(reqNum, false);
+      return;
+    }
+
+    strWrap.style.display = 'flex';
+
+    var hasLen   = pw.length >= 8;
+    var hasUpper = /[A-Z]/.test(pw);
+    var hasNum   = /[0-9]/.test(pw);
+
+    /* Block anything that isn't letters or numbers */
+    if (/[^a-zA-Z0-9]/.test(pw)) {
+      pwInput.value = pw.replace(/[^a-zA-Z0-9]/g, '');
+      pw = pwInput.value;
+    }
+
+    setReq(reqLen, hasLen);
+    setReq(reqUpper, hasUpper);
+    setReq(reqNum, hasNum);
+
+    var score = (hasLen ? 1 : 0) + (hasUpper ? 1 : 0) + (hasNum ? 1 : 0);
+
+    if (score <= 1) {
+      strFill.style.width = '33%';
+      strFill.style.background = '#ff3b30';
+      strLabel.textContent = 'Weak';
+      strLabel.style.color = '#ff3b30';
+    } else if (score === 2) {
+      strFill.style.width = '66%';
+      strFill.style.background = '#ff9500';
+      strLabel.textContent = 'Fair';
+      strLabel.style.color = '#ff9500';
+    } else {
+      strFill.style.width = '100%';
+      strFill.style.background = '#34c759';
+      strLabel.textContent = 'Strong';
+      strLabel.style.color = '#34c759';
+    }
+  });
+
+  function setReq(el, ok) {
+    el.classList.toggle('su-req-met', ok);
+    var icon = el.querySelector('.su-req-icon');
+    icon.textContent = ok ? '\u2713' : '';
+  }
+
+  /* ── Enter key on step 1 moves to step 2 ── */
+  document.getElementById('suName').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('suEmail').focus(); }
+  });
+  document.getElementById('suEmail').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); goToStep(2); pwInput.focus(); }
+  });
+  document.getElementById('suConfirm').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('suForm').submit(); }
+  });
+})();
+</script>
 {% endblock %}
