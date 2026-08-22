@@ -153,6 +153,12 @@ body.ios-keyboard-open .card {
   transform: none;
 }
 
+body.ios-keyboard-open .card-login {
+  background:
+    radial-gradient(ellipse at 85% 0%, rgba(245,184,216,0.20) 0%, transparent 50%),
+    var(--glass);
+}
+
 body.ios-keyboard-open .brand {
   display: none;
 }
@@ -754,14 +760,14 @@ body.ios-keyboard-open .brand {
   }
 
   body.ios-keyboard-open .auth-form {
-    gap: 5px;
+    gap: 6px;
   }
 
   body.ios-keyboard-open .field-group {
-    height: 38px;
-    min-height: 38px;
-    border-radius: 11px;
-    padding: 0 10px;
+    height: 48px;
+    min-height: 48px;
+    border-radius: 14px;
+    padding: 0 14px;
   }
 
   body.ios-keyboard-open .field-icon {
@@ -773,13 +779,18 @@ body.ios-keyboard-open .brand {
   }
 
   body.ios-keyboard-open .cta-btn {
-    height: 40px;
-    min-height: 40px;
-    margin-top: 2px;
+    height: 48px;
+    min-height: 48px;
+    margin-top: 4px;
+  }
+
+  body.ios-keyboard-open .link-button {
+    padding: 6px 8px;
+    min-height: 36px;
   }
 
   body.ios-keyboard-open .divider {
-    margin: 10px 0 8px;
+    margin: 8px 0 6px;
   }
 
   body.ios-keyboard-open .footer-copy,
@@ -1444,13 +1455,8 @@ body.ios-keyboard-open .brand {
 }
 
 /* ════════════════════════════════════════════════════════════
-   SIGNUP KEYBOARD OPEN – FIELD SIZES STAY DEFAULT
+   SIGNUP KEYBOARD OPEN – EXTRA OVERRIDES
    ════════════════════════════════════════════════════════════ */
-
-body.ios-keyboard-open .su-step-active .field-group {
-  height: 48px;
-  min-height: 48px;
-}
 
 body.ios-keyboard-open .su-step-active .su-strength {
   display: flex !important;
@@ -1463,13 +1469,6 @@ body.ios-keyboard-open .su-step-active .su-reqs {
 
 body.ios-keyboard-open .su-step-active .su-req {
   font-size: 0.68rem;
-}
-
-body.ios-keyboard-open .su-step-active .su-next-btn,
-body.ios-keyboard-open .su-step-active .cta-btn {
-  height: 46px;
-  min-height: 46px;
-  margin-top: 4px;
 }
 
 body.ios-keyboard-open .su-step-active .su-back-btn {
@@ -1498,22 +1497,8 @@ body.ios-keyboard-open .su-step-dot {
   height: 5px;
 }
 
-body.ios-keyboard-open .form-title {
-  font-size: 1.18rem;
-  margin-top: 0;
-  margin-bottom: 2px;
-}
-
-body.ios-keyboard-open .form-sub {
-  display: none;
-}
-
 body.ios-keyboard-open .su-step {
   gap: 6px;
-}
-
-body.ios-keyboard-open .footer-copy {
-  display: none;
 }
 
 /* ════════════════════════════════════════════════════════════

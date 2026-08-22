@@ -150,7 +150,7 @@
       </div>
       {% if errors.confirm_password %}<p class="field-msg">{{ errors.confirm_password }}</p>{% endif %}
 
-      <button type="submit" class="cta-btn" id="suSubmitBtn">
+      <button type="submit" class="cta-btn su-btn-disabled" id="suSubmitBtn" disabled>
         Create account &rarr;
       </button>
     </div>
@@ -191,10 +191,16 @@
   const emailStatus = document.getElementById('suEmailStatus');
   const nameMsg     = document.getElementById('suNameMsg');
   const emailMsg    = document.getElementById('suEmailMsg');
+  const submitBtn   = document.getElementById('suSubmitBtn');
+  const confirmInput = document.getElementById('suConfirm');
+  const pwGroup     = pwInput.closest('.field-group');
+  const confirmGroup = confirmInput.closest('.field-group');
 
   let currentStep = 1;
   let nameValid = false;
   let emailValid = false;
+  let pwValid = false;
+  let confirmValid = false;
 
   /* ── Validation helpers ── */
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -341,6 +347,13 @@
     });
   });
 
+  /* ── Submit button state ── */
+  function updateSubmitBtn() {
+    var ok = pwValid && confirmValid;
+    submitBtn.disabled = !ok;
+    submitBtn.classList.toggle('su-btn-disabled', !ok);
+  }
+
   /* ── Password strength + requirements ── */
   pwInput.addEventListener('input', function() {
     var pw = pwInput.value;
@@ -350,14 +363,13 @@
       setReq(reqLen, false);
       setReq(reqUpper, false);
       setReq(reqNum, false);
+      pwValid = false;
+      pwGroup.classList.remove('su-fg-ok', 'su-fg-err');
+      updateSubmitBtn();
       return;
     }
 
     strWrap.style.display = 'flex';
-
-    var hasLen   = pw.length >= 8;
-    var hasUpper = /[A-Z]/.test(pw);
-    var hasNum   = /[0-9]/.test(pw);
 
     /* Block anything that isn't letters or numbers */
     if (/[^a-zA-Z0-9]/.test(pw)) {
@@ -365,9 +377,17 @@
       pw = pwInput.value;
     }
 
+    var hasLen   = pw.length >= 8;
+    var hasUpper = /[A-Z]/.test(pw);
+    var hasNum   = /[0-9]/.test(pw);
+
     setReq(reqLen, hasLen);
     setReq(reqUpper, hasUpper);
     setReq(reqNum, hasNum);
+
+    pwValid = hasLen && hasUpper && hasNum;
+    pwGroup.classList.toggle('su-fg-ok', pwValid);
+    pwGroup.classList.toggle('su-fg-err', pw.length >= 8 && !pwValid);
 
     var score = (hasLen ? 1 : 0) + (hasUpper ? 1 : 0) + (hasNum ? 1 : 0);
 
@@ -387,7 +407,31 @@
       strLabel.textContent = 'Strong';
       strLabel.style.color = '#34c759';
     }
+
+    /* Re-check confirm if it has a value */
+    if (confirmInput.value.length > 0) {
+      validateConfirm();
+    }
+    updateSubmitBtn();
   });
+
+  /* ── Confirm password validation ── */
+  function validateConfirm() {
+    var pw = pwInput.value;
+    var cfm = confirmInput.value;
+    if (cfm.length === 0) {
+      confirmValid = false;
+      confirmGroup.classList.remove('su-fg-ok', 'su-fg-err');
+      updateSubmitBtn();
+      return;
+    }
+    confirmValid = cfm === pw && pw.length > 0;
+    confirmGroup.classList.toggle('su-fg-ok', confirmValid);
+    confirmGroup.classList.toggle('su-fg-err', !confirmValid && cfm.length > 0);
+    updateSubmitBtn();
+  }
+
+  confirmInput.addEventListener('input', validateConfirm);
 
   function setReq(el, ok) {
     el.classList.toggle('su-req-met', ok);
@@ -402,8 +446,8 @@
   emailInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.preventDefault(); if (nameValid && emailValid) { goToStep(2); pwInput.focus(); } }
   });
-  document.getElementById('suConfirm').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('suForm').submit(); }
+  confirmInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); if (pwValid && confirmValid) document.getElementById('suForm').submit(); }
   });
 
   /* ── Initial state: check if fields already have values (server re-render) ── */
