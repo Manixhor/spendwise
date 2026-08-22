@@ -36,6 +36,7 @@ from .views import (
     api_delete_goal,
     api_contribute_goal,
     api_goal_allocations,
+    api_check_email,
 )
 
 urlpatterns = [
@@ -77,6 +78,8 @@ urlpatterns = [
         api_mark_lend_paid,
         name="api_mark_lend_paid",
     ),
+    # Email check (public)
+    path("api/check-email/", api_check_email, name="api_check_email"),
     # Salary / target / currency
     path("api/currency/", api_set_currency, name="api_set_currency"),
     path("api/salary/", api_set_salary, name="api_set_salary"),

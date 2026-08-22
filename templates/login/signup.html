@@ -25,7 +25,7 @@
     <div class="alert alert-error">{{ errors.general }}</div>
   {% endif %}
 
-  <form method="post" action="{% url 'signup' %}" class="auth-form" novalidate id="suForm">
+  <form method="post" action="{% url 'signup' %}" class="auth-form" novalidate id="suForm" data-step="{{ step|default:'1' }}">
     {% csrf_token %}
 
     {# ══════════ STEP 1: Name + Email ══════════ #}
@@ -199,6 +199,7 @@
   let currentStep = 1;
   let nameValid = false;
   let emailValid = false;
+  let emailChecking = false;
   let pwValid = false;
   let confirmValid = false;
 
@@ -245,7 +246,7 @@
   }
 
   function updateNextBtn() {
-    var ok = nameValid && emailValid;
+    var ok = nameValid && emailValid && !emailChecking;
     nextBtn.disabled = !ok;
     nextBtn.classList.toggle('su-btn-disabled', !ok);
   }
@@ -291,7 +292,27 @@
         if (DISPOSABLE.indexOf(baseDomain) !== -1) {
           setEmailState('err', 'Please use a permanent email address');
         } else {
-          setEmailState('ok');
+          /* Format is valid — now check if email already exists */
+          emailChecking = true;
+          updateNextBtn();
+          fetch('/api/check-email/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: v})
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            emailChecking = false;
+            if (data.exists) {
+              setEmailState('err', 'An account with this email already exists');
+            } else {
+              setEmailState('ok');
+            }
+          })
+          .catch(function() {
+            emailChecking = false;
+            setEmailState('ok');
+          });
         }
       }
     }, 400);
@@ -441,8 +462,23 @@
   (function initValidation() {
     var n = nameInput.value.trim();
     var em = emailInput.value.trim();
-    if (n.length >= 2 && /^[a-zA-Z\s.'-]+$/.test(n)) setNameState('ok');
-    if (em.length >= 5 && EMAIL_RE.test(em.toLowerCase())) setEmailState('ok');
+    var nameHasErr = nameMsg.textContent.trim().length > 0;
+    var emailHasErr = emailMsg.textContent.trim().length > 0;
+
+    /* Only set OK if there's no server error already shown */
+    if (!nameHasErr && n.length >= 2 && /^[a-zA-Z\s.'-]+$/.test(n)) setNameState('ok');
+    if (nameHasErr) { nameGroup.classList.add('su-fg-err'); nameStatus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'; }
+
+    if (!emailHasErr && em.length >= 5 && EMAIL_RE.test(em.toLowerCase())) setEmailState('ok');
+    if (emailHasErr) { emailGroup.classList.add('su-fg-err'); emailStatus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'; }
+
+    /* If server returned step=2 (password errors), go to step 2 */
+    var serverStep = parseInt(document.getElementById('suForm').dataset.step || '1', 10);
+    if (serverStep === 2) {
+      goToStep(2);
+      if (pwInput.value.length > 0) pwInput.dispatchEvent(new Event('input'));
+      if (confirmInput.value.length > 0) confirmInput.dispatchEvent(new Event('input'));
+    }
   })();
 })();
 </script>

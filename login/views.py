@@ -1443,8 +1443,14 @@ def signup(request: HttpRequest) -> HttpResponse:
             errors["confirm_password"] = "Passwords do not match."
 
         if errors:
+            # Determine which step the user was on based on errors
+            step = 1
+            if errors.get("password") or errors.get("confirm_password"):
+                step = 2
             return render(
-                request, "login/signup.html", {"errors": errors, "form": request.POST}
+                request,
+                "login/signup.html",
+                {"errors": errors, "form": request.POST, "step": step},
             )
 
         if existing_user and not existing_user.is_active:
@@ -1723,6 +1729,8 @@ def forgot_password_reset(request: HttpRequest) -> HttpResponse:
                 validate_password(password)
             except ValidationError as exc:
                 errors["password"] = exc.messages[0]
+            if not errors.get("password") and user.check_password(password):
+                errors["password"] = "Please choose a new password — this is the same as your current one."
         if not confirm_password:
             errors["confirm_password"] = "Please confirm your password."
         elif password and password != confirm_password:
@@ -3009,6 +3017,26 @@ def api_mark_lend_paid(request: HttpRequest, txn_id: int) -> JsonResponse:
         return JsonResponse({"error": "Transaction not found."}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+# ── API: Check Email Exists ───────────────────────────────
+@require_POST
+def api_check_email(request: HttpRequest) -> JsonResponse:
+    try:
+        data = json.loads(request.body)
+        email = data.get("email", "").strip().lower()
+    except (json.JSONDecodeError, AttributeError):
+        return JsonResponse({"exists": False})
+
+    if not email or len(email) < 5:
+        return JsonResponse({"exists": False})
+
+    user = User.objects.filter(email=email).first()
+    if user and user.is_active:
+        return JsonResponse({"exists": True, "message": "An account with this email already exists."})
+    elif user and not user.is_active:
+        return JsonResponse({"exists": False, "message": ""})
+    return JsonResponse({"exists": False})
 
 
 # ── API: Set Currency ─────────────────────────────────────

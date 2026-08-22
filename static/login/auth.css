@@ -1294,10 +1294,11 @@ body.ios-keyboard-open .brand {
     font-size: 0.55rem;
   }
 
-  /* Toggle button touch target */
+  /* Toggle button touch target — no animation */
   .su-toggle-pw {
     width: 44px;
     height: 44px;
+    transition: none;
   }
 
   /* Validation status icons */
@@ -1356,10 +1357,11 @@ body.ios-keyboard-open .brand {
     min-height: 48px;
   }
 
-  /* Toggle buttons: 44px touch target */
+  /* Toggle buttons: 44px touch target, no animation */
   .su-toggle-pw {
     min-width: 44px;
     min-height: 44px;
+    transition: none;
   }
 
   /* CTA buttons: 48px min */
@@ -1395,6 +1397,7 @@ body.ios-keyboard-open .brand {
   .su-toggle-pw {
     width: 44px;
     height: 44px;
+    transition: none;
   }
 
   .su-reqs {
@@ -1483,6 +1486,7 @@ body.ios-keyboard-open .su-step-active .su-back-btn {
 body.ios-keyboard-open .su-step-active .su-toggle-pw {
   width: 44px;
   height: 44px;
+  transition: none;
 }
 
 body.ios-keyboard-open .su-progress {
@@ -1602,6 +1606,7 @@ body.ios-keyboard-open #rpReqs .su-req-icon {
 body.ios-keyboard-open .su-toggle-pw {
   width: 40px;
   height: 40px;
+  transition: none;
 }
 
 body.ios-keyboard-open .su-toggle-pw svg {

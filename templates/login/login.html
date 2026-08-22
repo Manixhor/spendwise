@@ -170,7 +170,9 @@
   /* ── Initial state: check if fields already have values (server re-render) ── */
   (function initValidation() {
     var em = emailInput.value.trim().toLowerCase();
-    if (em.length >= 5 && EMAIL_RE.test(em)) setEmailState('ok');
+    var emailHasErr = emailMsg.textContent.trim().length > 0;
+    if (!emailHasErr && em.length >= 5 && EMAIL_RE.test(em)) setEmailState('ok');
+    if (emailHasErr) { emailGroup.classList.add('su-fg-err'); emailStatus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'; }
     if (pwInput.value.length > 0) { pwValid = true; pwGroup.classList.add('su-fg-ok'); }
     updateSubmitBtn();
   })();
