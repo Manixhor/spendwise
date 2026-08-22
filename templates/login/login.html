@@ -13,10 +13,10 @@
     <div class="alert alert-error">{{ errors.general }}</div>
   {% endif %}
 
-  <form method="post" action="{% url 'login' %}" class="auth-form" novalidate>
+  <form method="post" action="{% url 'login' %}" class="auth-form" novalidate id="liForm">
     {% csrf_token %}
 
-    <div class="field-group {% if errors.email %}field-error{% endif %}">
+    <div class="field-group su-fg-validate {% if errors.email %}field-error{% endif %}" id="liEmailGroup">
       <span class="field-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
           <rect x="2" y="4" width="20" height="16" rx="2"/>
@@ -25,11 +25,13 @@
       </span>
       <input type="email" name="email" placeholder="Enter your email"
              class="field-input" autocomplete="email" enterkeyhint="next"
+             id="liEmail"
              value="{{ form.email|default:'' }}" />
+      <span class="su-fg-status" id="liEmailStatus"></span>
     </div>
-    {% if errors.email %}<p class="field-msg">{{ errors.email }}</p>{% endif %}
+    <p class="field-msg" id="liEmailMsg">{% if errors.email %}{{ errors.email }}{% endif %}</p>
 
-    <div class="field-group {% if errors.password %}field-error{% endif %}">
+    <div class="field-group {% if errors.password %}field-error{% endif %}" id="liPwGroup">
       <span class="field-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
           <rect x="3" y="11" width="18" height="11" rx="2"/>
@@ -37,11 +39,25 @@
         </svg>
       </span>
       <input type="password" name="password" placeholder="Enter your password"
-             class="field-input" autocomplete="current-password" enterkeyhint="done" />
+             class="field-input" autocomplete="current-password" enterkeyhint="done"
+             id="liPassword" />
+      <button type="button" class="su-toggle-pw" data-target="liPassword" aria-label="Show password">
+        <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="18" height="18">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="18" height="18" style="display:none">
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+        </svg>
+      </button>
     </div>
     {% if errors.password %}<p class="field-msg">{{ errors.password }}</p>{% endif %}
 
-    <button type="submit" class="cta-btn">Login &rarr;</button>
+    <button type="submit" class="cta-btn su-btn-disabled" id="liSubmitBtn" disabled>
+      Login &rarr;
+    </button>
   </form>
 
   <p class="footer-copy center auth-secondary-action">
@@ -50,4 +66,114 @@
   <p class="footer-copy center auth-switch-copy">
     Don't have an account? <a href="{% url 'signup' %}" class="link-accent">Sign up</a>
   </p>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  var emailInput  = document.getElementById('liEmail');
+  var pwInput     = document.getElementById('liPassword');
+  var emailGroup  = document.getElementById('liEmailGroup');
+  var emailStatus = document.getElementById('liEmailStatus');
+  var emailMsg    = document.getElementById('liEmailMsg');
+  var pwGroup     = document.getElementById('liPwGroup');
+  var submitBtn   = document.getElementById('liSubmitBtn');
+
+  var emailValid = false;
+  var pwValid = false;
+
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  var DISPOSABLE = ['mailinator','guerrillamail','tempmail','throwaway','yopmail','10minutemail','trashmail','sharklasers','guerrillamailblock','grr.la','dispostable','maildrop'];
+
+  /* ── Password toggle ── */
+  document.querySelectorAll('.su-toggle-pw').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var target = document.getElementById(btn.dataset.target);
+      var isPassword = target.type === 'password';
+      target.type = isPassword ? 'text' : 'password';
+      btn.querySelector('.eye-open').style.display  = isPassword ? 'none' : 'block';
+      btn.querySelector('.eye-closed').style.display = isPassword ? 'block' : 'none';
+    });
+  });
+
+  /* ── Submit button state ── */
+  function updateSubmitBtn() {
+    var ok = emailValid && pwValid;
+    submitBtn.disabled = !ok;
+    submitBtn.classList.toggle('su-btn-disabled', !ok);
+  }
+
+  /* ── Email validation ── */
+  function setEmailState(state, msg) {
+    emailGroup.classList.remove('su-fg-ok', 'su-fg-err');
+    emailStatus.textContent = '';
+    emailMsg.textContent = '';
+    if (state === 'ok') {
+      emailGroup.classList.add('su-fg-ok');
+      emailStatus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M20 6 9 17l-5-5"/></svg>';
+      emailValid = true;
+    } else if (state === 'err') {
+      emailGroup.classList.add('su-fg-err');
+      emailStatus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+      emailMsg.textContent = msg;
+      emailValid = false;
+    } else {
+      emailValid = false;
+    }
+    updateSubmitBtn();
+  }
+
+  var emailTimer = null;
+  emailInput.addEventListener('input', function() {
+    clearTimeout(emailTimer);
+    var v = emailInput.value.trim().toLowerCase();
+    if (v.length === 0) { setEmailState(''); return; }
+    emailTimer = setTimeout(function() {
+      if (v.length < 5) {
+        setEmailState('err', 'Email is too short');
+      } else if (!EMAIL_RE.test(v)) {
+        setEmailState('err', 'Enter a valid email address');
+      } else {
+        var domain = v.split('@')[1];
+        var baseDomain = domain.split('.')[0];
+        if (DISPOSABLE.indexOf(baseDomain) !== -1) {
+          setEmailState('err', 'Please use a permanent email address');
+        } else {
+          setEmailState('ok');
+        }
+      }
+    }, 400);
+  });
+
+  emailInput.addEventListener('blur', function() {
+    var v = emailInput.value.trim();
+    if (v.length === 0) {
+      setEmailState('err', 'Email is required');
+    }
+  });
+
+  /* ── Password validation (just check non-empty) ── */
+  pwInput.addEventListener('input', function() {
+    pwValid = pwInput.value.length > 0;
+    pwGroup.classList.toggle('su-fg-ok', pwValid);
+    updateSubmitBtn();
+  });
+
+  /* ── Enter key navigation ── */
+  emailInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); pwInput.focus(); }
+  });
+  pwInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); if (emailValid && pwValid) document.getElementById('liForm').submit(); }
+  });
+
+  /* ── Initial state: check if fields already have values (server re-render) ── */
+  (function initValidation() {
+    var em = emailInput.value.trim().toLowerCase();
+    if (em.length >= 5 && EMAIL_RE.test(em)) setEmailState('ok');
+    if (pwInput.value.length > 0) { pwValid = true; pwGroup.classList.add('su-fg-ok'); }
+    updateSubmitBtn();
+  })();
+})();
+</script>
 {% endblock %}

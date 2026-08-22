@@ -147,10 +147,12 @@ body.ios-keyboard-open .card {
   flex: 0 1 auto;
   max-height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
   transform: none;
+  padding-bottom: env(safe-area-inset-bottom, 8px);
 }
 
 body.ios-keyboard-open .card-login {
@@ -742,6 +744,9 @@ body.ios-keyboard-open .brand {
     padding: 10px 14px 12px;
     flex: 0 0 auto;
     max-height: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
   }
 
   body.ios-keyboard-open .card-form::before,
@@ -1531,5 +1536,125 @@ body.ios-keyboard-open .su-step {
 
   .su-toggle-pw:hover {
     background: rgba(255,255,255,0.08);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   FORGOT / RESET PASSWORD / OTP — KEYBOARD OPEN
+   ════════════════════════════════════════════════════════════ */
+
+/* Reset password has many elements — compact them when keyboard opens */
+body.ios-keyboard-open .su-reqs {
+  padding: 4px 8px;
+  gap: 2px;
+}
+
+body.ios-keyboard-open .su-req {
+  font-size: 0.66rem;
+}
+
+body.ios-keyboard-open .su-strength {
+  gap: 6px;
+}
+
+body.ios-keyboard-open .su-strength-track {
+  height: 3px;
+}
+
+body.ios-keyboard-open .su-strength-label {
+  font-size: 0.62rem;
+  min-width: 32px;
+}
+
+/* Hide footer on keyboard open for all auth pages */
+body.ios-keyboard-open .footer-copy {
+  display: none;
+}
+
+/* Hide link-button (resend OTP) when keyboard is open */
+body.ios-keyboard-open .link-button {
+  display: none;
+}
+
+/* Auth form gap compact when keyboard open */
+body.ios-keyboard-open .auth-form {
+  gap: 6px;
+}
+
+/* Reset password specific — compact the requirements box */
+body.ios-keyboard-open #rpReqs {
+  padding: 3px 8px;
+  gap: 1px;
+}
+
+body.ios-keyboard-open #rpReqs .su-req {
+  font-size: 0.64rem;
+  gap: 4px;
+}
+
+body.ios-keyboard-open #rpReqs .su-req-icon {
+  width: 12px;
+  height: 12px;
+  font-size: 0.5rem;
+}
+
+/* Reset password toggle buttons compact */
+body.ios-keyboard-open .su-toggle-pw {
+  width: 40px;
+  height: 40px;
+}
+
+body.ios-keyboard-open .su-toggle-pw svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* PWA standalone + keyboard open */
+@media (display-mode: standalone) {
+  body.ios-keyboard-open .field-group {
+    height: 48px;
+    min-height: 48px;
+  }
+
+  body.ios-keyboard-open .cta-btn {
+    height: 48px;
+    min-height: 48px;
+  }
+
+  body.ios-keyboard-open .su-reqs {
+    padding: 3px 8px;
+  }
+
+  body.ios-keyboard-open .su-req {
+    font-size: 0.64rem;
+  }
+
+  body.ios-keyboard-open .su-strength-track {
+    height: 3px;
+  }
+}
+
+/* PWA landscape keyboard open */
+@media (display-mode: standalone) and (orientation: landscape) and (max-height: 500px) {
+  body.ios-keyboard-open .su-reqs {
+    padding: 2px 6px;
+  }
+
+  body.ios-keyboard-open .su-req {
+    font-size: 0.58rem;
+  }
+
+  body.ios-keyboard-open .su-strength-track {
+    height: 2px;
+  }
+
+  body.ios-keyboard-open .field-group {
+    height: 40px;
+    min-height: 40px;
+  }
+
+  body.ios-keyboard-open .cta-btn {
+    height: 40px;
+    min-height: 40px;
   }
 }
