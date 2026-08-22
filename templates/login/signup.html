@@ -31,7 +31,7 @@
     {# ══════════ STEP 1: Name + Email ══════════ #}
     <div class="su-step su-step-active" id="suStep1">
 
-      <div class="field-group {% if errors.name %}field-error{% endif %}">
+      <div class="field-group su-fg-validate {% if errors.name %}field-error{% endif %}" id="suNameGroup">
         <span class="field-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -42,10 +42,11 @@
                class="field-input" autocomplete="name" enterkeyhint="next"
                id="suName"
                value="{{ form.name|default:'' }}" />
+        <span class="su-fg-status" id="suNameStatus"></span>
       </div>
-      {% if errors.name %}<p class="field-msg">{{ errors.name }}</p>{% endif %}
+      <p class="field-msg" id="suNameMsg">{% if errors.name %}{{ errors.name }}{% endif %}</p>
 
-      <div class="field-group {% if errors.email %}field-error{% endif %}">
+      <div class="field-group su-fg-validate {% if errors.email %}field-error{% endif %}" id="suEmailGroup">
         <span class="field-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
             <rect x="2" y="4" width="20" height="16" rx="2"/>
@@ -56,10 +57,11 @@
                class="field-input" autocomplete="email" enterkeyhint="next"
                id="suEmail"
                value="{{ form.email|default:'' }}" />
+        <span class="su-fg-status" id="suEmailStatus"></span>
       </div>
-      {% if errors.email %}<p class="field-msg">{{ errors.email }}</p>{% endif %}
+      <p class="field-msg" id="suEmailMsg">{% if errors.email %}{{ errors.email }}{% endif %}</p>
 
-      <button type="button" class="cta-btn su-next-btn" id="suNextBtn">
+      <button type="button" class="cta-btn su-next-btn su-btn-disabled" id="suNextBtn" disabled>
         Continue &rarr;
       </button>
 
@@ -181,7 +183,120 @@
   const reqUpper = document.getElementById('suReqUpper');
   const reqNum   = document.getElementById('suReqNum');
 
+  const nameInput   = document.getElementById('suName');
+  const emailInput  = document.getElementById('suEmail');
+  const nameGroup   = document.getElementById('suNameGroup');
+  const emailGroup  = document.getElementById('suEmailGroup');
+  const nameStatus  = document.getElementById('suNameStatus');
+  const emailStatus = document.getElementById('suEmailStatus');
+  const nameMsg     = document.getElementById('suNameMsg');
+  const emailMsg    = document.getElementById('suEmailMsg');
+
   let currentStep = 1;
+  let nameValid = false;
+  let emailValid = false;
+
+  /* ── Validation helpers ── */
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  const DISPOSABLE = ['mailinator','guerrillamail','tempmail','throwaway','yopmail','10minutemail','trashmail','sharklasers','guerrillamailblock','grr.la','dispostable','maildrop'];
+
+  function setNameState(state, msg) {
+    nameGroup.classList.remove('su-fg-ok', 'su-fg-err');
+    nameStatus.textContent = '';
+    nameMsg.textContent = '';
+    if (state === 'ok') {
+      nameGroup.classList.add('su-fg-ok');
+      nameStatus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M20 6 9 17l-5-5"/></svg>';
+      nameValid = true;
+    } else if (state === 'err') {
+      nameGroup.classList.add('su-fg-err');
+      nameStatus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+      nameMsg.textContent = msg;
+      nameValid = false;
+    } else {
+      nameValid = false;
+    }
+    updateNextBtn();
+  }
+
+  function setEmailState(state, msg) {
+    emailGroup.classList.remove('su-fg-ok', 'su-fg-err');
+    emailStatus.textContent = '';
+    emailMsg.textContent = '';
+    if (state === 'ok') {
+      emailGroup.classList.add('su-fg-ok');
+      emailStatus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M20 6 9 17l-5-5"/></svg>';
+      emailValid = true;
+    } else if (state === 'err') {
+      emailGroup.classList.add('su-fg-err');
+      emailStatus.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+      emailMsg.textContent = msg;
+      emailValid = false;
+    } else {
+      emailValid = false;
+    }
+    updateNextBtn();
+  }
+
+  function updateNextBtn() {
+    var ok = nameValid && emailValid;
+    nextBtn.disabled = !ok;
+    nextBtn.classList.toggle('su-btn-disabled', !ok);
+  }
+
+  /* ── Name validation ── */
+  var nameTimer = null;
+  nameInput.addEventListener('input', function() {
+    clearTimeout(nameTimer);
+    var v = nameInput.value.trim();
+    if (v.length === 0) { setNameState(''); return; }
+    nameTimer = setTimeout(function() {
+      if (v.length < 2) {
+        setNameState('err', 'Name must be at least 2 characters');
+      } else if (!/^[a-zA-Z\s.'-]+$/.test(v)) {
+        setNameState('err', 'Name can only contain letters, spaces, hyphens, and apostrophes');
+      } else {
+        setNameState('ok');
+      }
+    }, 300);
+  });
+
+  nameInput.addEventListener('blur', function() {
+    var v = nameInput.value.trim();
+    if (v.length === 0) {
+      setNameState('err', 'Name is required');
+    }
+  });
+
+  /* ── Email validation ── */
+  var emailTimer = null;
+  emailInput.addEventListener('input', function() {
+    clearTimeout(emailTimer);
+    var v = emailInput.value.trim().toLowerCase();
+    if (v.length === 0) { setEmailState(''); return; }
+    emailTimer = setTimeout(function() {
+      if (v.length < 5) {
+        setEmailState('err', 'Email is too short');
+      } else if (!EMAIL_RE.test(v)) {
+        setEmailState('err', 'Enter a valid email address');
+      } else {
+        var domain = v.split('@')[1];
+        var baseDomain = domain.split('.')[0];
+        if (DISPOSABLE.indexOf(baseDomain) !== -1) {
+          setEmailState('err', 'Please use a permanent email address');
+        } else {
+          setEmailState('ok');
+        }
+      }
+    }, 400);
+  });
+
+  emailInput.addEventListener('blur', function() {
+    var v = emailInput.value.trim();
+    if (v.length === 0) {
+      setEmailState('err', 'Email is required');
+    }
+  });
 
   /* ── Step navigation ── */
   function goToStep(n) {
@@ -206,6 +321,7 @@
   }
 
   nextBtn.addEventListener('click', function() {
+    if (!nameValid || !emailValid) return;
     goToStep(2);
     pwInput.focus();
   });
@@ -280,15 +396,23 @@
   }
 
   /* ── Enter key on step 1 moves to step 2 ── */
-  document.getElementById('suName').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('suEmail').focus(); }
+  nameInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); emailInput.focus(); }
   });
-  document.getElementById('suEmail').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); goToStep(2); pwInput.focus(); }
+  emailInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); if (nameValid && emailValid) { goToStep(2); pwInput.focus(); } }
   });
   document.getElementById('suConfirm').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.preventDefault(); document.getElementById('suForm').submit(); }
   });
+
+  /* ── Initial state: check if fields already have values (server re-render) ── */
+  (function initValidation() {
+    var n = nameInput.value.trim();
+    var em = emailInput.value.trim();
+    if (n.length >= 2 && /^[a-zA-Z\s.'-]+$/.test(n)) setNameState('ok');
+    if (em.length >= 5 && EMAIL_RE.test(em.toLowerCase())) setEmailState('ok');
+  })();
 })();
 </script>
 {% endblock %}

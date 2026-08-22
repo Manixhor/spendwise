@@ -945,6 +945,16 @@ body.ios-keyboard-open .brand {
   margin-bottom: 4px;
   padding-left: 4px;
   font-weight: 500;
+  min-height: 0;
+  overflow: hidden;
+  transition: min-height 0.2s, opacity 0.2s;
+}
+
+.field-msg:empty {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1138,6 +1148,69 @@ body.ios-keyboard-open .brand {
   margin-top: 16px;
 }
 
+/* ── Disabled button ──────────────────────────────────── */
+.su-btn-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  filter: grayscale(0.3);
+}
+
+/* ── Field validation states ──────────────────────────── */
+.su-fg-validate {
+  position: relative;
+}
+
+.su-fg-status {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.su-fg-ok .su-fg-status,
+.su-fg-err .su-fg-status {
+  opacity: 1;
+}
+
+.su-fg-ok .su-fg-status {
+  color: #34c759;
+}
+
+.su-fg-err .su-fg-status {
+  color: #ff3b30;
+}
+
+.su-fg-ok {
+  border-color: #34c759 !important;
+  background: rgba(52,199,89,0.06) !important;
+}
+
+.su-fg-ok:focus-within {
+  box-shadow: 0 0 0 3px rgba(52,199,89,0.12) !important;
+}
+
+.su-fg-err {
+  border-color: rgba(255,59,48,0.50) !important;
+}
+
+.su-fg-err:focus-within {
+  border-color: rgba(255,59,48,0.70) !important;
+  box-shadow: 0 0 0 3px rgba(255,59,48,0.10) !important;
+}
+
+/* Hide status icon when there's a toggle button */
+.su-fg-ok .su-toggle-pw ~ .su-fg-status,
+.su-fg-err .su-toggle-pw ~ .su-fg-status {
+  right: 44px;
+}
+
 /* ════════════════════════════════════════════════════════════
    SIGNUP RESPONSIVE – MOBILE
    ════════════════════════════════════════════════════════════ */
@@ -1209,6 +1282,17 @@ body.ios-keyboard-open .brand {
   .su-toggle-pw {
     width: 44px;
     height: 44px;
+  }
+
+  /* Validation status icons */
+  .su-fg-status {
+    width: 18px;
+    height: 18px;
+  }
+
+  .su-fg-ok .su-toggle-pw ~ .su-fg-status,
+  .su-fg-err .su-toggle-pw ~ .su-fg-status {
+    right: 48px;
   }
 
   /* Continue button */
