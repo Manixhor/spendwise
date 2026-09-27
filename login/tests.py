@@ -29,7 +29,7 @@ class SignupOtpTests(TestCase):
         profile = UserProfile.objects.get(user=user)
         self.assertFalse(user.is_active)
         self.assertFalse(profile.email_is_verified)
-        self.assertRegex(profile.email_verification_code, r'^\d{6}$')
+        self.assertRegex(profile.email_verification_code, r'^\d{4}$')
         self.assertEqual(self.client.session['pending_signup_user_id'], user.id)
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ['newuser@example.com'])
@@ -44,7 +44,7 @@ class SignupOtpTests(TestCase):
             is_active=False,
         )
         profile = UserProfile.objects.get(user=user)
-        code = '123456'
+        code = '1234'
         profile.email_verification_code = code
         profile.email_verification_sent_at = timezone.now()
         profile.email_is_verified = False
@@ -86,6 +86,55 @@ class LoginTests(TestCase):
         )
 
         self.assertRedirects(response, reverse('dashboard'))
+
+
+class InvitationSetupTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='invited@example.com',
+            email='invited@example.com',
+            password='TemporaryPass123!',
+        )
+        self.profile = UserProfile.objects.get(user=self.user)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_invited_user_completes_otp_and_profile_setup_before_login(self):
+        response = self.client.post(
+            reverse('login'),
+            {'email': 'invited@example.com', 'password': 'TemporaryPass123!'},
+        )
+
+        self.assertRedirects(response, reverse('invitation_verify'))
+        self.profile.refresh_from_db()
+        self.assertRegex(self.profile.email_verification_code, r'^\d{4}$')
+        self.assertEqual(len(mail.outbox), 1)
+
+        response = self.client.post(
+            reverse('invitation_verify'),
+            {'otp': self.profile.email_verification_code},
+        )
+
+        self.assertRedirects(response, reverse('invitation_setup'))
+        self.profile.refresh_from_db()
+        self.assertTrue(self.profile.email_is_verified)
+
+        response = self.client.post(
+            reverse('invitation_setup'),
+            {
+                'name': 'Invited User',
+                'password': 'MyNewPass123!',
+                'confirm_password': 'MyNewPass123!',
+                'currency': 'usd',
+            },
+        )
+
+        self.assertRedirects(response, reverse('dashboard'))
+        self.user.refresh_from_db()
+        self.profile.refresh_from_db()
+        self.assertEqual(self.user.first_name, 'Invited')
+        self.assertEqual(self.user.last_name, 'User')
+        self.assertTrue(self.user.check_password('MyNewPass123!'))
+        self.assertEqual(self.profile.currency, 'usd')
 
 
 class PwaCsrfCacheTests(TestCase):
@@ -209,6 +258,14 @@ class AdminToolAccessTests(TestCase):
         self.assertContains(response, 'Manually Add User')
         self.assertContains(response, reverse('admin:auth_user_add'))
 
+    def test_admin_sidebar_has_an_invite_user_link(self):
+        self.client.force_login(self.superuser)
+
+        response = self.client.get(reverse('admin:auth_user_changelist'))
+
+        self.assertContains(response, 'Invite User')
+        self.assertContains(response, reverse('admin:auth_user_add'))
+
     def test_analytics_lists_recently_active_users_below_the_charts(self):
         customer = User.objects.create_user(
             username='active@example.com',
@@ -260,10 +317,6 @@ class ManualUserAdminTests(TestCase):
                 reverse('admin:auth_user_add'),
                 {
                     'email': 'newuser@example.com',
-                    'first_name': 'New',
-                    'last_name': 'User',
-                    'password1': 'TemporaryPass123!',
-                    'password2': 'TemporaryPass123!',
                     '_save': 'Save',
                 },
             )
@@ -271,10 +324,12 @@ class ManualUserAdminTests(TestCase):
         self.assertEqual(response.status_code, 302)
         user = User.objects.get(email='newuser@example.com')
         self.assertEqual(user.username, 'newuser@example.com')
-        self.assertTrue(user.check_password('TemporaryPass123!'))
+        self.assertTrue(user.is_active)
+        self.assertFalse(user.profile.email_is_verified)
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ['newuser@example.com'])
-        self.assertIn('TemporaryPass123!', mail.outbox[0].body)
+        self.assertIn('Temporary password:', mail.outbox[0].body)
+        self.assertIn('After signing in, verify your email', mail.outbox[0].body)
 
 
 class DashboardInsightsTests(TestCase):

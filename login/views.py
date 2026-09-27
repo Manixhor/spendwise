@@ -1355,7 +1355,7 @@ def onboarding(request: HttpRequest) -> HttpResponse:
 
 #try it 
 def _issue_signup_otp(profile: UserProfile) -> str:
-    code = f"{random.randint(100000, 999999)}"
+    code = f"{random.randint(1000, 9999)}"
     profile.email_verification_code = code
     profile.email_verification_sent_at = timezone.now()
     profile.email_is_verified = False
@@ -1374,7 +1374,7 @@ def _send_signup_otp_email(user: User, code: str) -> None:
     name = user.first_name or user.username or "there"
     text_body = (
         f"Hi {name},\n\n"
-        f"Use this 6-digit OTP to verify your SpendWise account: {code}\n\n"
+        f"Use this 4-digit OTP to verify your SpendWise account: {code}\n\n"
         f"This OTP expires in {expiry_minutes} minutes.\n\n"
         "If you did not create this account, you can ignore this email."
     )
@@ -1498,7 +1498,7 @@ def signup(request: HttpRequest) -> HttpResponse:
                 request, "login/signup.html", {"errors": errors, "form": request.POST}
             )
 
-        messages.success(request, f"We sent a 6-digit OTP to {user.email}.")
+        messages.success(request, f"We sent a 4-digit OTP to {user.email}.")
         return redirect("signup_verify")
 
     return render(request, "login/signup.html")
@@ -1539,8 +1539,8 @@ def signup_verify(request: HttpRequest) -> HttpResponse:
         expiry_minutes = getattr(settings, "EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES", 10)
         sent_at = profile.email_verification_sent_at
 
-        if not code:
-            errors["otp"] = "Enter the 6-digit OTP."
+        if not code or not code.isdigit() or len(code) != 4:
+            errors["otp"] = "Enter the 4-digit OTP."
         elif code != profile.email_verification_code:
             errors["otp"] = "That OTP is incorrect."
         elif not sent_at or timezone.now() > sent_at + timedelta(minutes=expiry_minutes):
@@ -1572,9 +1572,121 @@ def signup_verify(request: HttpRequest) -> HttpResponse:
     )
 
 
+def _get_pending_invitation_user(request: HttpRequest) -> User | None:
+    user_id = request.session.get('pending_invitation_user_id')
+    return User.objects.filter(id=user_id, is_active=True).first()
+
+
+@never_cache
+@ensure_csrf_cookie
+def invitation_verify(request: HttpRequest) -> HttpResponse:
+    user = _get_pending_invitation_user(request)
+    if not user:
+        messages.error(request, 'Please sign in with your temporary password to continue.')
+        return redirect('login')
+
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    errors = {}
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'verify')
+        if action == 'resend':
+            code = _issue_signup_otp(profile)
+            try:
+                _send_signup_otp_email(user, code)
+                messages.success(request, f'A fresh OTP was sent to {user.email}.')
+            except Exception:
+                errors['general'] = 'We could not resend the OTP. Please check SMTP settings.'
+            return render(
+                request,
+                'login/invitation_verify.html',
+                {'errors': errors, 'email': user.email},
+            )
+
+        code = request.POST.get('otp', '').strip()
+        expiry_minutes = getattr(settings, 'EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES', 10)
+        sent_at = profile.email_verification_sent_at
+        if not code or not code.isdigit() or len(code) != 4:
+            errors['otp'] = 'Enter the 4-digit OTP.'
+        elif code != profile.email_verification_code:
+            errors['otp'] = 'That OTP is incorrect.'
+        elif not sent_at or timezone.now() > sent_at + timedelta(minutes=expiry_minutes):
+            errors['otp'] = 'That OTP expired. Please resend a new one.'
+
+        if not errors:
+            profile.email_is_verified = True
+            profile.email_verification_code = ''
+            profile.save(update_fields=['email_is_verified', 'email_verification_code'])
+            request.session.pop('pending_invitation_user_id', None)
+            request.session['pending_invitation_setup_user_id'] = user.id
+            return redirect('invitation_setup')
+
+    return render(
+        request,
+        'login/invitation_verify.html',
+        {'errors': errors, 'email': user.email},
+    )
+
+
+@never_cache
+@ensure_csrf_cookie
+def invitation_setup(request: HttpRequest) -> HttpResponse:
+    user_id = request.session.get('pending_invitation_setup_user_id')
+    user = User.objects.filter(id=user_id, is_active=True).first()
+    if not user:
+        messages.error(request, 'Your setup session expired. Please sign in again.')
+        return redirect('login')
+
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    if not profile.email_is_verified:
+        request.session['pending_invitation_user_id'] = user.id
+        return redirect('invitation_verify')
+
+    errors = {}
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        currency = request.POST.get('currency', 'inr')
+
+        if not name:
+            errors['name'] = 'Name is required.'
+        if len(password) < 8:
+            errors['password'] = 'Password must be at least 8 characters.'
+        elif not any(char.isupper() for char in password):
+            errors['password'] = 'Password must include an uppercase letter.'
+        elif not any(char.isdigit() for char in password):
+            errors['password'] = 'Password must include a number.'
+        if password != confirm_password:
+            errors['confirm_password'] = 'Passwords do not match.'
+        if currency not in {'inr', 'usd'}:
+            errors['currency'] = 'Choose a valid currency.'
+
+        if not errors:
+            name_parts = name.split()
+            user.first_name = name_parts[0]
+            user.last_name = ' '.join(name_parts[1:])
+            user.set_password(password)
+            user.save(update_fields=['first_name', 'last_name', 'password'])
+            profile.currency = currency
+            profile.save(update_fields=['currency'])
+            request.session.pop('pending_invitation_setup_user_id', None)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            messages.success(request, 'Your SpendWise account is ready.')
+            return redirect('dashboard')
+
+        return render(
+            request,
+            'login/invitation_setup.html',
+            {'errors': errors, 'form': request.POST, 'email': user.email},
+        )
+
+    return render(request, 'login/invitation_setup.html', {'email': user.email})
+
+
 # ── Forgot Password ───────────────────────────────────────
 def _issue_password_reset_otp(profile: UserProfile) -> str:
-    code = f"{random.randint(100000, 999999)}"
+    code = f"{random.randint(1000, 9999)}"
     profile.password_reset_code = code
     profile.password_reset_sent_at = timezone.now()
     profile.save(update_fields=["password_reset_code", "password_reset_sent_at"])
@@ -1586,7 +1698,7 @@ def _send_password_reset_otp_email(user: User, code: str) -> None:
     name = user.first_name or user.username or "there"
     text_body = (
         f"Hi {name},\n\n"
-        f"Use this 6-digit OTP to reset your SpendWise password: {code}\n\n"
+        f"Use this 4-digit OTP to reset your SpendWise password: {code}\n\n"
         f"This OTP expires in {expiry_minutes} minutes.\n\n"
         "If you did not request a password reset, you can ignore this email."
     )
@@ -1638,7 +1750,7 @@ def forgot_password(request: HttpRequest) -> HttpResponse:
                         request, "login/forgot_password.html", {"errors": errors, "form": request.POST}
                     )
                 request.session["password_reset_user_id"] = user.id
-                messages.success(request, f"We sent a 6-digit OTP to {user.email}.")
+                messages.success(request, f"We sent a 4-digit OTP to {user.email}.")
                 return redirect("forgot_password_verify")
             else:
                 errors["general"] = "No account found with that email."
@@ -1685,8 +1797,8 @@ def forgot_password_verify(request: HttpRequest) -> HttpResponse:
         expiry_minutes = getattr(settings, "EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES", 10)
         sent_at = profile.password_reset_sent_at
 
-        if not code:
-            errors["otp"] = "Enter the 6-digit OTP."
+        if not code or not code.isdigit() or len(code) != 4:
+            errors["otp"] = "Enter the 4-digit OTP."
         elif code != profile.password_reset_code:
             errors["otp"] = "That OTP is incorrect."
         elif not sent_at or timezone.now() > sent_at + timedelta(minutes=expiry_minutes):
@@ -1779,6 +1891,20 @@ def login_view(request: HttpRequest) -> HttpResponse:
         if not errors:
             user = authenticate(request, username=email, password=password)
             if user is not None:
+                profile, _ = UserProfile.objects.get_or_create(user=user)
+                if not profile.email_is_verified:
+                    code = _issue_signup_otp(profile)
+                    request.session['pending_invitation_user_id'] = user.id
+                    try:
+                        _send_signup_otp_email(user, code)
+                    except Exception:
+                        errors['general'] = 'We could not send the OTP. Please check SMTP settings.'
+                    else:
+                        return redirect('invitation_verify')
+                if errors:
+                    return render(
+                        request, 'login/login.html', {'errors': errors, 'form': request.POST}
+                    )
                 login(request, user)
                 return redirect("dashboard")
             errors["general"] = "Invalid email or password."
@@ -3292,5 +3418,3 @@ def api_update_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
         return JsonResponse({"error": "Transaction not found."}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-
-

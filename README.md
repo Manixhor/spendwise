@@ -25,7 +25,7 @@
 ## Features
 
 ### Authentication
-- Email + password signup with 6-digit OTP verification
+- Email + password signup with 4-digit OTP verification
 - Login / Logout
 - Forgot password flow with OTP reset
 - Google OAuth sign-in (via django-allauth)
@@ -323,7 +323,7 @@ heroku run python manage.py migrate
 ### First Time Setup
 1. Visit the app URL
 2. Sign up with your email
-3. Verify your account with the 6-digit OTP
+3. Verify your account with the 4-digit OTP
 4. Complete onboarding — set your salary and savings target
 5. Start adding transactions
 

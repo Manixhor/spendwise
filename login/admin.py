@@ -2,12 +2,12 @@ from django.conf import settings
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.db import transaction
 from django.shortcuts import redirect
 from django.urls import path, reverse
+from django.utils.crypto import get_random_string
 from django.utils import timezone
 from django.utils.html import format_html
 
@@ -21,14 +21,14 @@ admin.site.index_title = 'Welcome to SpendWise Admin'
 admin.site.index_template = 'admin/index.html'
 
 
-class ManualUserCreationForm(UserCreationForm):
-    """Create customer accounts with an email address as the login identifier."""
+class ManualUserCreationForm(forms.ModelForm):
+    """Create an invited customer with an email as their login identifier."""
 
     email = forms.EmailField(required=True)
 
-    class Meta(UserCreationForm.Meta):
+    class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name')
+        fields = ('email',)
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip().lower()
@@ -40,9 +40,13 @@ class ManualUserCreationForm(UserCreationForm):
         user = super().save(commit=False)
         user.username = self.cleaned_data['email']
         user.email = self.cleaned_data['email']
+        self.temporary_password = get_random_string(
+            14,
+            allowed_chars='abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789',
+        )
+        user.set_password(self.temporary_password)
         if commit:
             user.save()
-            self.save_m2m()
         return user
 
 
@@ -63,7 +67,8 @@ class UserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'first_name', 'last_name', 'password1', 'password2'),
+            'fields': ('email',),
+            'description': 'A temporary password and sign-in link will be sent to this email address.',
         }),
     )
     list_display = (
@@ -94,9 +99,19 @@ class UserAdmin(BaseUserAdmin):
         if change or obj.is_staff:
             return
 
-        password = form.cleaned_data.get('password1')
+        password = getattr(form, 'temporary_password', '')
         if not obj.email or not password:
             return
+
+        profile, _ = UserProfile.objects.get_or_create(user=obj)
+        profile.email_is_verified = False
+        profile.email_verification_code = ''
+        profile.email_verification_sent_at = None
+        profile.save(update_fields=[
+            'email_is_verified',
+            'email_verification_code',
+            'email_verification_sent_at',
+        ])
 
         login_url = request.build_absolute_uri(reverse('login'))
 
@@ -105,12 +120,12 @@ class UserAdmin(BaseUserAdmin):
                 send_mail(
                     subject='Your SpendWise account is ready',
                     message=(
-                        f'Hi {obj.first_name or obj.username},\n\n'
+                        'Hi,\n\n'
                         'An administrator created a SpendWise account for you.\n\n'
                         f'Login email: {obj.email}\n'
                         f'Temporary password: {password}\n\n'
                         f'Sign in here: {login_url}\n\n'
-                        'Please change your password after you sign in.\n\n'
+                        'After signing in, verify your email with an OTP and complete your profile.\n\n'
                         'SpendWise'
                     ),
                     from_email=settings.DEFAULT_FROM_EMAIL,

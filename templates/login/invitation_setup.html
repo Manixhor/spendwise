@@ -1,0 +1,42 @@
+{% extends "login/base_auth.html" %}
+
+{% block title %}SpendWise - Complete Your Account{% endblock %}
+{% block left_tagline %}A few final details.<br/>Then your money has a home.{% endblock %}
+{% block card_class %}card-form{% endblock %}
+
+{% block card_content %}
+  <h2 class="form-title">Complete your account</h2>
+  <p class="form-sub">Set up your SpendWise profile for <strong>{{ email }}</strong>.</p>
+
+  <form method="post" class="auth-form" novalidate>
+    {% csrf_token %}
+    <div class="field-group {% if errors.name %}field-error{% endif %}">
+      <input type="text" name="name" placeholder="Your full name" class="field-input"
+             value="{{ form.name|default:'' }}" autocomplete="name" />
+    </div>
+    {% if errors.name %}<p class="field-msg">{{ errors.name }}</p>{% endif %}
+
+    <div class="field-group {% if errors.password %}field-error{% endif %}">
+      <input type="password" name="password" placeholder="Create a password" class="field-input"
+             autocomplete="new-password" />
+    </div>
+    {% if errors.password %}<p class="field-msg">{{ errors.password }}</p>{% endif %}
+
+    <div class="field-group {% if errors.confirm_password %}field-error{% endif %}">
+      <input type="password" name="confirm_password" placeholder="Confirm your password" class="field-input"
+             autocomplete="new-password" />
+    </div>
+    {% if errors.confirm_password %}<p class="field-msg">{{ errors.confirm_password }}</p>{% endif %}
+
+    <div class="field-group {% if errors.currency %}field-error{% endif %}">
+      <label class="field-label" for="currency">Preferred currency</label>
+      <select id="currency" name="currency" class="field-input">
+        <option value="inr" {% if form.currency != 'usd' %}selected{% endif %}>Indian Rupee (INR)</option>
+        <option value="usd" {% if form.currency == 'usd' %}selected{% endif %}>US Dollar (USD)</option>
+      </select>
+    </div>
+    {% if errors.currency %}<p class="field-msg">{{ errors.currency }}</p>{% endif %}
+
+    <button type="submit" class="cta-btn">Finish setup &rarr;</button>
+  </form>
+{% endblock %}

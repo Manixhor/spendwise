@@ -8,7 +8,7 @@
 {% block card_content %}
   <h2 class="form-title">Verify Email</h2>
   <p class="form-sub">
-    We sent a 6-digit OTP to<br/>
+    We sent a 4-digit OTP to<br/>
     <strong>{{ email }}</strong>
   </p>
 
@@ -29,11 +29,11 @@
       <input
         type="text"
         name="otp"
-        placeholder="Enter 6-digit OTP"
+        placeholder="Enter 4-digit OTP"
         class="field-input"
         inputmode="numeric"
         autocomplete="one-time-code"
-        maxlength="6"
+        maxlength="4"
         autofocus
       />
     </div>

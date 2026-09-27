@@ -18,6 +18,13 @@ from urllib.parse import parse_qs, urlparse, unquote
 
 from django.core.exceptions import ImproperlyConfigured
 
+from login.admin_navigation import (
+    analytics_link,
+    broadcast_link,
+    invite_user_link,
+    users_link,
+)
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -178,6 +185,45 @@ UNFOLD = {
     "SITE_TITLE": "SpendWise Admin",
     "SITE_HEADER": "SpendWise Admin",
     "SITE_SYMBOL": "dashboard",
+    "SIDEBAR": {
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": "User management",
+                "items": [
+                    {
+                        "title": "Invite User",
+                        "icon": "person_add",
+                        "link": invite_user_link,
+                        "permission": "login.admin_navigation.is_superuser",
+                    },
+                    {
+                        "title": "Users",
+                        "icon": "group",
+                        "link": users_link,
+                        "permission": "login.admin_navigation.is_superuser",
+                    },
+                ],
+            },
+            {
+                "title": "SpendWise",
+                "items": [
+                    {
+                        "title": "Analytics",
+                        "icon": "monitoring",
+                        "link": analytics_link,
+                        "permission": "login.admin_navigation.is_superuser",
+                    },
+                    {
+                        "title": "Broadcast email",
+                        "icon": "campaign",
+                        "link": broadcast_link,
+                        "permission": "login.admin_navigation.is_superuser",
+                    },
+                ],
+            },
+        ],
+    },
 }
 
 TEMPLATES = [

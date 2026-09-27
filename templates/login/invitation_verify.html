@@ -1,0 +1,27 @@
+{% extends "login/base_auth.html" %}
+
+{% block title %}SpendWise - Verify Your Email{% endblock %}
+{% block left_tagline %}Verify your email.<br/>Then make SpendWise yours.{% endblock %}
+{% block card_class %}card-form{% endblock %}
+
+{% block card_content %}
+  <h2 class="form-title">Verify your email</h2>
+  <p class="form-sub">We sent a 4-digit code to<br/><strong>{{ email }}</strong></p>
+
+  {% if errors.general %}<div class="alert alert-error">{{ errors.general }}</div>{% endif %}
+
+  <form method="post" class="auth-form" novalidate>
+    {% csrf_token %}
+    <div class="field-group {% if errors.otp %}field-error{% endif %}">
+      <input type="text" name="otp" placeholder="Enter 4-digit OTP" class="field-input"
+             inputmode="numeric" autocomplete="one-time-code" maxlength="4" autofocus />
+    </div>
+    {% if errors.otp %}<p class="field-msg">{{ errors.otp }}</p>{% endif %}
+    <button type="submit" name="action" value="verify" class="cta-btn">Verify email &rarr;</button>
+  </form>
+
+  <form method="post" class="auth-form" novalidate>
+    {% csrf_token %}
+    <button type="submit" name="action" value="resend" class="link-button">Resend OTP</button>
+  </form>
+{% endblock %}
