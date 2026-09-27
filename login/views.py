@@ -879,12 +879,21 @@ def _build_top_spending_days(user, month_start: date, month_end: date) -> list[d
     return results
 
 
-def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
+def _build_monthly_analysis(
+    user,
+    profile,
+    selected_month: date,
+    start_date: date | None = None,
+    end_date: date | None = None,
+) -> dict:
     month_start, month_end = _month_bounds(selected_month)
+    if start_date and end_date:
+        month_start, month_end = start_date, end_date
     today = date.today()
-    if selected_month.year == today.year and selected_month.month == today.month:
+    if not start_date and selected_month.year == today.year and selected_month.month == today.month:
         month_end = min(month_end, today)
-    prev_month_start = _add_months(month_start, -1)
+    report_days = (month_end - month_start).days + 1
+    prev_month_start = month_start - timedelta(days=report_days)
     prev_month_end = month_start - timedelta(days=1)
     current_month_str = month_start.strftime("%Y-%m")
 
@@ -1009,18 +1018,25 @@ def _build_monthly_analysis(user, profile, selected_month: date) -> dict:
         reminder_title = "Review your biggest spending days this month"
         reminder_sub = "CUT BACK WHERE IT HURTS MOST"
 
+    uses_custom_range = bool(start_date and end_date)
+    range_label = (
+        f'{month_start:%d %b %Y} - {month_end:%d %b %Y}'
+        if uses_custom_range
+        else month_start.strftime('%B %Y')
+    )
+
     return {
         "selected_month": month_start,
         "selected_month_param": month_start.strftime("%Y-%m"),
-        "selected_month_label": month_start.strftime("%B %Y"),
+        "selected_month_label": range_label,
         "month_period_label": f"{month_start.day} - {month_end.day} {month_end.strftime('%b %Y')}",
         "prev_month_param": _add_months(month_start, -1).strftime("%Y-%m"),
         "next_month_param": _add_months(month_start, 1).strftime("%Y-%m"),
-        "is_current_month": month_start == date.today().replace(day=1),
-        "account_subtitle": f"{month_txns.count()} transaction{'s' if month_txns.count() != 1 else ''} in this month",
+        "is_current_month": not uses_custom_range and month_start == date.today().replace(day=1),
+        "account_subtitle": f"{month_txns.count()} transaction{'s' if month_txns.count() != 1 else ''} in this period",
         "month_badge": "This month"
-        if month_start == date.today().replace(day=1)
-        else month_start.strftime("%b %Y"),
+        if not uses_custom_range and month_start == date.today().replace(day=1)
+        else range_label,
         "total_income": total_income,
         "total_expense": total_expense,
         "total_saved": total_saved,
@@ -1131,7 +1147,12 @@ def _build_monthly_analysis_email_context(user, profile, analysis: dict) -> dict
     }
 
 
-def send_monthly_analysis_email(user: User, month_value: str | None = None) -> str:
+def send_monthly_analysis_email(
+    user: User,
+    month_value: str | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+) -> str:
     recipient = (user.email or "").strip()
     if not recipient:
         raise ValueError("User does not have an email address.")
@@ -1141,6 +1162,8 @@ def send_monthly_analysis_email(user: User, month_value: str | None = None) -> s
         user,
         profile,
         _parse_month_param(month_value),
+        start_date=start_date,
+        end_date=end_date,
     )
     email_context = _build_monthly_analysis_email_context(user, profile, analysis)
     subject = f"SpendWise Monthly Analysis - {analysis['selected_month_label']}"

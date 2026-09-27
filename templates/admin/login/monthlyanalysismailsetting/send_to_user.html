@@ -1,27 +1,92 @@
 {% extends "admin/base_site.html" %}
 
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    .sw-report-shell { max-width: 720px; margin: 28px auto; animation: sw-report-enter .35s ease-out both; }
+    .sw-report-card { background: #111827; border: 1px solid #273449; border-radius: 8px; box-shadow: 0 18px 42px rgba(0, 0, 0, .22); overflow: hidden; }
+    .sw-report-header { padding: 28px 30px 24px; border-bottom: 1px solid #273449; display: flex; gap: 16px; align-items: flex-start; }
+    .sw-report-icon { width: 42px; height: 42px; border-radius: 8px; display: grid; place-items: center; flex: 0 0 auto; background: #1d4ed8; color: #fff; }
+    .sw-report-icon .material-symbols-outlined { font-size: 22px; }
+    .sw-report-header h1 { color: #f8fafc; font-size: 23px; margin: 0 0 5px; }
+    .sw-report-header p { color: #aab7ca; line-height: 1.5; margin: 0; }
+    .sw-report-form { padding: 28px 30px 30px; }
+    .sw-report-field { margin-bottom: 22px; }
+    .sw-report-field label { color: #dbe5f2; display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .sw-report-input { box-sizing: border-box; background: #0b1220; border: 1px solid #37465e; border-radius: 6px; color: #f8fafc; font-size: 15px; min-height: 44px; padding: 9px 12px; width: 100%; }
+    .sw-report-input:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(96, 165, 250, .18); outline: 0; }
+    .sw-report-dates { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sw-report-period { align-items: center; background: #162032; border: 1px solid #2b3b55; border-radius: 6px; color: #aab7ca; display: flex; font-size: 13px; gap: 8px; margin: 2px 0 24px; padding: 11px 12px; }
+    .sw-report-period .material-symbols-outlined { color: #60a5fa; font-size: 18px; }
+    .sw-report-actions { align-items: center; border-top: 1px solid #273449; display: flex; gap: 12px; justify-content: flex-end; margin: 26px -30px -30px; padding: 18px 30px; }
+    .sw-report-cancel { color: #aab7ca; font-weight: 700; padding: 10px 14px; text-decoration: none; }
+    .sw-report-cancel:hover { color: #f8fafc; }
+    .sw-report-send { align-items: center; background: #2563eb; border: 1px solid #3b82f6; border-radius: 6px; color: #fff; cursor: pointer; display: inline-flex; font-size: 14px; font-weight: 700; gap: 8px; min-height: 42px; padding: 0 16px; transition: background .18s ease, transform .18s ease, box-shadow .18s ease; }
+    .sw-report-send:hover { background: #1d4ed8; box-shadow: 0 8px 18px rgba(37, 99, 235, .24); transform: translateY(-1px); }
+    .sw-report-send:active { transform: translateY(0); }
+    .sw-report-send .material-symbols-outlined { font-size: 18px; }
+    .sw-report-errors { color: #fecaca; font-size: 13px; margin-top: 7px; }
+    .errornote { margin-bottom: 20px; }
+    @keyframes sw-report-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 640px) { .sw-report-shell { margin: 12px; } .sw-report-header, .sw-report-form { padding-left: 20px; padding-right: 20px; } .sw-report-dates { grid-template-columns: 1fr; } .sw-report-actions { margin-left: -20px; margin-right: -20px; padding-left: 20px; padding-right: 20px; } }
+  </style>
+{% endblock %}
+
 {% block content %}
-  <div id="content-main" style="max-width:640px;">
+  <main class="sw-report-shell">
     <form method="post" novalidate>
       {% csrf_token %}
-      <div class="module" style="padding:24px;">
-        <h1 style="margin-top:0;">Send Monthly Analysis</h1>
-        <p>Choose one user and the report month to email.</p>
-        {% if form.non_field_errors %}
-          <div class="errornote">{{ form.non_field_errors }}</div>
-        {% endif %}
-        {% for field in form %}
-          <div class="form-row" style="margin:20px 0;">
-            {{ field.label_tag }}
-            {{ field }}
-            {% if field.errors %}<div class="errors">{{ field.errors }}</div>{% endif %}
+      <section class="sw-report-card">
+        <header class="sw-report-header">
+          <div class="sw-report-icon" aria-hidden="true"><span class="material-symbols-outlined">mail</span></div>
+          <div>
+            <h1>Send Monthly Analysis</h1>
+            <p>Choose a recipient and the exact reporting period.</p>
           </div>
-        {% endfor %}
-        <div class="submit-row">
-          <a href="{% url 'admin:login_monthlyanalysismailsetting_changelist' %}" class="button cancel-link">Cancel</a>
-          <input type="submit" value="Send analysis email" class="default">
+        </header>
+        <div class="sw-report-form">
+          {% if form.non_field_errors %}<div class="errornote">{{ form.non_field_errors }}</div>{% endif %}
+          <div class="sw-report-field">
+            {{ form.recipient.label_tag }}
+            {{ form.recipient }}
+            {% if form.recipient.errors %}<div class="sw-report-errors">{{ form.recipient.errors }}</div>{% endif %}
+          </div>
+          <div class="sw-report-dates">
+            <div class="sw-report-field">
+              {{ form.start_date.label_tag }}
+              {{ form.start_date }}
+              {% if form.start_date.errors %}<div class="sw-report-errors">{{ form.start_date.errors }}</div>{% endif %}
+            </div>
+            <div class="sw-report-field">
+              {{ form.end_date.label_tag }}
+              {{ form.end_date }}
+              {% if form.end_date.errors %}<div class="sw-report-errors">{{ form.end_date.errors }}</div>{% endif %}
+            </div>
+          </div>
+          <div class="sw-report-period"><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span><span id="period-summary">Previous month is selected by default.</span></div>
+          <footer class="sw-report-actions">
+            <a href="{% url 'admin:login_monthlyanalysismailsetting_changelist' %}" class="sw-report-cancel">Cancel</a>
+            <button type="submit" class="sw-report-send"><span class="material-symbols-outlined" aria-hidden="true">send</span>Send analysis email</button>
+          </footer>
         </div>
-      </div>
+      </section>
     </form>
-  </div>
+  </main>
+{% endblock %}
+
+{% block footer %}
+  {{ block.super }}
+  <script>
+    (function () {
+      const start = document.getElementById('id_start_date');
+      const end = document.getElementById('id_end_date');
+      const summary = document.getElementById('period-summary');
+      if (!start || !end || !summary) return;
+      const formatDate = (value) => value ? new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : 'Choose a date';
+      const refreshSummary = () => { summary.textContent = `${formatDate(start.value)} to ${formatDate(end.value)}`; };
+      start.addEventListener('change', refreshSummary);
+      end.addEventListener('change', refreshSummary);
+      refreshSummary();
+    }());
+  </script>
 {% endblock %}

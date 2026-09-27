@@ -238,11 +238,16 @@ class MonthlyAnalysisMailAdminTests(TestCase):
         with patch('login.admin.send_monthly_analysis_email') as sender:
             response = self.client.post(url, {
                 'recipient': str(user.pk),
-                'report_month': '2026-09',
+                'start_date': '2026-08-01',
+                'end_date': '2026-08-31',
             }, follow=True)
 
         self.assertEqual(response.status_code, 200)
-        sender.assert_called_once_with(user, '2026-09')
+        sender.assert_called_once_with(
+            user,
+            start_date=date(2026, 8, 1),
+            end_date=date(2026, 8, 31),
+        )
         self.assertContains(response, 'sent to report@example.com')
 
 

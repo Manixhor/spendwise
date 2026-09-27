@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django import forms
 from django.contrib import admin, messages
@@ -58,10 +60,13 @@ class SendMonthlyAnalysisToUserForm(forms.Form):
         label='Recipient',
         empty_label='Choose a user',
     )
-    report_month = forms.DateField(
-        label='Report month',
-        input_formats=['%Y-%m'],
-        widget=forms.DateInput(attrs={'type': 'month'}),
+    start_date = forms.DateField(
+        label='From date',
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    end_date = forms.DateField(
+        label='To date',
+        widget=forms.DateInput(attrs={'type': 'date'}),
     )
 
     def __init__(self, *args, **kwargs):
@@ -71,7 +76,27 @@ class SendMonthlyAnalysisToUserForm(forms.Form):
             is_staff=False,
             email__gt='',
         ).order_by('email')
-        self.fields['report_month'].initial = timezone.localdate().replace(day=1)
+        today = timezone.localdate()
+        current_month_start = today.replace(day=1)
+        previous_month_end = current_month_start - timedelta(days=1)
+        self.fields['start_date'].initial = previous_month_end.replace(day=1)
+        self.fields['end_date'].initial = previous_month_end
+        self.fields['recipient'].widget.attrs['class'] = 'sw-report-input'
+        self.fields['start_date'].widget.attrs['class'] = 'sw-report-input'
+        self.fields['end_date'].widget.attrs['class'] = 'sw-report-input'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        if start_date and end_date:
+            if start_date > end_date:
+                self.add_error('end_date', 'Choose an end date after the start date.')
+            elif end_date > timezone.localdate():
+                self.add_error('end_date', 'Reports cannot include future dates.')
+            elif end_date - start_date > timedelta(days=366):
+                self.add_error('end_date', 'Choose a range of one year or less.')
+        return cleaned_data
 
 
 # ── UserProfile inline (shows inside User admin) ──────────
@@ -314,9 +339,14 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
                 form.add_error(None, 'SMTP is not configured for this service.')
             else:
                 recipient = form.cleaned_data['recipient']
-                report_month = form.cleaned_data['report_month'].strftime('%Y-%m')
+                start_date = form.cleaned_data['start_date']
+                end_date = form.cleaned_data['end_date']
                 try:
-                    send_monthly_analysis_email(recipient, report_month)
+                    send_monthly_analysis_email(
+                        recipient,
+                        start_date=start_date,
+                        end_date=end_date,
+                    )
                 except Exception:
                     form.add_error(
                         None,
@@ -325,7 +355,7 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
                 else:
                     self.message_user(
                         request,
-                        f'Monthly analysis for {report_month} sent to {recipient.email}.',
+                        f'Monthly analysis for {start_date:%d %b %Y} to {end_date:%d %b %Y} sent to {recipient.email}.',
                         level=messages.SUCCESS,
                     )
                     return redirect('admin:login_monthlyanalysismailsetting_changelist')
