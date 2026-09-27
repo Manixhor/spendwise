@@ -337,6 +337,38 @@ class ManualUserAdminTests(TestCase):
         self.assertIn('Welcome to SpendWise', mail.outbox[0].alternatives[0].content)
         self.assertIn('Sign In to SpendWise', mail.outbox[0].alternatives[0].content)
 
+    def test_users_list_has_row_and_bulk_delete_controls(self):
+        user = User.objects.create_user(
+            username='remove@example.com',
+            email='remove@example.com',
+            password='StrongPass123!',
+        )
+
+        response = self.client.get(reverse('admin:auth_user_changelist'))
+
+        self.assertContains(response, reverse('admin:auth_user_delete', args=[user.pk]))
+        self.assertContains(response, 'Delete selected')
+
+    def test_selected_user_delete_requires_confirmation(self):
+        user = User.objects.create_user(
+            username='confirm-remove@example.com',
+            email='confirm-remove@example.com',
+            password='StrongPass123!',
+        )
+
+        response = self.client.post(
+            reverse('admin:auth_user_changelist'),
+            {
+                'action': 'delete_selected',
+                '_selected_action': str(user.pk),
+                'index': '0',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Are you sure you want to delete')
+        self.assertTrue(User.objects.filter(pk=user.pk).exists())
+
 
 class DashboardInsightsTests(TestCase):
     def setUp(self):

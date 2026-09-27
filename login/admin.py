@@ -73,7 +73,7 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
     list_display = (
-        'username', 'email', 'first_name', 'last_name',
+        'username', 'delete_account', 'email', 'first_name', 'last_name',
         'is_staff', 'is_active', 'date_joined', 'get_salary',
     )
     list_filter  = ('is_staff', 'is_active', 'date_joined')
@@ -87,6 +87,17 @@ class UserAdmin(BaseUserAdmin):
             return f'${s:,.2f}' if s else '—'
         except UserProfile.DoesNotExist:
             return '—'
+
+    @admin.display(description='Actions')
+    def delete_account(self, obj):
+        delete_url = reverse('admin:auth_user_delete', args=[obj.pk])
+        return format_html(
+            '<a href="{}" class="button" '
+            'style="background:#b4233d;border-color:#b4233d;color:#fff;" '
+            'title="Delete {}">Delete</a>',
+            delete_url,
+            obj.get_username(),
+        )
 
     def get_inline_instances(self, request, obj=None):
         # A profile is created by the user post-save signal, so it is not needed
