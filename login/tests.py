@@ -329,7 +329,10 @@ class ManualUserAdminTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ['newuser@example.com'])
         self.assertIn('Temporary password:', mail.outbox[0].body)
-        self.assertIn('After signing in, verify your email', mail.outbox[0].body)
+        self.assertIn('After signing in, verify your email with a 4-digit OTP', mail.outbox[0].body)
+        self.assertEqual(len(mail.outbox[0].alternatives), 1)
+        self.assertIn('Welcome to SpendWise', mail.outbox[0].alternatives[0].content)
+        self.assertIn('Sign In to SpendWise', mail.outbox[0].alternatives[0].content)
 
 
 class DashboardInsightsTests(TestCase):

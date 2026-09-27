@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Your SpendWise account is ready</title>
+</head>
+<body style="margin:0;background:#f6f4fb;color:#1f2937;font-family:Arial,sans-serif;">
+  <div style="max-width:480px;margin:0 auto;padding:28px 18px;">
+    <div style="background:#ffffff;border:1px solid #e7e2f3;border-radius:14px;padding:32px 28px;text-align:center;">
+      <h1 style="margin:0 0 8px;color:#191724;font-size:22px;font-weight:800;">Welcome to SpendWise</h1>
+      <p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.5;">An administrator created an account for you. Use the details below to sign in securely.</p>
+
+      <div style="background:#f6f4fb;border:1px solid #ede9f7;border-radius:10px;padding:18px;margin-bottom:20px;text-align:left;">
+        <p style="margin:0 0 6px;color:#6b7280;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Login email</p>
+        <p style="margin:0 0 18px;color:#191724;font-size:15px;font-weight:700;word-break:break-word;">{{ email }}</p>
+        <p style="margin:0 0 6px;color:#6b7280;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Temporary password</p>
+        <p style="margin:0;color:#191724;font-family:monospace;font-size:20px;font-weight:800;letter-spacing:1px;word-break:break-all;">{{ temporary_password }}</p>
+      </div>
+
+      <a href="{{ login_url }}" style="display:inline-block;background:#5b4b9a;border-radius:8px;color:#ffffff;font-size:14px;font-weight:700;padding:13px 22px;text-decoration:none;">Sign In to SpendWise</a>
+      <p style="margin:22px 0 0;color:#6b7280;font-size:13px;line-height:1.5;">After signing in, we will send a 4-digit OTP to verify your email. You can then set your own password and complete your profile.</p>
+      <p style="margin:18px 0 0;color:#9ca3af;font-size:12px;line-height:1.5;">If you were not expecting this account, you can ignore this email.</p>
+    </div>
+    <p style="text-align:center;color:#9ca3af;font-size:11px;margin-top:16px;">SpendWise &middot; Smart budgeting for everyone</p>
+  </div>
+</body>
+</html>

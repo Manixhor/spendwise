@@ -3,13 +3,14 @@ from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.shortcuts import redirect
 from django.urls import path, reverse
 from django.utils.crypto import get_random_string
 from django.utils import timezone
 from django.utils.html import format_html
+from django.template.loader import render_to_string
 
 from .monthly_mailer import send_monthly_analysis_batch
 from .models import MonthlyAnalysisMailSetting, Transaction, UserProfile, SavingsGoal
@@ -117,21 +118,29 @@ class UserAdmin(BaseUserAdmin):
 
         def send_welcome_email():
             try:
-                send_mail(
-                    subject='Your SpendWise account is ready',
-                    message=(
-                        'Hi,\n\n'
-                        'An administrator created a SpendWise account for you.\n\n'
-                        f'Login email: {obj.email}\n'
-                        f'Temporary password: {password}\n\n'
-                        f'Sign in here: {login_url}\n\n'
-                        'After signing in, verify your email with an OTP and complete your profile.\n\n'
-                        'SpendWise'
-                    ),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[obj.email],
-                    fail_silently=False,
+                subject = 'Your SpendWise account is ready'
+                text_body = (
+                    'Welcome to SpendWise.\n\n'
+                    'An administrator created a SpendWise account for you.\n\n'
+                    f'Login email: {obj.email}\n'
+                    f'Temporary password: {password}\n\n'
+                    f'Sign in here: {login_url}\n\n'
+                    'After signing in, verify your email with a 4-digit OTP and complete your profile.\n\n'
+                    'SpendWise'
                 )
+                html_body = render_to_string('login/emails/manual_user_invite.html', {
+                    'email': obj.email,
+                    'temporary_password': password,
+                    'login_url': login_url,
+                })
+                email = EmailMultiAlternatives(
+                    subject=subject,
+                    body=text_body,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[obj.email],
+                )
+                email.attach_alternative(html_body, 'text/html')
+                email.send(fail_silently=False)
             except Exception:
                 self.message_user(
                     request,
