@@ -7,14 +7,14 @@
 <style>
   .sw-broadcast {
     max-width: 860px;
-    padding: 28px;
+    padding: 24px;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   }
 
   .sw-broadcast-card {
     background: #fff;
     border: 1px solid #e8e3f2;
-    border-radius: 18px;
+    border-radius: 8px;
     box-shadow: 0 16px 40px rgba(40, 34, 72, 0.08);
     padding: 28px;
   }
@@ -32,7 +32,7 @@
     color: #1c1c1e;
     font-size: 2rem;
     font-weight: 850;
-    letter-spacing: -0.05em;
+    letter-spacing: 0;
     margin: 0;
   }
 
@@ -178,6 +178,7 @@
           name="subject"
           placeholder="Example: New SpendWise update is live"
           value="{{ form.subject|default:'' }}"
+          maxlength="160"
           required
         />
         {% if errors.subject %}<p class="sw-error">{{ errors.subject }}</p>{% endif %}
@@ -190,13 +191,14 @@
           id="message"
           name="message"
           placeholder="Write your announcement here..."
+          maxlength="10000"
           required
         >{{ form.message|default:'' }}</textarea>
         {% if errors.message %}<p class="sw-error">{{ errors.message }}</p>{% endif %}
       </div>
 
       <div class="sw-actions">
-        <button class="sw-send-btn" type="submit">Send to all users</button>
+        <button class="sw-send-btn" type="submit" onclick="return confirm('Send this email to all active users?');">Send to all users</button>
         <a class="sw-back-btn" href="/admin/">Back to admin</a>
       </div>
     </form>

@@ -8,46 +8,62 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
-from django.db.models import Count, Sum
-from django.db.models.functions import TruncDate, TruncMonth
+from django.db.models import Count, OuterRef, Subquery, Sum
+from django.db.models.functions import TruncDate
 from django.shortcuts import redirect, render
-from django.utils.decorators import method_decorator
-from django.utils.timezone import now
+from django.utils import timezone
 
 from .models import PageView, Transaction, UserProfile
 
 
-@staff_member_required
+def superuser_required(view):
+    return user_passes_test(
+        lambda user: user.is_active and user.is_superuser,
+        login_url='/admin/login/',
+    )(view)
+
+
+def _month_start(month: date, offset: int) -> date:
+    """Return the first day of the month that is ``offset`` months earlier."""
+    month_number = month.month - offset
+    year = month.year
+    while month_number <= 0:
+        month_number += 12
+        year -= 1
+    return date(year, month_number, 1)
+
+
+@superuser_required
 def admin_dashboard(request):
-    today      = date.today()
+    today = timezone.localdate()
     month_start = today.replace(day=1)
-    week_start  = today - timedelta(days=6)
+    week_start = today - timedelta(days=6)
 
     # ── User stats ─────────────────────────────────────────
-    total_users   = User.objects.filter(is_staff=False).count()
-    active_users  = User.objects.filter(
-        is_staff=False,
-        transactions__date__gte=month_start
-    ).distinct().count()
+    total_users = User.objects.filter(is_staff=False).count()
     new_this_week = User.objects.filter(
         is_staff=False,
         date_joined__date__gte=week_start
     ).count()
-    users_with_salary = UserProfile.objects.filter(salary__isnull=False).count()
+    users_with_salary = UserProfile.objects.filter(
+        user__is_staff=False,
+        salary__isnull=False,
+    ).count()
 
     # ── Transaction stats ──────────────────────────────────
-    total_txns    = Transaction.objects.count()
-    total_income  = Transaction.objects.filter(txn_type='income').aggregate(s=Sum('amount'))['s'] or Decimal('0')
-    total_expense = Transaction.objects.filter(txn_type='expense').aggregate(s=Sum('amount'))['s'] or Decimal('0')
+    customer_transactions = Transaction.objects.filter(user__is_staff=False)
+    total_txns = customer_transactions.count()
+    total_income = customer_transactions.filter(txn_type='income').aggregate(s=Sum('amount'))['s'] or Decimal('0')
+    total_expense = customer_transactions.filter(txn_type='expense').aggregate(s=Sum('amount'))['s'] or Decimal('0')
 
     # ── Users enrolled per day (last 30 days) ─────────────
     enroll_qs = (
         User.objects
         .filter(is_staff=False, date_joined__date__gte=today - timedelta(days=29))
-        .extra(select={'day': "date(date_joined)"})
+        .annotate(day=TruncDate('date_joined'))
         .values('day')
         .annotate(count=Count('id'))
         .order_by('day')
@@ -61,7 +77,7 @@ def admin_dashboard(request):
 
     # ── Transactions per day (last 30 days) ────────────────
     txn_qs = (
-        Transaction.objects
+        customer_transactions
         .filter(date__gte=today - timedelta(days=29))
         .values('date')
         .annotate(count=Count('id'))
@@ -77,27 +93,26 @@ def admin_dashboard(request):
     # ── Income vs Expense per month (last 6 months) ────────
     monthly_labels, monthly_income, monthly_expense = [], [], []
     for i in range(5, -1, -1):
-        d = today.replace(day=1) - timedelta(days=i * 28)
-        m_start = d.replace(day=1)
-        if d.month == 12:
-            m_end = d.replace(year=d.year + 1, month=1, day=1) - timedelta(days=1)
+        m_start = _month_start(month_start, i)
+        if m_start.month == 12:
+            m_end = m_start.replace(year=m_start.year + 1, month=1, day=1) - timedelta(days=1)
         else:
-            m_end = d.replace(month=d.month + 1, day=1) - timedelta(days=1)
+            m_end = m_start.replace(month=m_start.month + 1, day=1) - timedelta(days=1)
 
-        inc = Transaction.objects.filter(
+        inc = customer_transactions.filter(
             txn_type='income', date__gte=m_start, date__lte=m_end
         ).aggregate(s=Sum('amount'))['s'] or Decimal('0')
-        exp = Transaction.objects.filter(
+        exp = customer_transactions.filter(
             txn_type='expense', date__gte=m_start, date__lte=m_end
         ).aggregate(s=Sum('amount'))['s'] or Decimal('0')
 
-        monthly_labels.append(d.strftime('%b %Y'))
+        monthly_labels.append(m_start.strftime('%b %Y'))
         monthly_income.append(float(inc))
         monthly_expense.append(float(exp))
 
     # ── Category breakdown (all time) ─────────────────────
     cat_qs = (
-        Transaction.objects
+        customer_transactions
         .filter(txn_type='expense')
         .values('category')
         .annotate(total=Sum('amount'))
@@ -108,7 +123,7 @@ def admin_dashboard(request):
 
     # ── Top 5 users by spending ────────────────────────────
     top_users = (
-        Transaction.objects
+        customer_transactions
         .filter(txn_type='expense')
         .values('user__username', 'user__email')
         .annotate(total=Sum('amount'))
@@ -116,46 +131,48 @@ def admin_dashboard(request):
     )
 
     # ── Recent signups ─────────────────────────────────────
-    from django.db.models import Max, OuterRef, Subquery
-    recent_users_qs = User.objects.filter(is_staff=False).order_by('-date_joined')
-    user_ids = list(recent_users_qs.values_list('id', flat=True))
-    last_visit_map = dict(
-        PageView.objects.filter(user__isnull=False)
-        .values('user')
-        .annotate(last=Max('last_viewed'))
-        .values_list('user', 'last')
+    recent_users_qs = list(
+        User.objects.filter(is_staff=False).order_by('-date_joined')[:20]
     )
-    last_pv = PageView.objects.filter(user__isnull=False).order_by('-last_viewed')
-    last_page_by_user = {}
-    for pv in last_pv:
-        if pv.user_id not in last_page_by_user:
-            last_page_by_user[pv.user_id] = pv.path
-    recent_users = []
-    for u in recent_users_qs:
-        last_viewed = last_visit_map.get(u.id)
-        last_page = last_page_by_user.get(u.id, '')
-        if last_viewed:
-            delta = now() - last_viewed
-            last_active_hrs = round(delta.total_seconds() / 3600, 1)
-        else:
-            last_active_hrs = None
-        recent_users.append({
+    recent_users = [
+        {
             'username': u.username,
             'full_name': u.get_full_name() or u.username,
             'email': u.email,
             'date_joined': u.date_joined,
-            'last_active_hrs': last_active_hrs,
-            'last_page': last_page,
+        }
+        for u in recent_users_qs
+    ]
+
+    latest_page_view = PageView.objects.filter(user=OuterRef('pk')).order_by('-last_viewed')
+    recent_active_users = []
+    for user in (
+        User.objects.filter(is_staff=False, page_views__isnull=False)
+        .annotate(
+            last_active=Subquery(latest_page_view.values('last_viewed')[:1]),
+            last_page=Subquery(latest_page_view.values('path')[:1]),
+        )
+        .order_by('-last_active')[:10]
+    ):
+        hours_since_active = round(
+            (timezone.now() - user.last_active).total_seconds() / 3600,
+            1,
+        )
+        recent_active_users.append({
+            'full_name': user.get_full_name() or user.username,
+            'email': user.email,
+            'last_page': user.last_page,
+            'last_active_hrs': hours_since_active,
         })
 
     page_views = PageView.objects.all()[:20]
-    total_page_views = sum(pv.view_count for pv in PageView.objects.all())
+    total_page_views = PageView.objects.aggregate(total=Sum('view_count'))['total'] or 0
 
     # ── Page views per day (last 30 days) ─────────────────
     pv_qs = (
         PageView.objects
         .filter(last_viewed__date__gte=today - timedelta(days=29))
-        .extra(select={'day': "date(last_viewed)"})
+        .annotate(day=TruncDate('last_viewed'))
         .values('day')
         .annotate(count=Sum('view_count'))
         .order_by('day')
@@ -170,7 +187,6 @@ def admin_dashboard(request):
     context = {
         # Stats
         'total_users':        total_users,
-        'active_users':       active_users,
         'new_this_week':      new_this_week,
         'users_with_salary':  users_with_salary,
         'total_txns':         total_txns,
@@ -194,6 +210,7 @@ def admin_dashboard(request):
         # Tables
         'top_users':          top_users,
         'recent_users':       recent_users,
+        'recent_active_users': recent_active_users,
         # Admin context
         'title':              'SpendWise Analytics',
         'has_permission':     True,
@@ -201,7 +218,7 @@ def admin_dashboard(request):
     return render(request, 'admin/dashboard.html', context)
 
 
-@staff_member_required
+@superuser_required
 def admin_broadcast(request):
     recipient_count = (
         User.objects
@@ -219,8 +236,12 @@ def admin_broadcast(request):
 
         if not subject:
             errors['subject'] = 'Subject is required.'
+        elif len(subject) > 160:
+            errors['subject'] = 'Keep the subject to 160 characters or fewer.'
         if not body:
             errors['message'] = 'Message is required.'
+        elif len(body) > 10000:
+            errors['message'] = 'Keep the message to 10,000 characters or fewer.'
 
         recipients = list(
             User.objects
@@ -242,15 +263,26 @@ def admin_broadcast(request):
                 'email_backend': settings.EMAIL_BACKEND,
             })
 
-        email = EmailMessage(
-            subject=subject,
-            body=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[settings.DEFAULT_FROM_EMAIL],
-            bcc=recipients,
-            reply_to=[settings.DEFAULT_FROM_EMAIL],
-        )
-        sent_count = email.send(fail_silently=False)
+        try:
+            email = EmailMessage(
+                subject=subject,
+                body=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[settings.DEFAULT_FROM_EMAIL],
+                bcc=recipients,
+                reply_to=[settings.DEFAULT_FROM_EMAIL],
+            )
+            sent_count = email.send(fail_silently=False)
+        except Exception:
+            return render(request, 'admin/broadcast.html', {
+                'title': 'Send Broadcast Message',
+                'errors': {
+                    'general': 'The broadcast could not be sent. Check the email service settings and try again.',
+                },
+                'form': {'subject': subject, 'message': body},
+                'recipient_count': recipient_count,
+                'email_backend': settings.EMAIL_BACKEND,
+            })
 
         if sent_count:
             messages.success(

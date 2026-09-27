@@ -1,0 +1,12 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+  {% if has_add_permission %}
+    <li>
+      <a href="{% url 'admin:auth_user_add' %}" class="button" style="height:32px; padding:0 12px;">
+        Manually Add User
+      </a>
+    </li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

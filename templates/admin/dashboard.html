@@ -8,16 +8,29 @@
   /* ── Layout ─────────────────────────────────────────── */
   .sw-dashboard { padding: 24px; font-family: -apple-system, "SF Pro Display", sans-serif; }
 
+  .sw-dashboard-header {
+    align-items: center;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin: 0 0 20px;
+  }
+
+  .sw-dashboard-title { color: #1c1c1e; font-size: 1.25rem; font-weight: 750; margin: 0; }
+  .sw-dashboard-subtitle { color: #6b7280; font-size: 0.84rem; margin: 4px 0 0; }
+  .sw-dashboard-back { color: #4338ca; font-size: 0.84rem; font-weight: 700; text-decoration: none; }
+  .sw-dashboard-back:hover { text-decoration: underline; }
+
   .sw-stat-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 16px;
     margin-bottom: 28px;
   }
 
   .sw-stat-card {
     background: #fff;
-    border-radius: 16px;
+    border-radius: 8px;
     padding: 20px 22px;
     border: 1px solid #e8e3f2;
     box-shadow: 0 4px 16px rgba(100,80,180,0.07);
@@ -37,7 +50,7 @@
   .sw-stat-value {
     font-size: 2rem;
     font-weight: 800;
-    letter-spacing: -0.05em;
+    letter-spacing: 0;
     color: #1c1c1e;
   }
 
@@ -61,7 +74,7 @@
 
   .sw-chart-card {
     background: #fff;
-    border-radius: 16px;
+    border-radius: 8px;
     padding: 20px 22px;
     border: 1px solid #e8e3f2;
     box-shadow: 0 4px 16px rgba(100,80,180,0.07);
@@ -73,7 +86,7 @@
     font-size: 0.92rem;
     font-weight: 700;
     color: #1c1c1e;
-    letter-spacing: -0.03em;
+    letter-spacing: 0;
     margin-bottom: 16px;
   }
 
@@ -88,11 +101,13 @@
 
   .sw-table-card {
     background: #fff;
-    border-radius: 16px;
+    border-radius: 8px;
     padding: 20px 22px;
     border: 1px solid #e8e3f2;
     box-shadow: 0 4px 16px rgba(100,80,180,0.07);
   }
+
+  .sw-table-card.full { grid-column: span 2; }
 
   .sw-table {
     width: 100%;
@@ -130,11 +145,26 @@
 
   .sw-badge.green  { background: #dcfce7; color: #16a34a; }
   .sw-badge.purple { background: #ede9ff; color: #5e5ce6; }
+
+  @media (max-width: 780px) {
+    .sw-dashboard { padding: 16px; }
+    .sw-chart-grid, .sw-table-grid { grid-template-columns: 1fr; }
+    .sw-chart-card.full, .sw-table-card.full { grid-column: auto; }
+    .sw-chart-wrap { height: 200px; }
+    .sw-table-card { overflow-x: auto; }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="sw-dashboard">
+  <div class="sw-dashboard-header">
+    <div>
+      <h1 class="sw-dashboard-title">Analytics overview</h1>
+      <p class="sw-dashboard-subtitle">Live SpendWise activity and financial trends.</p>
+    </div>
+    <a class="sw-dashboard-back" href="/admin/">Back to admin</a>
+  </div>
 
   <!-- ── Stat cards ──────────────────────────────────── -->
   <div class="sw-stat-grid">
@@ -142,11 +172,6 @@
       <span class="sw-stat-label">Total Users</span>
       <span class="sw-stat-value">{{ total_users }}</span>
       <span class="sw-stat-sub">{{ new_this_week }} joined this week</span>
-    </div>
-    <div class="sw-stat-card green">
-      <span class="sw-stat-label">Active This Month</span>
-      <span class="sw-stat-value">{{ active_users }}</span>
-      <span class="sw-stat-sub">Users with transactions</span>
     </div>
     <div class="sw-stat-card purple">
       <span class="sw-stat-label">Total Transactions</span>
@@ -279,21 +304,43 @@
           <thead>
           <tr>
             <th>Name</th>
-            <th>Last Page</th>
             <th>Joined</th>
-            <th>Last Active (hrs)</th>
           </tr>
         </thead>
         <tbody>
           {% for u in recent_users %}
           <tr>
             <td>{{ u.full_name }}</td>
-            <td style="color:#8e8e93;">{{ u.last_page|default:"—" }}</td>
             <td><span class="sw-badge purple">{{ u.date_joined|date:"M d, Y" }}</span></td>
-            <td style="color:#8e8e93;">{{ u.last_active_hrs|default:"—" }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="4" style="color:#8e8e93;text-align:center;padding:20px;">No users yet</td></tr>
+          <tr><td colspan="2" style="color:#8e8e93;text-align:center;padding:20px;">No users yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sw-table-card full">
+      <p class="sw-chart-title">Recently Active Users</p>
+      <table class="sw-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Last Page</th>
+            <th>Last Active</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in recent_active_users %}
+          <tr>
+            <td>{{ u.full_name }}</td>
+            <td style="color:#8e8e93;">{{ u.email }}</td>
+            <td style="color:#8e8e93;">{{ u.last_page|default:"—" }}</td>
+            <td><span class="sw-badge green">{{ u.last_active_hrs }} hrs ago</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" style="color:#8e8e93;text-align:center;padding:20px;">No recent activity yet</td></tr>
           {% endfor %}
         </tbody>
       </table>

@@ -1,6 +1,7 @@
 {% extends "admin/index.html" %}
 
 {% block content %}
+{% if user.is_superuser %}
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:24px;">
   <div style="
     background: linear-gradient(135deg, #5e5ce6 0%, #a78bfa 100%);
@@ -49,7 +50,32 @@
       Send
     </a>
   </div>
+
+  <div style="
+    background: linear-gradient(135deg, #d97706 0%, #dc2626 100%);
+    border-radius: 14px;
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    box-shadow: 0 4px 20px rgba(217,119,6,0.22);
+  ">
+    <div>
+      <p style="margin:0; font-size:1.1rem; font-weight:700; color:#fff; letter-spacing:-0.03em;">
+        Manually Add User
+      </p>
+      <p style="margin:4px 0 0; font-size:0.84rem; color:rgba(255,255,255,0.82);">
+        Create a user account and send their login details by email.
+      </p>
+    </div>
+    <a href="{% url 'admin:auth_user_add' %}"
+       style="background:rgba(255,255,255,0.20);border:1px solid rgba(255,255,255,0.40);color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:700;font-size:0.88rem;white-space:nowrap;">
+      Add user
+    </a>
+  </div>
 </div>
+{% endif %}
 
 {{ block.super }}
 {% endblock %}

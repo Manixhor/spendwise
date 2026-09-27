@@ -9,7 +9,7 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import SavingsGoal, Transaction, UserProfile
+from .models import MonthlyAnalysisMailSetting, PageView, SavingsGoal, Transaction, UserProfile
 
 
 class SignupOtpTests(TestCase):
@@ -139,6 +139,142 @@ class MonthlyAnalysisMailAdminTests(TestCase):
         self.assertEqual(response.status_code, 200)
         sender.assert_not_called()
         self.assertContains(response, 'SMTP is not configured')
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend')
+    def test_send_now_respects_disabled_setting(self):
+        MonthlyAnalysisMailSetting.objects.create(pk=1, enabled=False)
+        url = reverse('admin:login_monthlyanalysismailsetting_send_now')
+        with patch('login.admin.send_monthly_analysis_batch') as sender:
+            response = self.client.post(url, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        sender.assert_not_called()
+        self.assertContains(response, 'Monthly analysis emails are disabled')
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend')
+    def test_send_now_prevents_duplicate_monthly_emails(self):
+        current_month = timezone.localtime().strftime('%Y-%m')
+        MonthlyAnalysisMailSetting.objects.create(pk=1, last_sent_month=current_month)
+        url = reverse('admin:login_monthlyanalysismailsetting_send_now')
+        with patch('login.admin.send_monthly_analysis_batch') as sender:
+            response = self.client.post(url, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        sender.assert_not_called()
+        self.assertContains(response, 'already sent')
+
+
+class AdminToolAccessTests(TestCase):
+    def setUp(self):
+        self.staff_user = User.objects.create_user(
+            username='staff@example.com',
+            email='staff@example.com',
+            password='StrongPass123!',
+            is_staff=True,
+        )
+        self.superuser = User.objects.create_superuser(
+            username='superuser@example.com',
+            email='superuser@example.com',
+            password='StrongPass123!',
+        )
+
+    def test_staff_user_cannot_access_sensitive_admin_tools(self):
+        self.client.force_login(self.staff_user)
+
+        for route_name in ('admin_dashboard', 'admin_broadcast'):
+            response = self.client.get(reverse(route_name))
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/admin/login/', response.url)
+
+    def test_superuser_can_access_sensitive_admin_tools(self):
+        self.client.force_login(self.superuser)
+
+        for route_name in ('admin_dashboard', 'admin_broadcast'):
+            response = self.client.get(reverse(route_name))
+            self.assertEqual(response.status_code, 200)
+
+    def test_admin_home_has_a_separate_manual_user_option(self):
+        self.client.force_login(self.superuser)
+
+        response = self.client.get(reverse('admin:index'))
+
+        self.assertContains(response, 'Manually Add User')
+        self.assertContains(response, reverse('admin:auth_user_add'))
+
+    def test_users_page_has_a_manual_add_user_button(self):
+        self.client.force_login(self.superuser)
+
+        response = self.client.get(reverse('admin:auth_user_changelist'))
+
+        self.assertContains(response, 'Manually Add User')
+        self.assertContains(response, reverse('admin:auth_user_add'))
+
+    def test_analytics_lists_recently_active_users_below_the_charts(self):
+        customer = User.objects.create_user(
+            username='active@example.com',
+            email='active@example.com',
+            password='StrongPass123!',
+            first_name='Active',
+        )
+        PageView.objects.create(user=customer, path='/dashboard/', view_count=3)
+        self.client.force_login(self.superuser)
+
+        response = self.client.get(reverse('admin_dashboard'))
+
+        self.assertContains(response, 'Recently Active Users')
+        self.assertContains(response, 'active@example.com')
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend')
+    def test_broadcast_handles_email_service_failure(self):
+        recipient = User.objects.create_user(
+            username='recipient@example.com',
+            email='recipient@example.com',
+            password='StrongPass123!',
+        )
+        self.client.force_login(self.superuser)
+
+        with patch('login.admin_views.EmailMessage.send', side_effect=OSError('SMTP unavailable')):
+            response = self.client.post(
+                reverse('admin_broadcast'),
+                {'subject': 'Maintenance', 'message': 'Scheduled maintenance tonight.'},
+                follow=True,
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'The broadcast could not be sent')
+
+
+class ManualUserAdminTests(TestCase):
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser(
+            username='admin@example.com',
+            email='admin@example.com',
+            password='StrongPass123!',
+        )
+        self.client.force_login(self.admin_user)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_manually_created_user_receives_login_email(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                reverse('admin:auth_user_add'),
+                {
+                    'email': 'newuser@example.com',
+                    'first_name': 'New',
+                    'last_name': 'User',
+                    'password1': 'TemporaryPass123!',
+                    'password2': 'TemporaryPass123!',
+                    '_save': 'Save',
+                },
+            )
+
+        self.assertEqual(response.status_code, 302)
+        user = User.objects.get(email='newuser@example.com')
+        self.assertEqual(user.username, 'newuser@example.com')
+        self.assertTrue(user.check_password('TemporaryPass123!'))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['newuser@example.com'])
+        self.assertIn('TemporaryPass123!', mail.outbox[0].body)
 
 
 class DashboardInsightsTests(TestCase):

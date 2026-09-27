@@ -1,7 +1,11 @@
 from django.conf import settings
+from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.db import transaction
 from django.shortcuts import redirect
 from django.urls import path, reverse
 from django.utils import timezone
@@ -11,21 +15,35 @@ from .monthly_mailer import send_monthly_analysis_batch
 from .models import MonthlyAnalysisMailSetting, Transaction, UserProfile, SavingsGoal
 
 
-# ── Custom admin site ──────────────────────────────────────
-class SpendWiseAdminSite(admin.AdminSite):
-    site_header = 'SpendWise Admin'
-    site_title  = 'SpendWise'
-    index_title = 'Dashboard'
-
-    def index(self, request, extra_context=None):
-        extra_context = extra_context or {}
-        extra_context['analytics_url'] = '/admin/analytics/'
-        return super().index(request, extra_context)
-
-
 admin.site.site_header = 'SpendWise Admin'
 admin.site.site_title  = 'SpendWise'
 admin.site.index_title = 'Welcome to SpendWise Admin'
+admin.site.index_template = 'admin/index.html'
+
+
+class ManualUserCreationForm(UserCreationForm):
+    """Create customer accounts with an email address as the login identifier."""
+
+    email = forms.EmailField(required=True)
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ('email', 'first_name', 'last_name')
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip().lower()
+        if User.objects.filter(username__iexact=email).exists() or User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError('A user with this email address already exists.')
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.username = self.cleaned_data['email']
+        user.email = self.cleaned_data['email']
+        if commit:
+            user.save()
+            self.save_m2m()
+        return user
 
 
 # ── UserProfile inline (shows inside User admin) ──────────
@@ -40,6 +58,14 @@ class UserProfileInline(admin.StackedInline):
 # ── Extend the default User admin ─────────────────────────
 class UserAdmin(BaseUserAdmin):
     inlines = (UserProfileInline,)
+    add_form = ManualUserCreationForm
+    change_list_template = 'admin/auth/user/change_list.html'
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'first_name', 'last_name', 'password1', 'password2'),
+        }),
+    )
     list_display = (
         'username', 'email', 'first_name', 'last_name',
         'is_staff', 'is_active', 'date_joined', 'get_salary',
@@ -55,6 +81,50 @@ class UserAdmin(BaseUserAdmin):
             return f'${s:,.2f}' if s else '—'
         except UserProfile.DoesNotExist:
             return '—'
+
+    def get_inline_instances(self, request, obj=None):
+        # A profile is created by the user post-save signal, so it is not needed
+        # while the initial account form is being submitted.
+        if obj is None:
+            return []
+        return super().get_inline_instances(request, obj)
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if change or obj.is_staff:
+            return
+
+        password = form.cleaned_data.get('password1')
+        if not obj.email or not password:
+            return
+
+        login_url = request.build_absolute_uri(reverse('login'))
+
+        def send_welcome_email():
+            try:
+                send_mail(
+                    subject='Your SpendWise account is ready',
+                    message=(
+                        f'Hi {obj.first_name or obj.username},\n\n'
+                        'An administrator created a SpendWise account for you.\n\n'
+                        f'Login email: {obj.email}\n'
+                        f'Temporary password: {password}\n\n'
+                        f'Sign in here: {login_url}\n\n'
+                        'Please change your password after you sign in.\n\n'
+                        'SpendWise'
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[obj.email],
+                    fail_silently=False,
+                )
+            except Exception:
+                self.message_user(
+                    request,
+                    f'User created, but the welcome email could not be sent to {obj.email}.',
+                    level=messages.WARNING,
+                )
+
+        transaction.on_commit(send_welcome_email)
 
 
 # Re-register User with the extended admin
@@ -132,6 +202,7 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
         if request.method != 'POST':
             return redirect('admin:login_monthlyanalysismailsetting_changelist')
 
+        setting, _ = MonthlyAnalysisMailSetting.objects.get_or_create(pk=1)
         if settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
             self.message_user(
                 request,
@@ -141,6 +212,21 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
             return redirect('admin:login_monthlyanalysismailsetting_changelist')
 
         month = timezone.localtime().strftime('%Y-%m')
+        if not setting.enabled:
+            self.message_user(
+                request,
+                'Monthly analysis emails are disabled. Enable them before sending.',
+                level=messages.WARNING,
+            )
+            return redirect('admin:login_monthlyanalysismailsetting_changelist')
+        if setting.last_sent_month == month:
+            self.message_user(
+                request,
+                f'Monthly analysis emails were already sent for {month}.',
+                level=messages.WARNING,
+            )
+            return redirect('admin:login_monthlyanalysismailsetting_changelist')
+
         result = send_monthly_analysis_batch(month)
         if result['failed']:
             first_error = result['failures'][0] if result['failures'] else 'Unknown error'

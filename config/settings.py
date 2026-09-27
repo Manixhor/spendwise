@@ -12,8 +12,11 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 import importlib.util
+import sys
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse, unquote
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -96,11 +99,16 @@ WHITENOISE_ENABLED = os.getenv('USE_WHITENOISE', '1') == '1' and importlib.util.
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dbr@s354m68v)cd&tsl0z5u-r$35dg)t*uc5*#t9)p%a=gvj0g')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env_bool('DEBUG', True)
+# Use explicit production settings. Test runs and deliberately enabled local
+# debugging receive an ephemeral development key instead of a public fallback.
+IS_TEST_RUN = 'test' in sys.argv
+DEBUG = env_bool('DEBUG', IS_TEST_RUN)
+SECRET_KEY = os.getenv('SECRET_KEY', '').strip()
+if not SECRET_KEY:
+    if DEBUG or IS_TEST_RUN:
+        SECRET_KEY = 'django-insecure-development-only-key'
+    else:
+        raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is disabled.')
 
 ALLOWED_HOSTS = list(dict.fromkeys([
     "127.0.0.1",
@@ -167,8 +175,8 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'config.urls'
 
 UNFOLD = {
-    "SITE_TITLE": "My Admin",
-    "SITE_HEADER": "My Dashboard",
+    "SITE_TITLE": "SpendWise Admin",
+    "SITE_HEADER": "SpendWise Admin",
     "SITE_SYMBOL": "dashboard",
 }
 
