@@ -226,6 +226,25 @@ class MonthlyAnalysisMailAdminTests(TestCase):
         self.assertEqual(MonthlyAnalysisMailSetting.objects.count(), 1)
         self.assertContains(response, 'Send report now')
 
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend')
+    def test_send_to_one_user_sends_the_selected_report(self):
+        user = User.objects.create_user(
+            username='report@example.com',
+            email='report@example.com',
+            password='StrongPass123!',
+        )
+        url = reverse('admin:login_monthlyanalysismailsetting_send_to_user')
+
+        with patch('login.admin.send_monthly_analysis_email') as sender:
+            response = self.client.post(url, {
+                'recipient': str(user.pk),
+                'report_month': '2026-09',
+            }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        sender.assert_called_once_with(user, '2026-09')
+        self.assertContains(response, 'sent to report@example.com')
+
 
 class MonthlyAnalysisMailCommandTests(TestCase):
     @patch('login.management.commands.send_monthly_analysis_emails.send_monthly_analysis_batch')

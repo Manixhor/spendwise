@@ -2,6 +2,11 @@
 
 {% block object-tools-items %}
   <li>
+    <a href="{% url 'admin:login_monthlyanalysismailsetting_send_to_user' %}" class="button" style="height:32px; padding:0 12px;">
+      Send to a user
+    </a>
+  </li>
+  <li>
     <form method="post" action="{% url 'admin:login_monthlyanalysismailsetting_send_now' %}" style="display:inline;">
       {% csrf_token %}
       <button type="submit" class="button" style="height:32px; padding:0 12px;" onclick="return confirm('Send the current monthly report to all active users now?');">

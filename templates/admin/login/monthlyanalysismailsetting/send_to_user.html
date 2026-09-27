@@ -1,0 +1,27 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <div id="content-main" style="max-width:640px;">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="module" style="padding:24px;">
+        <h1 style="margin-top:0;">Send Monthly Analysis</h1>
+        <p>Choose one user and the report month to email.</p>
+        {% if form.non_field_errors %}
+          <div class="errornote">{{ form.non_field_errors }}</div>
+        {% endif %}
+        {% for field in form %}
+          <div class="form-row" style="margin:20px 0;">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.errors %}<div class="errors">{{ field.errors }}</div>{% endif %}
+          </div>
+        {% endfor %}
+        <div class="submit-row">
+          <a href="{% url 'admin:login_monthlyanalysismailsetting_changelist' %}" class="button cancel-link">Cancel</a>
+          <input type="submit" value="Send analysis email" class="default">
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}

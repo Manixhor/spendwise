@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import path, reverse
 from django.utils.crypto import get_random_string
 from django.utils import timezone
@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 
 from .monthly_mailer import send_monthly_analysis_batch
 from .models import MonthlyAnalysisMailSetting, Transaction, UserProfile, SavingsGoal
+from .views import send_monthly_analysis_email
 
 
 admin.site.site_header = 'SpendWise Admin'
@@ -49,6 +50,28 @@ class ManualUserCreationForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+
+class SendMonthlyAnalysisToUserForm(forms.Form):
+    recipient = forms.ModelChoiceField(
+        queryset=User.objects.none(),
+        label='Recipient',
+        empty_label='Choose a user',
+    )
+    report_month = forms.DateField(
+        label='Report month',
+        input_formats=['%Y-%m'],
+        widget=forms.DateInput(attrs={'type': 'month'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['recipient'].queryset = User.objects.filter(
+            is_active=True,
+            is_staff=False,
+            email__gt='',
+        ).order_by('email')
+        self.fields['report_month'].initial = timezone.localdate().replace(day=1)
 
 
 # ── UserProfile inline (shows inside User admin) ──────────
@@ -241,6 +264,11 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.send_now),
                 name='login_monthlyanalysismailsetting_send_now',
             ),
+            path(
+                'send-to-user/',
+                self.admin_site.admin_view(self.send_to_user),
+                name='login_monthlyanalysismailsetting_send_to_user',
+            ),
         ]
         return custom_urls + urls
 
@@ -278,6 +306,36 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
                 level=messages.SUCCESS,
             )
         return redirect('admin:login_monthlyanalysismailsetting_changelist')
+
+    def send_to_user(self, request):
+        form = SendMonthlyAnalysisToUserForm(request.POST or None)
+        if request.method == 'POST' and form.is_valid():
+            if settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
+                form.add_error(None, 'SMTP is not configured for this service.')
+            else:
+                recipient = form.cleaned_data['recipient']
+                report_month = form.cleaned_data['report_month'].strftime('%Y-%m')
+                try:
+                    send_monthly_analysis_email(recipient, report_month)
+                except Exception:
+                    form.add_error(
+                        None,
+                        'The report could not be sent. Check the email service settings and try again.',
+                    )
+                else:
+                    self.message_user(
+                        request,
+                        f'Monthly analysis for {report_month} sent to {recipient.email}.',
+                        level=messages.SUCCESS,
+                    )
+                    return redirect('admin:login_monthlyanalysismailsetting_changelist')
+
+        return render(request, 'admin/login/monthlyanalysismailsetting/send_to_user.html', {
+            **self.admin_site.each_context(request),
+            'title': 'Send Monthly Analysis to a User',
+            'form': form,
+            'opts': self.model._meta,
+        })
 
 
 # ── Transaction admin ──────────────────────────────────────
