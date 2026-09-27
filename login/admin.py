@@ -92,9 +92,9 @@ class UserAdmin(BaseUserAdmin):
     def delete_account(self, obj):
         delete_url = reverse('admin:auth_user_delete', args=[obj.pk])
         return format_html(
-            '<a href="{}" class="button" '
-            'style="background:#b4233d;border-color:#b4233d;color:#fff;" '
-            'title="Delete {}">Delete</a>',
+            '<a href="{}" class="sw-delete-user" title="Delete {}">'
+            '<span class="material-symbols-outlined" aria-hidden="true">delete</span>'
+            '<span>Delete</span></a>',
             delete_url,
             obj.get_username(),
         )

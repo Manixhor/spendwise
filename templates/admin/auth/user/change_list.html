@@ -3,8 +3,9 @@
 {% block object-tools-items %}
   <li>
     <button type="button" id="bulk-delete-users" form="changelist-form" hidden
-            style="height:32px;padding:0 12px;background:#b4233d;border-color:#b4233d;color:#fff;">
-      Delete selected
+            class="sw-bulk-delete-users">
+      <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+      <span>Delete selected</span>
     </button>
   </li>
   {% if has_add_permission %}
@@ -19,6 +20,32 @@
 
 {% block extrahead %}
   {{ block.super }}
+  <style>
+    .sw-delete-user,
+    .sw-bulk-delete-users {
+      align-items: center;
+      background: #b4233d;
+      border: 1px solid #b4233d;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      display: inline-flex;
+      font-size: 12px;
+      font-weight: 700;
+      gap: 5px;
+      justify-content: center;
+      min-height: 32px;
+      padding: 0 10px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .sw-delete-user:hover,
+    .sw-bulk-delete-users:hover { background: #8f1d32; border-color: #8f1d32; color: #fff; }
+    .sw-delete-user:focus-visible,
+    .sw-bulk-delete-users:focus-visible { outline: 3px solid rgba(180,35,61,.25); outline-offset: 2px; }
+    .sw-delete-user .material-symbols-outlined,
+    .sw-bulk-delete-users .material-symbols-outlined { font-size: 16px; }
+  </style>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const form = document.getElementById('changelist-form');
@@ -28,7 +55,7 @@
       function updateButton() {
         const count = form.querySelectorAll('input[name="_selected_action"]:checked').length;
         button.hidden = count === 0;
-        button.textContent = count === 1 ? 'Delete selected user' : `Delete selected (${count})`;
+        button.lastElementChild.textContent = count === 1 ? 'Delete selected user' : `Delete selected (${count})`;
       }
 
       form.addEventListener('change', updateButton);

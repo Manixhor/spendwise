@@ -28,15 +28,40 @@
     </div>
     {% if errors.confirm_password %}<p class="field-msg">{{ errors.confirm_password }}</p>{% endif %}
 
-    <div class="field-group {% if errors.currency %}field-error{% endif %}">
+    <div class="currency-choice {% if errors.currency %}field-error{% endif %}" id="currencyChoice">
       <label class="field-label" for="currency">Preferred currency</label>
-      <select id="currency" name="currency" class="field-input">
+      <select id="currency" name="currency" class="currency-select">
         <option value="inr" {% if form.currency != 'usd' %}selected{% endif %}>Indian Rupee (INR)</option>
         <option value="usd" {% if form.currency == 'usd' %}selected{% endif %}>US Dollar (USD)</option>
       </select>
+      <span class="currency-chevron" aria-hidden="true"></span>
     </div>
     {% if errors.currency %}<p class="field-msg">{{ errors.currency }}</p>{% endif %}
 
     <button type="submit" class="cta-btn">Finish setup &rarr;</button>
   </form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    const choice = document.getElementById('currencyChoice');
+    const select = document.getElementById('currency');
+    if (!choice || !select) return;
+
+    choice.addEventListener('click', function (event) {
+      if (event.target === select) return;
+      select.focus();
+      try {
+        if (typeof select.showPicker === 'function') {
+          select.showPicker();
+        } else {
+          select.click();
+        }
+      } catch (error) {
+        select.click();
+      }
+    });
+  }());
+</script>
 {% endblock %}
