@@ -1,7 +1,7 @@
 {% load static %}
 {% load currency_filters %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-currency="{{ profile.currency }}">
 <head>
   <meta charset="UTF-8" />
   {% include "login/includes/pwa_meta.html" %}
@@ -458,8 +458,8 @@
     }
   }
 
-  // Initialize from localStorage (currency_sync.js may override)
-  window.USER_CURRENCY = (function() { try { return localStorage.getItem('spendwise-currency') || '{{ profile.currency|default:"inr" }}'; } catch { return '{{ profile.currency|default:"inr" }}'; } })();
+  // The account preference wins over any stale browser storage.
+  window.USER_CURRENCY = '{{ profile.currency|default:"inr" }}';
   window.CURRENCY_SYMBOLS_JS = { inr: '₹', usd: '$' };
   window.CURRENCY_LOCALES_JS = { inr: 'en-IN', usd: 'en-US' };
   const USER_CURRENCY = window.USER_CURRENCY;

@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-currency="{{ profile.currency }}">
 <head>
   <meta charset="UTF-8" />
   {% include "login/includes/pwa_meta.html" %}
@@ -250,7 +250,7 @@
   // ── Currency Picker ──────────────────────────────────────
   const currencyPicker = document.getElementById('currencyPicker');
   const currencyStatus = document.getElementById('currencyStatus');
-  let currentCurrency = (function() { try { return localStorage.getItem('spendwise-currency') || '{{ profile.currency|default:"inr" }}'; } catch { return '{{ profile.currency|default:"inr" }}'; } })();
+  let currentCurrency = '{{ profile.currency|default:"inr" }}';
 
   if (currencyPicker) {
     currencyPicker.querySelectorAll('.pf-currency-card').forEach(card => {

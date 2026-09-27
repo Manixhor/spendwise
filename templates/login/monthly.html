@@ -1,7 +1,7 @@
 {% load static %}
 {% load currency_filters %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-currency="{{ profile.currency }}">
 <head>
   <meta charset="UTF-8" />
   {% include "login/includes/pwa_meta.html" %}
@@ -227,7 +227,7 @@
 
         <script>
         (function() {
-          const USER_CURRENCY = (function() { try { return localStorage.getItem('spendwise-currency') || '{{ profile.currency|default:"inr" }}'; } catch { return '{{ profile.currency|default:"inr" }}'; } })();
+          const USER_CURRENCY = '{{ profile.currency|default:"inr" }}';
           const CURRENCY_SYMBOLS_JS = { inr: '₹', usd: '$' };
           const CURRENCY_LOCALES_JS = { inr: 'en-IN', usd: 'en-US' };
 

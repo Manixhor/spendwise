@@ -136,6 +136,9 @@ class InvitationSetupTests(TestCase):
         self.assertTrue(self.user.check_password('MyNewPass123!'))
         self.assertEqual(self.profile.currency, 'usd')
 
+        response = self.client.get(reverse('dashboard'))
+        self.assertContains(response, 'data-currency="usd"')
+
 
 class PwaCsrfCacheTests(TestCase):
     def test_auth_pages_are_never_cached(self):

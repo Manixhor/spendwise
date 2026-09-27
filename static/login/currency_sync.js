@@ -1,6 +1,6 @@
 /**
  * SpendWise Currency Sync
- * Reads currency from localStorage and updates all [data-curr] elements on load.
+ * Uses the signed-in account preference and updates all [data-curr] elements on load.
  * Also reformats elements with [data-amount] using the correct currency.
  * Exposes window.setSpendWiseCurrency(code) to update everywhere.
  */
@@ -10,8 +10,14 @@
   const LOCALES = { inr: 'en-IN', usd: 'en-US' };
 
   function getStoredCurrency() {
-    try { return localStorage.getItem(STORAGE_KEY) || 'inr'; }
-    catch { return 'inr'; }
+    // The server-rendered preference is authoritative. This prevents a stale
+    // local browser choice from overriding the currency selected during setup.
+    const accountCurrency = document.documentElement.dataset.currency;
+    if (SYMBOLS[accountCurrency]) return accountCurrency;
+    try {
+      const storedCurrency = localStorage.getItem(STORAGE_KEY);
+      return SYMBOLS[storedCurrency] ? storedCurrency : 'inr';
+    } catch { return 'inr'; }
   }
 
   function storeCurrency(code) {
@@ -90,6 +96,7 @@
   /** On DOM ready, sync all currency elements from localStorage */
   function syncOnLoad() {
     const code = getStoredCurrency();
+    storeCurrency(code);
     applyCurrency(code);
     updateGlobalVars(code);
     // Sync the profile currency picker active state
