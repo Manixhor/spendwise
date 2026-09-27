@@ -1,6 +1,6 @@
 import json
 from unittest.mock import patch
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from django.core import mail
@@ -197,23 +197,53 @@ class MonthlyAnalysisMailAdminTests(TestCase):
         MonthlyAnalysisMailSetting.objects.create(pk=1, enabled=False)
         url = reverse('admin:login_monthlyanalysismailsetting_send_now')
         with patch('login.admin.send_monthly_analysis_batch') as sender:
+            sender.return_value = {'month': '2026-09', 'sent': 2, 'failed': 0, 'failures': []}
             response = self.client.post(url, follow=True)
 
         self.assertEqual(response.status_code, 200)
-        sender.assert_not_called()
-        self.assertContains(response, 'Monthly analysis emails are disabled')
+        sender.assert_called_once()
+        self.assertContains(response, 'Sent 2 monthly analysis email')
 
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend')
-    def test_send_now_prevents_duplicate_monthly_emails(self):
+    def test_send_now_allows_resending_monthly_emails(self):
         current_month = timezone.localtime().strftime('%Y-%m')
         MonthlyAnalysisMailSetting.objects.create(pk=1, last_sent_month=current_month)
         url = reverse('admin:login_monthlyanalysismailsetting_send_now')
         with patch('login.admin.send_monthly_analysis_batch') as sender:
+            sender.return_value = {'month': current_month, 'sent': 2, 'failed': 0, 'failures': []}
             response = self.client.post(url, follow=True)
 
         self.assertEqual(response.status_code, 200)
-        sender.assert_not_called()
-        self.assertContains(response, 'already sent')
+        sender.assert_called_once()
+        self.assertContains(response, 'Sent 2 monthly analysis email')
+
+    def test_schedule_page_creates_a_single_editable_schedule(self):
+        response = self.client.get(
+            reverse('admin:login_monthlyanalysismailsetting_changelist')
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(MonthlyAnalysisMailSetting.objects.count(), 1)
+        self.assertContains(response, 'Send report now')
+
+
+class MonthlyAnalysisMailCommandTests(TestCase):
+    @patch('login.management.commands.send_monthly_analysis_emails.send_monthly_analysis_batch')
+    @patch('login.management.commands.send_monthly_analysis_emails.timezone.localtime')
+    def test_scheduled_delivery_sends_previous_completed_month(self, localtime, sender):
+        MonthlyAnalysisMailSetting.objects.create(
+            pk=1,
+            enabled=True,
+            send_day=1,
+            send_time=datetime.strptime('09:00', '%H:%M').time(),
+        )
+        localtime.return_value = timezone.make_aware(datetime(2026, 9, 1, 10, 0))
+        sender.return_value = {'month': '2026-08', 'sent': 1, 'failed': 0, 'failures': []}
+
+        from django.core.management import call_command
+        call_command('send_monthly_analysis_emails')
+
+        sender.assert_called_once_with('2026-08')
 
 
 class AdminToolAccessTests(TestCase):

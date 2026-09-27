@@ -68,16 +68,16 @@ class UserProfile(models.Model):
 class MonthlyAnalysisMailSetting(models.Model):
     enabled = models.BooleanField(
         default=True,
-        help_text="Send monthly analysis emails automatically.",
+        help_text="Turn automatic monthly report emails on or off.",
     )
     send_day = models.PositiveSmallIntegerField(
         default=1,
         validators=[MinValueValidator(1), MaxValueValidator(28)],
-        help_text="Day of the month to send. Use 1 for the first day.",
+        help_text="Choose a day from 1 to 28. Automatic emails contain the previous completed month's report.",
     )
     send_time = models.TimeField(
         default=datetime.time(9, 0),
-        help_text="Local time to send the monthly analysis.",
+        help_text="Send time in Asia/Kolkata.",
     )
     last_sent_month = models.CharField(
         max_length=7,
@@ -89,8 +89,8 @@ class MonthlyAnalysisMailSetting(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Monthly Analysis Mail Setting"
-        verbose_name_plural = "Monthly Analysis Mail Settings"
+        verbose_name = "Monthly Email Schedule"
+        verbose_name_plural = "Monthly Email Schedule"
 
     def __str__(self):
         status = "Enabled" if self.enabled else "Disabled"

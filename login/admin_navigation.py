@@ -19,3 +19,7 @@ def analytics_link(request):
 
 def broadcast_link(request):
     return reverse('admin_broadcast')
+
+
+def monthly_email_schedule_link(request):
+    return reverse('admin:login_monthlyanalysismailsetting_changelist')

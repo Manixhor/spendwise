@@ -22,6 +22,7 @@ from login.admin_navigation import (
     analytics_link,
     broadcast_link,
     invite_user_link,
+    monthly_email_schedule_link,
     users_link,
 )
 
@@ -221,6 +222,12 @@ UNFOLD = {
                         "title": "Broadcast email",
                         "icon": "campaign",
                         "link": broadcast_link,
+                        "permission": "login.admin_navigation.is_superuser",
+                    },
+                    {
+                        "title": "Monthly email schedule",
+                        "icon": "schedule_send",
+                        "link": monthly_email_schedule_link,
                         "permission": "login.admin_navigation.is_superuser",
                     },
                 ],

@@ -4,8 +4,8 @@
   <li>
     <form method="post" action="{% url 'admin:login_monthlyanalysismailsetting_send_now' %}" style="display:inline;">
       {% csrf_token %}
-      <button type="submit" class="button" style="height:32px; padding:0 12px;" onclick="return confirm('Send this month\'s analysis email now?');">
-        Send now
+      <button type="submit" class="button" style="height:32px; padding:0 12px;" onclick="return confirm('Send the current monthly report to all active users now?');">
+        Send report now
       </button>
     </form>
   </li>

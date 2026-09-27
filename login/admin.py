@@ -201,6 +201,7 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
         'enabled',
         'send_day',
         'send_time',
+        'schedule_status',
         'last_sent_month',
         'last_sent_at',
         'updated_at',
@@ -208,10 +209,10 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
     readonly_fields = ('last_sent_month', 'last_sent_at', 'updated_at')
 
     fieldsets = (
-        ('Schedule', {
+        ('Automatic delivery', {
             'fields': ('enabled', 'send_day', 'send_time')
         }),
-        ('Last Run', {
+        ('Delivery history', {
             'fields': ('last_sent_month', 'last_sent_at', 'updated_at'),
             'classes': ('collapse',),
         }),
@@ -221,6 +222,16 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
         if MonthlyAnalysisMailSetting.objects.exists():
             return False
         return super().has_add_permission(request)
+
+    @admin.display(description='Schedule')
+    def schedule_status(self, obj):
+        if obj.enabled:
+            return f'On: day {obj.send_day} at {obj.send_time:%H:%M} IST'
+        return 'Off'
+
+    def changelist_view(self, request, extra_context=None):
+        MonthlyAnalysisMailSetting.objects.get_or_create(pk=1)
+        return super().changelist_view(request, extra_context=extra_context)
 
     def get_urls(self):
         urls = super().get_urls()
@@ -247,21 +258,8 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
             return redirect('admin:login_monthlyanalysismailsetting_changelist')
 
         month = timezone.localtime().strftime('%Y-%m')
-        if not setting.enabled:
-            self.message_user(
-                request,
-                'Monthly analysis emails are disabled. Enable them before sending.',
-                level=messages.WARNING,
-            )
-            return redirect('admin:login_monthlyanalysismailsetting_changelist')
-        if setting.last_sent_month == month:
-            self.message_user(
-                request,
-                f'Monthly analysis emails were already sent for {month}.',
-                level=messages.WARNING,
-            )
-            return redirect('admin:login_monthlyanalysismailsetting_changelist')
-
+        # Send now is intentionally manual: it may be used to resend a report
+        # even while automation is paused or after this month's scheduled run.
         result = send_monthly_analysis_batch(month)
         if result['failed']:
             first_error = result['failures'][0] if result['failures'] else 'Unknown error'
