@@ -109,10 +109,13 @@ WHITENOISE_ENABLED = os.getenv('USE_WHITENOISE', '1') == '1' and importlib.util.
 # Use explicit production settings. Test runs and deliberately enabled local
 # debugging receive an ephemeral development key instead of a public fallback.
 IS_TEST_RUN = 'test' in sys.argv
+IS_COLLECTSTATIC_BUILD = 'collectstatic' in sys.argv
 DEBUG = env_bool('DEBUG', IS_TEST_RUN)
 SECRET_KEY = os.getenv('SECRET_KEY', '').strip()
 if not SECRET_KEY:
-    if DEBUG or IS_TEST_RUN:
+    # Northflank runs collectstatic in an isolated build workload, before
+    # runtime secrets are injected. This key is only used for that build step.
+    if DEBUG or IS_TEST_RUN or IS_COLLECTSTATIC_BUILD:
         SECRET_KEY = 'django-insecure-development-only-key'
     else:
         raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is disabled.')
