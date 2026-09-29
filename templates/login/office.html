@@ -501,22 +501,58 @@
     }
 
     // ── Live history updates ──────────────────────────
-    // The server owns the markup. After an entry is saved we swap in the
-    // freshly rendered section, so the list is always correct: right page,
-    // right search filter, right count, and a real empty state for the very
-    // first entry. Building rows here produced a blank row when the list was
-    // empty, because there was no existing row to clone.
+    // The server owns the markup. Every change swaps in the freshly rendered
+    // section, so the list is always correct: right page, right search filter,
+    // right count, and a real empty state for the very first entry. Building
+    // rows in the browser produced a blank row when the list was empty,
+    // because there was no existing row to clone.
     const historySection = document.getElementById('officeHistorySection');
-    // Must match the query in login.views._office_entries_page.
-    const HISTORY_QUERY = new URLSearchParams(window.location.search);
-    HISTORY_QUERY.delete('page');
+    const searchInput = document.getElementById('officeSearchInput');
+    const clearSearchButton = document.getElementById('officeClearSearch');
+    const typedSearch = () => (searchInput?.value || '').trim();
+    const shownPage = () => new URLSearchParams(window.location.search).get('page');
+    const shownDirection = () => new URLSearchParams(window.location.search).get('dir') || '';
+    let historyToken = 0;
 
-    async function refreshHistory() {
+    // Only these parts are replaced. The search form is deliberately left
+    // alone: swapping it out would steal focus and the caret mid-typing.
+    function swapHistory(fresh) {
+      for (const selector of ['.office-history-heading', '.office-filter-row', '.office-history-list', '.office-pagination']) {
+        const current = historySection.querySelector(selector);
+        const incoming = fresh.querySelector(selector);
+        if (current) current.remove();
+        if (incoming) historySection.appendChild(document.importNode(incoming, true));
+      }
+    }
+
+    function syncSearchChrome(query) {
+      if (clearSearchButton) clearSearchButton.hidden = !query && !shownDirection();
+      if (searchInput) searchInput.setAttribute('aria-busy', 'true');
+    }
+
+    function rememberInUrl(query, page, direction) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('q');
+      url.searchParams.delete('page');
+      url.searchParams.delete('dir');
+      if (query) url.searchParams.set('q', query);
+      if (page) url.searchParams.set('page', page);
+      if (direction) url.searchParams.set('dir', direction);
+      // Replace, not push: typing should not fill the back button.
+      window.history.replaceState(null, '', url);
+    }
+
+    async function renderHistory({
+      query = typedSearch(),
+      page = null,
+      direction = shownDirection(),
+      pushUrl = true,
+    } = {}) {
+      const token = ++historyToken;
       const url = new URL("{% url 'office_history_fragment' %}", window.location.origin);
-      HISTORY_QUERY.forEach((value, key) => url.searchParams.set(key, value));
-      // Keep the user on whichever page they were looking at.
-      const currentPage = new URLSearchParams(window.location.search).get('page');
-      if (currentPage) url.searchParams.set('page', currentPage);
+      if (query) url.searchParams.set('q', query);
+      if (page) url.searchParams.set('page', page);
+      if (direction) url.searchParams.set('dir', direction);
 
       const response = await fetch(url.toString(), {
         credentials: 'same-origin',
@@ -524,30 +560,71 @@
       });
       if (!response.ok) throw new Error(`history ${response.status}`);
 
-      const html = await response.text();
-      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
       const fresh = doc.getElementById('officeHistorySection');
       if (!fresh) throw new Error('history fragment missing');
+      // A slower earlier request must never overwrite a newer result.
+      if (token !== historyToken) return;
 
-      const currentList = historySection.querySelector('.office-history-list');
-      const freshList = fresh.querySelector('.office-history-list');
-      if (currentList && freshList) currentList.replaceWith(freshList);
-
-      const currentCaption = historySection.querySelector('.office-history-caption');
-      const freshCaption = fresh.querySelector('.office-history-caption');
-      if (currentCaption && freshCaption) currentCaption.replaceWith(freshCaption);
-
-      const currentSearch = historySection.querySelector('.office-search-row');
-      const freshSearch = fresh.querySelector('.office-search-row');
-      if (currentSearch && freshSearch) currentSearch.replaceWith(freshSearch);
-
-      const currentPages = historySection.querySelector('.office-pagination');
-      const freshPages = fresh.querySelector('.office-pagination');
-      if (currentPages) currentPages.remove();
-      if (freshPages) {
-        historySection.appendChild(document.importNode(freshPages, true));
-      }
+      swapHistory(fresh);
+      if (clearSearchButton) clearSearchButton.hidden = !query && !direction;
+      if (searchInput) searchInput.removeAttribute('aria-busy');
+      if (pushUrl) rememberInUrl(query, page, direction);
     }
+
+    // Filtering as you type, and neither Enter nor the Search button reloads
+    // the page. Debounced so a long query is one request, not one per key.
+    let searchTimer = null;
+    const runSearch = (query) => {
+      searchInput?.setAttribute('aria-busy', 'true');
+      renderHistory({ query, page: null }).catch(() => {
+        searchInput?.removeAttribute('aria-busy');
+      });
+    };
+
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => runSearch(typedSearch()), 250);
+      });
+      // Blur commits immediately rather than waiting out the debounce.
+      searchInput.addEventListener('change', () => {
+        clearTimeout(searchTimer);
+        runSearch(typedSearch());
+      });
+    }
+
+    // Falls back to a normal GET submit when scripting is unavailable.
+    historySection.querySelector('.office-search')?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      clearTimeout(searchTimer);
+      runSearch(typedSearch());
+    });
+
+    // Paging stays in place too, for the same reason.
+    historySection.addEventListener('click', (event) => {
+      const pageButton = event.target.closest('.office-pagination button[name="page"]');
+      if (!pageButton) return;
+      event.preventDefault();
+      renderHistory({ query: typedSearch(), page: pageButton.value }).catch(() => {
+        window.location.reload();
+      });
+    });
+
+    // All / Received / Paid. Kept separate from the text box, so a filter can
+    // stay applied while the query keeps narrowing it.
+    historySection.addEventListener('click', (event) => {
+      const filterButton = event.target.closest('.office-filter-row button');
+      if (!filterButton) return;
+      event.preventDefault();
+      clearTimeout(searchTimer);
+      if (filterButton.dataset.officeFilter === shownDirection()) return;
+      renderHistory({
+        query: typedSearch(),
+        page: null,
+        direction: filterButton.dataset.officeFilter || '',
+      }).catch(() => { window.location.reload(); });
+    });
 
     // Move suggestions dismissed in older versions from this browser to the account.
     if (legacyHiddenNames.length) {
@@ -617,7 +694,7 @@
               : `Recorded ${formatAmount(amount)} paid${name ? ` to ${name}` : ''}`,
           );
           try {
-            await refreshHistory();
+            await renderHistory({ query: typedSearch(), page: shownPage() });
           } catch (_) {
             window.location.reload();
             return;
@@ -1070,10 +1147,17 @@
       } catch (error) { alert(error.message || 'Could not restore this entry.'); }
     });
 
-    // Delegated, because the history fragment swap replaces this button.
+    // Delegated, because the history fragment swap can replace this button.
+    // Clears in place: no reload, the unfiltered list comes straight back.
     document.addEventListener('click', (event) => {
       if (!event.target.closest('#officeClearSearch')) return;
-      window.location.assign("{% url 'office' %}#officeHistorySection");
+      event.preventDefault();
+      clearTimeout(searchTimer);
+      if (searchInput) searchInput.value = '';
+      renderHistory({ query: '', page: null, direction: '' }).catch(() => {
+        window.location.reload();
+      });
+      searchInput?.focus();
     });
     document.addEventListener('click', async (event) => {
       const row = event.target.closest('.office-history-row[data-id]');

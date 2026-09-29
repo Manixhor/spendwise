@@ -174,6 +174,11 @@ body.office-modal-open { overflow: hidden; }
 .office-search-row input:focus { border-color: #6c9d77; box-shadow: 0 0 0 3px #e0eedf; }
 .office-search-row button, .office-pagination button { min-height: 40px; padding: 8px 13px; border: 1px solid #dce6db; border-radius: 9px; background: #f4f8f1; color: #315f50; font-size: 12px; font-weight: 750; }
 .office-search-row button[type="submit"] { border-color: #315f50; background: #315f50; color: #fff; }
+.office-filter-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 0 4px; }
+.office-filter-row button { min-height: 36px; padding: 6px 14px; border: 1px solid #dce6db; border-radius: 999px; background: #f7faf4; color: #5c6f63; font-size: 12px; font-weight: 700; }
+.office-filter-row button:hover { border-color: #9fbd9f; background: #eef5ea; }
+.office-filter-row button.is-active { border-color: #315f50; background: #315f50; color: #fff; }
+.office-filter-row button.is-active:hover { background: #26503f; }
 .office-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 15px 0 20px; border-top: 1px solid #edf0e9; }
 .office-pagination span { color: #819083; font-size: 11px; }
 /* Confirmation toast, anchored to the top of the page. */

@@ -2675,14 +2675,26 @@ def _office_totals(user) -> dict:
     }
 
 
-def _office_entries_page(active_entries, raw_search: str, raw_page: str | None):
+OFFICE_PAGE_SIZE = 10
+OFFICE_SEARCH_PAGE_SIZE = 8
+OFFICE_DIRECTIONS = {"came", "taken"}
+
+
+def _office_entries_page(
+    active_entries, raw_search: str, raw_page: str | None, raw_direction: str = ""
+):
     """Filter, then paginate the live office entries.
 
     Shared by the page and the history fragment so both agree on the search
-    rules and the current page.
+    rules, the Received/Paid filter, and the current page.
     """
     search = (raw_search or "").strip()[:100]
+    direction = (raw_direction or "").strip().lower()
+    if direction not in OFFICE_DIRECTIONS:
+        direction = ""
     visible_entries = active_entries
+    if direction:
+        visible_entries = visible_entries.filter(direction=direction)
     if search:
         criteria = Q(name__icontains=search) | Q(note__icontains=search)
         try:
@@ -2703,7 +2715,10 @@ def _office_entries_page(active_entries, raw_search: str, raw_page: str | None):
     # Only the live, most recent entries are surfaced. The soft-deleted
     # "trash" is intentionally not rendered for now; the restore endpoint
     # stays in place so nothing is lost if it comes back.
-    return Paginator(visible_entries, 10).get_page(raw_page), search
+    # Unfiltered history shows ten per page; a search or a direction filter
+    # narrows to the eight most recent matches so results stay scannable.
+    per_page = OFFICE_SEARCH_PAGE_SIZE if (search or direction) else OFFICE_PAGE_SIZE
+    return Paginator(visible_entries, per_page).get_page(raw_page), search, direction
 
 
 @login_required(login_url="/login/")
@@ -2711,7 +2726,12 @@ def office(request: HttpRequest) -> HttpResponse:
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     totals = _office_totals(request.user)
     active_entries = OfficeEntry.objects.filter(user=request.user, deleted_at__isnull=True)
-    entries_page, search = _office_entries_page(active_entries, request.GET.get("q", ""), request.GET.get("page"))
+    entries_page, search, direction = _office_entries_page(
+        active_entries,
+        request.GET.get("q", ""),
+        request.GET.get("page"),
+        request.GET.get("dir", ""),
+    )
     name_counts: dict[str, int] = {}
     for entry in active_entries.only("name"):
         key = entry.name.strip()
@@ -2735,6 +2755,7 @@ def office(request: HttpRequest) -> HttpResponse:
             "today": date.today(),
             "entries_page": entries_page,
             "office_search": search,
+            "office_direction": direction,
             "name_suggestions": name_suggestions[:50],
             "office_opening": totals["opening"],
             "office_came_total": totals["came_total"],
@@ -2746,18 +2767,28 @@ def office(request: HttpRequest) -> HttpResponse:
 
 @login_required(login_url="/login/")
 def office_history_fragment(request: HttpRequest) -> HttpResponse:
-    """Re-render the history list after an entry is added.
+    """Re-render the history section after an entry is added or a filter changes.
 
     The page swaps this markup in instead of rebuilding rows in the browser,
-    so the list always matches the server: correct page, search filter, entry
-    count, and an empty state when the very first entry lands.
+    so the list always matches the server: correct page, search text,
+    Received/Paid filter, entry count, and an empty state when the very first
+    entry lands.
     """
     active_entries = OfficeEntry.objects.filter(user=request.user, deleted_at__isnull=True)
-    entries_page, search = _office_entries_page(active_entries, request.GET.get("q", ""), request.GET.get("page"))
+    entries_page, search, direction = _office_entries_page(
+        active_entries,
+        request.GET.get("q", ""),
+        request.GET.get("page"),
+        request.GET.get("dir", ""),
+    )
     return render(
         request,
         "login/includes/office_history.html",
-        {"entries_page": entries_page, "office_search": search},
+        {
+            "entries_page": entries_page,
+            "office_search": search,
+            "office_direction": direction,
+        },
     )
 
 

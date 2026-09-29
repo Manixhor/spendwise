@@ -56,7 +56,7 @@ class OfficeLiveUpdateTests(TestCase):
 
         # The list is re-rendered from the server fragment rather than
         # rebuilt in the browser.
-        self.assertIn("refreshHistory", html)
+        self.assertIn("renderHistory", html)
         self.assertIn("officeHistorySection", html)
         self.assertIn("resetDateField", html)
         # No reload on the happy path, and no client-side row builder.
@@ -148,6 +148,81 @@ class OfficeLiveUpdateTests(TestCase):
         page = self.client.get(reverse("office"))
         self.assertEqual(page.context["office_opening"], Decimal("100000.00"))
         self.assertEqual(page.context["office_total"], Decimal("100500.00"))
+
+    def test_direction_filter_narrows_the_list_and_marks_the_button(self):
+        for i in range(4):
+            OfficeEntry.objects.create(
+                user=self.user, direction="came", amount="10", name=f"In{i}"
+            )
+        for i in range(6):
+            OfficeEntry.objects.create(
+                user=self.user, direction="taken", amount="10", name=f"Out{i}"
+            )
+
+        def fragment(**params):
+            return self.client.get(reverse("office_history_fragment"), params).content.decode()
+
+        received = fragment(dir="came")
+        self.assertIn("In3", received)
+        self.assertNotIn("Out0", received)
+        self.assertIn('data-office-filter="came" class="is-active" aria-pressed="true"', received)
+        self.assertIn(
+            'data-office-filter="taken" aria-pressed="false"', received
+        )
+
+        paid = fragment(dir="taken")
+        self.assertIn("Out5", paid)
+        self.assertNotIn("In0", paid)
+
+        # Unknown values fall back to everything rather than an empty list.
+        every = fragment(dir="nonsense")
+        self.assertIn("In0", every)
+        self.assertIn("Out0", every)
+
+    def test_search_and_direction_filter_combine(self):
+        OfficeEntry.objects.create(
+            user=self.user, direction="came", amount="10", name="Ravi"
+        )
+        OfficeEntry.objects.create(
+            user=self.user, direction="taken", amount="10", name="Ravi"
+        )
+        OfficeEntry.objects.create(
+            user=self.user, direction="came", amount="10", name="Anita"
+        )
+
+        html = self.client.get(
+            reverse("office_history_fragment"), {"q": "Ravi", "dir": "came"}
+        ).content.decode()
+        self.assertEqual(html.count("office-history-row"), 1)
+        self.assertIn("Received", html)
+        # "Paid" is also a filter button label, so check the row data itself.
+        self.assertNotIn('data-direction="taken"', html)
+
+    def test_search_shows_the_eight_most_recent_matches(self):
+        for i in range(12):
+            OfficeEntry.objects.create(
+                user=self.user, direction="came", amount="10", name="Match"
+            )
+        filtered = self.client.get(
+            reverse("office_history_fragment"), {"q": "Match"}
+        ).content.decode()
+        # Narrowed from ten per page to eight.
+        self.assertEqual(filtered.count("office-history-row"), 8)
+        self.assertIn("12 entries", filtered)  # caption reports every match
+        self.assertIn("Page 1 of 2", filtered)
+
+    def test_page_searches_in_place(self):
+        html = self.client.get(reverse("office")).content.decode()
+        # Submitting the form and paging are both intercepted, so neither
+        # reloads the document.
+        self.assertIn("addEventListener('submit'", html)
+        self.assertIn("event.preventDefault()", html)
+        # Typing filters as you go, debounced to one request per pause.
+        self.assertIn("setTimeout(() => runSearch(typedSearch()), 250)", html)
+        # The query is mirrored into the URL so a refresh keeps it.
+        self.assertIn("window.history.replaceState", html)
+        # The search form is never swapped out, which would eat the caret.
+        self.assertNotIn("'.office-search-row',", html)
 
     def test_recording_updates_totals_without_a_reload(self):
         self._add(direction="came", name="Ravi", amount="100")

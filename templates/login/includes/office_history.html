@@ -3,8 +3,13 @@
       <div class="office-history-heading"><div><span class="office-section-kicker">02 / Review</span><h2>{% if office_search %}Search results{% else %}Recent entries{% endif %}</h2></div><span class="office-history-caption" data-total="{{ entries_page.paginator.count }}">{{ entries_page.paginator.count }} {% if entries_page.paginator.count == 1 %}entry{% else %}entries{% endif %}</span></div>
       <form class="office-search" method="get" action="{% url 'office' %}#officeHistorySection" role="search">
         <label for="officeSearchInput">Find an entry</label>
-        <div class="office-search-row"><input id="officeSearchInput" name="q" type="search" value="{{ office_search }}" placeholder="Search name, date, or amount" /><button type="submit">Search</button>{% if office_search %}<button type="button" class="office-clear-search" id="officeClearSearch">Clear</button>{% endif %}</div>
+        <div class="office-search-row"><input id="officeSearchInput" name="q" type="search" value="{{ office_search }}" placeholder="Search name, date, or amount" autocomplete="off" /><button type="submit">Search</button><button type="button" class="office-clear-search" id="officeClearSearch"{% if not office_search and not office_direction %} hidden{% endif %}>Clear</button></div>
       </form>
+      <div class="office-filter-row" role="group" aria-label="Filter by direction">
+        <button type="button" data-office-filter=""{% if not office_direction %} class="is-active" aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>All</button>
+        <button type="button" data-office-filter="came"{% if office_direction == "came" %} class="is-active" aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>Received</button>
+        <button type="button" data-office-filter="taken"{% if office_direction == "taken" %} class="is-active" aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>Paid</button>
+      </div>
       <ul class="office-history-list" id="officeHistory">
         {% for entry in entries_page %}
           <li class="office-history-row" data-id="{{ entry.id }}" data-direction="{{ entry.direction }}" data-name="{{ entry.name }}" data-entry-date="{{ entry.entry_date|date:'Y-m-d' }}" data-amount="{{ entry.amount }}">
