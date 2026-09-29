@@ -873,20 +873,27 @@ class OfficeMoneyFlowTests(TestCase):
         self.assertEqual(entry.name, 'Ravi')
         self.assertEqual(OfficeEntry.objects.filter(user=self.user).count(), 1)
 
-    def test_office_navigation_and_balance_warning_are_self_contained(self):
+    def test_office_navigation_and_balance_controls_are_self_contained(self):
         page = self.client.get(reverse('office')).content.decode()
         for target in ('officeOverview', 'officeEntry', 'officeHistorySection'):
             self.assertIn(f'data-office-target="{target}"', page)
             self.assertIn(f'id="{target}"', page)
-        self.assertIn('Changing this value will recalculate the current balance', page)
-        self.assertIn('Your existing entries and dates will stay the same', page)
+        self.assertNotIn('officeBalanceNotice', page)
+        self.assertIn('id="officeBalanceSave"', page)
         # The starting balance previews as you type, but only Save Balance
         # (or Enter) actually persists it.
-        self.assertIn('Press Save Balance to apply', page)
         self.assertIn('previewOpening', page)
         self.assertIn("openingInput.addEventListener('input', previewOpening)", page)
+        self.assertIn('<dialog class="office-confirm-dialog office-balance-dialog" id="officeBalanceConfirm"', page)
+        self.assertIn('Current starting', page)
+        self.assertIn('New starting', page)
+        self.assertIn('Projected current balance', page)
+        self.assertIn('Your existing entries and dates stay the same.', page)
+        self.assertIn('dialog.showModal()', page)
+        self.assertIn('id="officeDeleteConfirm"', page)
+        self.assertIn('id="officeDeleteName"', page)
+        self.assertIn('You can undo the deletion for 10 seconds.', page)
         self.assertNotIn('scheduleOpeningSave', page)
-        self.assertNotIn('id="officeBalanceConfirm"', page)
         self.assertNotIn('href="/dashboard/"', page)
 
     def test_recent_entries_are_paginated_and_searchable(self):

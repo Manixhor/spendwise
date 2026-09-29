@@ -46,11 +46,10 @@
             <input type="text" inputmode="decimal" id="officeOpeningInput"
                    class="office-input office-amount-input" autocomplete="off"
                    value="{{ office_opening|indian_number }}"
-                   aria-label="Starting balance" aria-describedby="officeBalanceNotice" />
+                   aria-label="Starting balance" aria-describedby="officeBalanceMsg" />
           </div>
-          <p class="office-balance-notice" id="officeBalanceNotice" hidden>Changing this value will recalculate the current balance and summary. Your existing entries and dates will stay the same. Press Save Balance to apply.</p>
           <button type="button" class="office-save" id="officeBalanceSave">Save Balance</button>
-          <p class="office-error" id="officeBalanceMsg"></p>
+          <p class="office-error" id="officeBalanceMsg" aria-live="polite"></p>
         </div>
       </div>
       <div class="office-breakdown">
@@ -208,6 +207,41 @@
 </div>
 
 
+<dialog class="office-confirm-dialog office-balance-dialog" id="officeBalanceConfirm" aria-labelledby="officeBalanceTitle" aria-describedby="officeBalanceDescription">
+  <div class="office-dialog-inner">
+    <span class="office-dialog-kicker">Balance update</span>
+    <h2 id="officeBalanceTitle">Confirm starting balance</h2>
+    <p class="office-dialog-description" id="officeBalanceDescription">This recalculates your current balance and summary. Your existing entries and dates stay the same.</p>
+    <div class="office-dialog-comparison">
+      <div><span>Current starting</span><strong id="officeBalanceCurrent"></strong></div>
+      <span class="office-dialog-arrow" aria-hidden="true">→</span>
+      <div><span>New starting</span><strong id="officeBalanceNew"></strong></div>
+    </div>
+    <div class="office-dialog-projection"><span>Projected current balance</span><strong id="officeBalanceProjected"></strong></div>
+    <form method="dialog" class="office-dialog-actions">
+      <button type="submit" value="cancel" class="office-dialog-cancel" autofocus>Keep current</button>
+      <button type="submit" value="confirm" class="office-dialog-confirm">Confirm change</button>
+    </form>
+  </div>
+</dialog>
+
+<dialog class="office-confirm-dialog office-delete-dialog" id="officeDeleteConfirm" aria-labelledby="officeDeleteTitle" aria-describedby="officeDeleteDescription">
+  <div class="office-dialog-inner">
+    <span class="office-dialog-kicker">Entry removal</span>
+    <h2 id="officeDeleteTitle">Move this entry to Deleted?</h2>
+    <p class="office-dialog-description" id="officeDeleteDescription">It will leave your recent entries. You can undo the deletion for 10 seconds.</p>
+    <div class="office-delete-preview">
+      <span class="office-delete-preview-type" id="officeDeleteType"></span>
+      <div class="office-delete-preview-details"><strong id="officeDeleteName"></strong><span id="officeDeleteDate"></span></div>
+      <strong class="office-delete-preview-amount" id="officeDeleteAmount"></strong>
+    </div>
+    <form method="dialog" class="office-dialog-actions">
+      <button type="submit" value="cancel" class="office-dialog-cancel" autofocus>Keep entry</button>
+      <button type="submit" value="confirm" class="office-dialog-confirm">Move to Deleted</button>
+    </form>
+  </div>
+</dialog>
+
 <div class="office-toast" id="officeToast" role="status" aria-live="polite" hidden>
   <span class="office-toast-icon" id="officeToastIcon" aria-hidden="true"></span>
   <span class="office-toast-text" id="officeToastText"></span>
@@ -264,8 +298,9 @@
     // Commas appear as you type. The caret is tracked by counting digits rather
     // than characters, so inserting a comma never moves the user's cursor.
     const formatLive = (input) => {
-      const caret = input.selectionStart ?? input.value.length;
-      const raw = stripGrouping(input.value);
+      const before = input.value;
+      const caret = input.selectionStart ?? before.length;
+      const raw = stripGrouping(before);
       const dotAt = raw.indexOf('.');
       let intPart = dotAt === -1 ? raw : raw.slice(0, dotAt);
       let decPart = dotAt === -1 ? '' : raw.slice(dotAt + 1);
@@ -278,7 +313,7 @@
         ? `${head || '0'}.${decPart}`
         : (dotAt === -1 ? head : `${head || '0'}.`);
 
-      const digitsBefore = raw.slice(0, caret).replace(/[^\d]/g, '').length;
+      const digitsBefore = before.slice(0, caret).replace(/[^\d]/g, '').length;
       let pos = 0;
       let seen = 0;
       while (pos < input.value.length && seen < digitsBefore) {
@@ -287,7 +322,7 @@
       }
       // Typing at the end must keep the caret at the end, otherwise the next
       // keystroke lands before a trailing '.' and the decimals run together.
-      if (caret >= raw.length) pos = input.value.length;
+      if (caret >= before.length) pos = input.value.length;
       input.setSelectionRange(pos, pos);
     };
 
@@ -705,13 +740,58 @@
     // reaches the server until the user asks for it.
     // Holds what the server actually has; only a successful save moves it.
     let persistedOpening = Number(openingEl.dataset.value || 0);
+    const balanceDialog = document.getElementById('officeBalanceConfirm');
+    const balanceCurrent = document.getElementById('officeBalanceCurrent');
+    const balanceNew = document.getElementById('officeBalanceNew');
+    const balanceProjected = document.getElementById('officeBalanceProjected');
+
+    function askOfficeConfirmation(dialog, fallbackMessage) {
+      if (typeof dialog.showModal !== 'function') return Promise.resolve(window.confirm(fallbackMessage));
+      dialog.returnValue = 'cancel';
+      return new Promise((resolve) => {
+        dialog.addEventListener('close', () => resolve(dialog.returnValue === 'confirm'), { once: true });
+        dialog.showModal();
+      });
+    }
+
+    document.querySelectorAll('.office-confirm-dialog').forEach((dialog) => {
+      dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) dialog.close('cancel');
+      });
+    });
+
+    function confirmBalanceChange(amount) {
+      const projected = Number(amount) + Number(cameEl.dataset.value || 0) - Number(takenEl.dataset.value || 0);
+      balanceCurrent.textContent = formatAmount(persistedOpening);
+      balanceNew.textContent = formatAmount(amount);
+      balanceProjected.textContent = formatAmount(projected, { negative: projected < 0 });
+      balanceProjected.classList.toggle('is-negative', projected < 0);
+      return askOfficeConfirmation(balanceDialog, 'Save this starting balance? Your existing entries and dates will stay the same.');
+    }
+
+    function restoreBalanceDisplay({ resetInput = true } = {}) {
+      if (resetInput) openingInput.value = formatAmount(persistedOpening).replace('\u20b9', '');
+      openingEl.textContent = formatAmount(persistedOpening);
+      const total = Number(totalEl.dataset.total || 0);
+      totalEl.textContent = formatAmount(total, { negative: total < 0 });
+      totalEl.classList.toggle('is-negative', total < 0);
+    }
 
     async function saveBalance() {
+      if (balanceSave.disabled) return;
       balanceMsg.textContent = '';
-      balanceMsg.classList.remove('is-success');
       const amount = parseAmount(openingInput.value);
-      if (amount === '' || !Number.isFinite(Number(amount)) || Number(amount) < 0) {
+      if (amount === '' || !Number.isFinite(Number(amount)) || Number(amount) < 0 || Number(amount) >= 1000000000000) {
         balanceMsg.textContent = 'Enter a valid starting balance.';
+        return;
+      }
+      if (Number(amount) === persistedOpening) {
+        restoreBalanceDisplay();
+        return;
+      }
+      const confirmed = await confirmBalanceChange(amount);
+      if (!confirmed) {
+        restoreBalanceDisplay();
         return;
       }
       balanceSave.disabled = true;
@@ -725,8 +805,6 @@
         // Only now is the new figure the persisted one.
         persistedOpening = Number(data.opening);
         openingInput.value = formatAmount(data.opening).replace('\u20b9', '');
-        balanceMsg.textContent = 'Balance saved.';
-        balanceMsg.classList.add('is-success');
         showToast(`Starting balance set to ${formatAmount(data.opening)}`);
       } catch (err) {
         balanceMsg.textContent = 'Network error. Try again.';
@@ -737,10 +815,13 @@
 
 
     function previewOpening() {
+      balanceMsg.textContent = '';
       const raw = parseAmount(openingInput.value);
-      if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) return;
+      if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0 || Number(raw) >= 1000000000000) {
+        restoreBalanceDisplay({ resetInput: false });
+        return;
+      }
       const opening = Number(raw);
-      if (opening === persistedOpening) return;
       // Show the effect straight away. openingEl.dataset.value is left on the
       // server value, because that is the baseline the next save compares to.
       const total = opening + Number(cameEl.dataset.value || 0) - Number(takenEl.dataset.value || 0);
@@ -752,28 +833,8 @@
     openingInput.addEventListener('input', previewOpening);
 
     const balanceSave = document.getElementById('officeBalanceSave');
-    const balanceNotice = document.getElementById('officeBalanceNotice');
-    openingInput.addEventListener('focus', () => { balanceNotice.hidden = false; });
-    openingInput.addEventListener('click', () => { balanceNotice.hidden = false; });
 
-    // Saves straight away now, so there is no confirmation dialog to miss.
-    // The only path that persists the balance.
-    balanceSave.addEventListener('click', async () => {
-      balanceMsg.textContent = '';
-      balanceMsg.classList.remove('is-success');
-      const amount = parseAmount(openingInput.value);
-      if (amount === '' || !Number.isFinite(Number(amount)) || Number(amount) < 0) {
-        balanceMsg.textContent = 'Enter a valid starting balance.';
-        openingInput.focus();
-        return;
-      }
-      if (Number(amount) === persistedOpening) {
-        balanceMsg.textContent = 'No changes to save.';
-        balanceMsg.classList.add('is-success');
-        return;
-      }
-      await saveBalance();
-    });
+    balanceSave.addEventListener('click', saveBalance);
 
     // Enter saves the balance or moves through entry fields.
     const FLOW = [
@@ -792,12 +853,7 @@
         if (input.classList.contains('office-date-trigger')) return;
         event.preventDefault();
         if (input === openingInput) {
-          const raw = parseAmount(openingInput.value);
-          if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) {
-            balanceMsg.textContent = 'Enter a valid starting balance.';
-            return;
-          }
-          if (Number(raw) !== persistedOpening) saveBalance();
+          saveBalance();
           return;
         }
 
@@ -1030,6 +1086,25 @@
     };
 
     const undoKey = 'office-undo-{{ user.pk }}';
+    const deleteDialog = document.getElementById('officeDeleteConfirm');
+    const deleteType = document.getElementById('officeDeleteType');
+    const deleteName = document.getElementById('officeDeleteName');
+    const deleteDate = document.getElementById('officeDeleteDate');
+    const deleteAmount = document.getElementById('officeDeleteAmount');
+
+    function confirmDeleteEntry(row) {
+      const received = row.dataset.direction === 'came';
+      deleteType.textContent = received ? 'Received' : 'Paid';
+      deleteType.classList.toggle('came', received);
+      deleteType.classList.toggle('taken', !received);
+      deleteName.textContent = row.dataset.name?.trim() || 'No name';
+      deleteDate.textContent = row.querySelector('.office-history-meta')?.textContent.trim() || row.dataset.entryDate || '';
+      deleteAmount.textContent = row.querySelector('.office-history-amount')?.textContent.trim() || '';
+      deleteAmount.classList.toggle('came', received);
+      deleteAmount.classList.toggle('taken', !received);
+      return askOfficeConfirmation(deleteDialog, 'Move this entry to Deleted? You can undo it for 10 seconds.');
+    }
+
     const undoToast = document.getElementById('officeUndoToast');
     let undoId = null;
     try {
@@ -1083,7 +1158,7 @@
         return;
       }
       const deleteButton = event.target.closest('.office-delete');
-      if (!deleteButton || !confirm('Move this entry to Deleted entries? You can restore it later.')) return;
+      if (!deleteButton || deleteButton.disabled || !await confirmDeleteEntry(row)) return;
       deleteButton.disabled = true;
       try {
         const { ok, data } = await post(entryUrl('delete', row.dataset.id), {});
