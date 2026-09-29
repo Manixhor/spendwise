@@ -48,7 +48,7 @@
                    value="{{ office_opening|indian_number }}"
                    aria-label="Starting balance" aria-describedby="officeBalanceNotice" />
           </div>
-          <p class="office-balance-notice" id="officeBalanceNotice" hidden>Changing this value will recalculate the current balance and summary. Your existing entries and dates will stay the same. Saved automatically.</p>
+          <p class="office-balance-notice" id="officeBalanceNotice" hidden>Changing this value will recalculate the current balance and summary. Your existing entries and dates will stay the same. Press Save Balance to apply.</p>
           <button type="button" class="office-save" id="officeBalanceSave">Save Balance</button>
           <p class="office-error" id="officeBalanceMsg"></p>
         </div>
@@ -99,10 +99,6 @@
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
             <div class="office-name-suggestions" id="officeTakenSuggestions" role="listbox" aria-label="Suggested names" hidden></div>
-          </div>
-          <div class="office-name-recommend" id="officeTakenRecommend" hidden>
-            <span class="office-name-recommend-label">Recent</span>
-            <div class="office-name-recommend-chips" id="officeTakenRecommendChips"></div>
           </div>
         </div>
         <div class="office-field">
@@ -165,10 +161,6 @@
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
             <div class="office-name-suggestions" id="officeCameSuggestions" role="listbox" aria-label="Suggested names" hidden></div>
-          </div>
-          <div class="office-name-recommend" id="officeCameRecommend" hidden>
-            <span class="office-name-recommend-label">Recent</span>
-            <div class="office-name-recommend-chips" id="officeCameRecommendChips"></div>
           </div>
         </div>
         <div class="office-field">
@@ -348,12 +340,16 @@
       const input = wrap.querySelector('input[name="name"]');
       const list = wrap.querySelector('.office-name-suggestions');
       const query = nameKey(input.value);
-      // Empty fields use the recommendation chips below, not an overlapping menu.
-      if (!query) {
+      // An empty field still offers the most-used names, which is where the
+      // suggestion chips used to cover it.
+      const matches = (query
+        ? suggestedNames.filter((name) => nameKey(name).includes(query))
+        : suggestedNames
+      ).slice(0, 8);
+      if (!matches.length) {
         hideNameSuggestions(wrap);
         return;
       }
-      const matches = suggestedNames.filter((name) => nameKey(name).includes(query)).slice(0, 8);
       list.replaceChildren();
       matches.forEach((name) => {
         const row = document.createElement('div');
@@ -376,12 +372,14 @@
         remove.title = 'Remove suggestion';
         remove.textContent = '×';
         remove.addEventListener('click', async (event) => {
+          event.preventDefault();
           event.stopPropagation();
           remove.disabled = true;
           try {
             await hideSuggestion(name);
             showNameSuggestions(wrap);
             input.focus();
+            showToast(`${name} removed from suggestions.`);
           } catch (error) {
             remove.disabled = false;
             alert(error.message || 'Could not remove this suggestion.');
@@ -394,80 +392,22 @@
       input.setAttribute('aria-expanded', String(matches.length > 0));
     }
 
-    // ── Recommended names ──────────────────────────────
-    // Most-used names surface as tappable chips while the name field is empty,
-    // so the common case needs no typing. Once you type, the filtered
-    // dropdown above takes over and the chips step aside.
-    const RECOMMEND_LIMIT = 6;
+    // ── Suggested names ────────────────────────────────
+    // Most-used names surface in the dropdown under the name field, filtered
+    // as you type. A name can be dropped for good from that list.
 
-    // Shared by the dropdown rows and the chips: hides a name for good.
+    // Shared by both dropdowns: hides a name for good.
     function hideSuggestion(name) {
       const index = suggestedNames.findIndex((item) => nameKey(item) === nameKey(name));
       if (index === -1) return Promise.resolve();
       return post("{% url 'api_office_hide_suggestion' %}", { name }).then(({ ok, data }) => {
         if (!ok) throw new Error(data.error || 'Could not remove this suggestion.');
         suggestedNames.splice(index, 1);
+        // Both dropdowns read from the shared list, so redraw whichever is open.
         document.querySelectorAll('.office-name-wrap').forEach((other) => {
-          buildRecommendChips(other);
-          updateRecommend(other);
+          if (other.querySelector('.office-name-suggestions')) showNameSuggestions(other);
         });
       });
-    }
-
-    function buildRecommendChips(wrap) {
-      const panel = wrap.parentElement.querySelector('.office-name-recommend');
-      if (!panel) return;
-      const chips = panel.querySelector('.office-name-recommend-chips');
-      const input = wrap.querySelector('input[name="name"]');
-      chips.replaceChildren();
-
-      suggestedNames.slice(0, RECOMMEND_LIMIT).forEach((name) => {
-        const chip = document.createElement('span');
-        chip.className = 'office-name-chip';
-        const use = document.createElement('button');
-        use.type = 'button';
-        use.className = 'office-name-chip-use';
-        use.textContent = name;
-        use.title = `Use ${name}`;
-        use.addEventListener('click', (event) => {
-          event.stopPropagation();
-          input.value = name;
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-          hideNameSuggestions(wrap);
-          wrap.closest('.office-form')?.querySelector('.office-amount-input')?.focus();
-        });
-
-        // Each recommendation can be dropped for good, independently.
-        const drop = document.createElement('button');
-        drop.type = 'button';
-        drop.className = 'office-name-chip-remove';
-        drop.setAttribute('aria-label', `Remove ${name} from recommendations`);
-        drop.title = 'Remove recommendation';
-        drop.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
-        drop.addEventListener('click', async (event) => {
-          event.stopPropagation();
-          chip.classList.add('is-busy');
-          try {
-            await hideSuggestion(name);
-          } catch (error) {
-            chip.classList.remove('is-busy');
-            alert(error.message || 'Could not remove this suggestion.');
-          }
-        });
-
-        chip.append(use, drop);
-        chips.append(chip);
-      });
-    }
-
-    function updateRecommend(wrap) {
-      const panel = wrap.parentElement.querySelector('.office-name-recommend');
-      if (!panel) return;
-      const input = wrap.querySelector('input[name="name"]');
-      const hasText = input.value.trim().length > 0;
-      const empty = panel.querySelector('.office-name-recommend-chips').childElementCount === 0;
-      panel.hidden = hasText || empty;
     }
 
     async function post(url, body) {
@@ -520,8 +460,9 @@
       for (const selector of ['.office-history-heading', '.office-filter-row', '.office-history-list', '.office-pagination']) {
         const current = historySection.querySelector(selector);
         const incoming = fresh.querySelector(selector);
-        if (current) current.remove();
-        if (incoming) historySection.appendChild(document.importNode(incoming, true));
+        if (current && incoming) current.replaceWith(document.importNode(incoming, true));
+        else if (current) current.remove();
+        else if (incoming) historySection.appendChild(document.importNode(incoming, true));
       }
     }
 
@@ -587,11 +528,6 @@
         clearTimeout(searchTimer);
         searchTimer = setTimeout(() => runSearch(typedSearch()), 250);
       });
-      // Blur commits immediately rather than waiting out the debounce.
-      searchInput.addEventListener('change', () => {
-        clearTimeout(searchTimer);
-        runSearch(typedSearch());
-      });
     }
 
     // Falls back to a normal GET submit when scripting is unavailable.
@@ -606,8 +542,9 @@
       const pageButton = event.target.closest('.office-pagination button[name="page"]');
       if (!pageButton) return;
       event.preventDefault();
+      clearTimeout(searchTimer);
       renderHistory({ query: typedSearch(), page: pageButton.value }).catch(() => {
-        window.location.reload();
+        pageButton.form.requestSubmit(pageButton);
       });
     });
 
@@ -717,47 +654,40 @@
     bindEntryForm('officeCameForm', 'came');
     bindEntryForm('officeTakenForm', 'taken');
 
-    // The field X clears typed text; each suggestion row and recommendation
+    // The field X clears typed text; each suggestion row
     // chip can be dismissed on its own.
     document.querySelectorAll('.office-name-wrap').forEach((wrap) => {
       const input = wrap.querySelector('input[name="name"]');
       const btn = wrap.querySelector('.office-name-clear');
       const sync = () => { btn.hidden = input.value.length === 0; };
-      buildRecommendChips(wrap);
-      input.addEventListener('input', () => { sync(); showNameSuggestions(wrap); updateRecommend(wrap); });
+      input.addEventListener('input', () => { sync(); showNameSuggestions(wrap); });
       input.addEventListener('change', sync);
-      input.addEventListener('focus', () => { showNameSuggestions(wrap); updateRecommend(wrap); });
+      input.addEventListener('focus', () => { showNameSuggestions(wrap); });
       input.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') { hideNameSuggestions(wrap); updateRecommend(wrap); }
+        if (event.key === 'Escape') { hideNameSuggestions(wrap); }
         if (event.key === 'ArrowDown' && !wrap.querySelector('.office-name-suggestions').hidden) {
           event.preventDefault();
           wrap.querySelector('.office-suggestion-select')?.focus();
         }
-      });
-      wrap.addEventListener('focusout', () => {
-        // On touch browsers relatedTarget can be null. Defer closing until the
-        // click has had a chance to select or remove the suggestion.
-        setTimeout(() => {
-          if (!wrap.contains(document.activeElement)) hideNameSuggestions(wrap);
-          updateRecommend(wrap);
-        }, 0);
       });
       btn.addEventListener('click', () => {
         input.value = '';
         sync();
         input.focus();
         showNameSuggestions(wrap);
-        updateRecommend(wrap);
       });
       sync();
-      updateRecommend(wrap);
     });
     document.addEventListener('click', (event) => {
       document.querySelectorAll('.office-name-wrap').forEach((wrap) => {
         if (!wrap.contains(event.target)) {
           hideNameSuggestions(wrap);
-          updateRecommend(wrap);
         }
+      });
+    });
+    document.addEventListener('focusin', (event) => {
+      document.querySelectorAll('.office-name-wrap').forEach((wrap) => {
+        if (!wrap.contains(event.target)) hideNameSuggestions(wrap);
       });
     });
 
@@ -770,12 +700,18 @@
       });
     });
 
-    async function saveBalance({ quiet = false } = {}) {
+    // The balance is only ever persisted by Save Balance (or Enter). Typing
+    // still previews the new figure so it does not look inert, but nothing
+    // reaches the server until the user asks for it.
+    // Holds what the server actually has; only a successful save moves it.
+    let persistedOpening = Number(openingEl.dataset.value || 0);
+
+    async function saveBalance() {
       balanceMsg.textContent = '';
       balanceMsg.classList.remove('is-success');
       const amount = parseAmount(openingInput.value);
       if (amount === '' || !Number.isFinite(Number(amount)) || Number(amount) < 0) {
-        if (!quiet) balanceMsg.textContent = 'Enter a valid starting balance.';
+        balanceMsg.textContent = 'Enter a valid starting balance.';
         return;
       }
       balanceSave.disabled = true;
@@ -786,6 +722,8 @@
           return;
         }
         renderTotals(data);
+        // Only now is the new figure the persisted one.
+        persistedOpening = Number(data.opening);
         openingInput.value = formatAmount(data.opening).replace('\u20b9', '');
         balanceMsg.textContent = 'Balance saved.';
         balanceMsg.classList.add('is-success');
@@ -797,47 +735,21 @@
       }
     }
 
-    // The starting balance used to need a button press and then a modal
-    // confirmation, so typing a new number looked like it did nothing.
-    // It now previews live and saves itself once the typing pauses.
-    const savedOpening = () => Number(openingEl.dataset.value || 0);
 
     function previewOpening() {
       const raw = parseAmount(openingInput.value);
       if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) return;
       const opening = Number(raw);
-      if (opening === savedOpening()) return;
-      // Show the effect immediately; the server confirms it a moment later.
+      if (opening === persistedOpening) return;
+      // Show the effect straight away. openingEl.dataset.value is left on the
+      // server value, because that is the baseline the next save compares to.
       const total = opening + Number(cameEl.dataset.value || 0) - Number(takenEl.dataset.value || 0);
       totalEl.textContent = formatAmount(total, { negative: total < 0 });
       totalEl.classList.toggle('is-negative', total < 0);
-      totalEl.dataset.total = String(total);
       openingEl.textContent = formatAmount(opening);
-      openingEl.dataset.value = raw;
     }
 
-    let openingSaveTimer = null;
-    function scheduleOpeningSave() {
-      clearTimeout(openingSaveTimer);
-      openingSaveTimer = setTimeout(async () => {
-        const raw = parseAmount(openingInput.value);
-        if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) return;
-        if (Number(raw) === lastSavedOpening) return;
-        lastSavedOpening = Number(raw);
-        await saveBalance({ quiet: true });
-      }, 700);
-    }
-
-    let lastSavedOpening = savedOpening();
-    openingInput.addEventListener('input', () => { previewOpening(); scheduleOpeningSave(); });
-    openingInput.addEventListener('blur', async () => {
-      clearTimeout(openingSaveTimer);
-      const raw = parseAmount(openingInput.value);
-      if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) return;
-      if (Number(raw) === lastSavedOpening) return;
-      lastSavedOpening = Number(raw);
-      await saveBalance({ quiet: true });
-    });
+    openingInput.addEventListener('input', previewOpening);
 
     const balanceSave = document.getElementById('officeBalanceSave');
     const balanceNotice = document.getElementById('officeBalanceNotice');
@@ -845,6 +757,7 @@
     openingInput.addEventListener('click', () => { balanceNotice.hidden = false; });
 
     // Saves straight away now, so there is no confirmation dialog to miss.
+    // The only path that persists the balance.
     balanceSave.addEventListener('click', async () => {
       balanceMsg.textContent = '';
       balanceMsg.classList.remove('is-success');
@@ -854,13 +767,11 @@
         openingInput.focus();
         return;
       }
-      if (Number(amount) === lastSavedOpening) {
+      if (Number(amount) === persistedOpening) {
         balanceMsg.textContent = 'No changes to save.';
         balanceMsg.classList.add('is-success');
         return;
       }
-      clearTimeout(openingSaveTimer);
-      lastSavedOpening = Number(amount);
       await saveBalance();
     });
 
@@ -881,16 +792,12 @@
         if (input.classList.contains('office-date-trigger')) return;
         event.preventDefault();
         if (input === openingInput) {
-          clearTimeout(openingSaveTimer);
           const raw = parseAmount(openingInput.value);
           if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) {
             balanceMsg.textContent = 'Enter a valid starting balance.';
             return;
           }
-          if (Number(raw) !== lastSavedOpening) {
-            lastSavedOpening = Number(raw);
-            saveBalance();
-          }
+          if (Number(raw) !== persistedOpening) saveBalance();
           return;
         }
 

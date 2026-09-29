@@ -880,11 +880,12 @@ class OfficeMoneyFlowTests(TestCase):
             self.assertIn(f'id="{target}"', page)
         self.assertIn('Changing this value will recalculate the current balance', page)
         self.assertIn('Your existing entries and dates will stay the same', page)
-        # The starting balance previews and saves on its own now, so the
-        # confirmation modal that used to gate it is gone.
-        self.assertIn('Saved automatically', page)
+        # The starting balance previews as you type, but only Save Balance
+        # (or Enter) actually persists it.
+        self.assertIn('Press Save Balance to apply', page)
         self.assertIn('previewOpening', page)
-        self.assertIn("addEventListener('blur'", page)
+        self.assertIn("openingInput.addEventListener('input', previewOpening)", page)
+        self.assertNotIn('scheduleOpeningSave', page)
         self.assertNotIn('id="officeBalanceConfirm"', page)
         self.assertNotIn('href="/dashboard/"', page)
 
@@ -896,14 +897,14 @@ class OfficeMoneyFlowTests(TestCase):
                 entry_date=date.today() - timedelta(days=i),
             )
         first = self.client.get(reverse('office'))
-        self.assertEqual(len(first.context['entries_page']), 10)
+        self.assertEqual(len(first.context['entries_page']), 8)
         self.assertEqual(first.context['entries_page'].paginator.count, 28)
         self.assertEqual(first.context['entries_page'][0].name, 'Person 0')
 
-        last = self.client.get(reverse('office'), {'page': 3})
-        self.assertEqual(len(last.context['entries_page']), 8)
+        last = self.client.get(reverse('office'), {'page': 4})
+        self.assertEqual(len(last.context['entries_page']), 4)
         middle = self.client.get(reverse('office'), {'page': 2})
-        self.assertEqual(middle.context['entries_page'][0].name, 'Person 10')
+        self.assertEqual(middle.context['entries_page'][0].name, 'Person 8')
 
         found = self.client.get(reverse('office'), {'q': 'Needle'})
         self.assertEqual(found.context['entries_page'].paginator.count, 1)
@@ -943,8 +944,12 @@ class OfficeMoneyFlowTests(TestCase):
             {'Ravi', 'Anita', 'Bala'},
         )
         markup = page.content.decode()
-        self.assertIn('id="officeCameRecommendChips"', markup)
-        self.assertIn('id="officeTakenRecommendChips"', markup)
+        # The dropdown under the name field keeps the suggestions. The
+        # "Recent" chip row is gone.
+        self.assertIn('id="officeNameSuggestions"', markup)
+        self.assertIn('office-name-suggestions', markup)
+        self.assertNotIn('office-name-recommend', markup)
+        self.assertNotIn('office-name-chip', markup)
 
     def test_each_recommendation_can_be_removed_individually(self):
         self._add(direction='came', name='Ravi', amount='10')
@@ -991,7 +996,18 @@ class OfficeMoneyFlowTests(TestCase):
         self.assertIn('Ravi', self.client.get(reverse('office')).context['name_suggestions'])
         self.client.force_login(self.user)
         self._add(direction='came', name='Ravi', amount='5')
-        self.assertIn('Ravi', self.client.get(reverse('office')).context['name_suggestions'])
+        self.assertNotIn('Ravi', self.client.get(reverse('office')).context['name_suggestions'])
+        entry = OfficeEntry.objects.filter(user=self.user, name='Ravi').first()
+        edit = self.client.post(
+            reverse('api_office_edit_entry', kwargs={'entry_id': entry.id}),
+            data=json.dumps({
+                'direction': 'came', 'name': 'Ravi', 'amount': '5',
+                'entry_date': date.today().isoformat(),
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(edit.status_code, 200)
+        self.assertNotIn('Ravi', self.client.get(reverse('office')).context['name_suggestions'])
 
     def test_edit_delete_and_restore_preserve_entry(self):
         self._add(direction='came', name='Ravi', amount='50')

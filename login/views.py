@@ -2675,8 +2675,7 @@ def _office_totals(user) -> dict:
     }
 
 
-OFFICE_PAGE_SIZE = 10
-OFFICE_SEARCH_PAGE_SIZE = 8
+OFFICE_PAGE_SIZE = 8
 OFFICE_DIRECTIONS = {"came", "taken"}
 
 
@@ -2712,13 +2711,7 @@ def _office_entries_page(
         if search.lower() in ("paid", "payment", "out"):
             criteria |= Q(direction="taken")
         visible_entries = visible_entries.filter(criteria)
-    # Only the live, most recent entries are surfaced. The soft-deleted
-    # "trash" is intentionally not rendered for now; the restore endpoint
-    # stays in place so nothing is lost if it comes back.
-    # Unfiltered history shows ten per page; a search or a direction filter
-    # narrows to the eight most recent matches so results stay scannable.
-    per_page = OFFICE_SEARCH_PAGE_SIZE if (search or direction) else OFFICE_PAGE_SIZE
-    return Paginator(visible_entries, per_page).get_page(raw_page), search, direction
+    return Paginator(visible_entries, OFFICE_PAGE_SIZE).get_page(raw_page), search, direction
 
 
 @login_required(login_url="/login/")
@@ -2886,9 +2879,6 @@ def api_office_add_entry(request: HttpRequest) -> JsonResponse:
         note=note,
         entry_date=entry_date,
     )
-    if name:
-        OfficeHiddenSuggestion.objects.filter(user=request.user, name_key=name.casefold()).delete()
-
     return JsonResponse(
         {
             "ok": True,
@@ -2979,8 +2969,6 @@ def api_office_edit_entry(request: HttpRequest, entry_id: int) -> JsonResponse:
     entry.name = name
     entry.entry_date = entry_date
     entry.save(update_fields=["direction", "amount", "name", "entry_date"])
-    if name:
-        OfficeHiddenSuggestion.objects.filter(user=request.user, name_key=name.casefold()).delete()
     return JsonResponse({"ok": True, **_office_totals(request.user)})
 
 

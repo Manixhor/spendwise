@@ -35,6 +35,7 @@
       {% if entries_page.has_other_pages %}
       <form class="office-pagination" method="get" action="{% url 'office' %}#officeHistorySection">
         <input type="hidden" name="q" value="{{ office_search }}" />
+        <input type="hidden" name="dir" value="{{ office_direction }}" />
         {% if entries_page.has_previous %}<button type="submit" name="page" value="{{ entries_page.previous_page_number }}" rel="prev">Previous</button>{% endif %}
         <span>Page {{ entries_page.number }} of {{ entries_page.paginator.num_pages }}</span>
         {% if entries_page.has_next %}<button type="submit" name="page" value="{{ entries_page.next_page_number }}" rel="next">Next</button>{% endif %}

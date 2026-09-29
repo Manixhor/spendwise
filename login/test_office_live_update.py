@@ -88,12 +88,17 @@ class OfficeLiveUpdateTests(TestCase):
             OfficeEntry.objects.create(
                 user=self.user, direction="came", amount="10", name=f"Person{i:02d}"
             )
-        # Page 1 holds ten rows; the new eleventh row pushes page 1 forward.
+        # Page 1 holds eight rows; the remaining rows are on page 2.
         page_one = self.client.get(
             reverse("office_history_fragment"), {"page": 1}
         ).content.decode()
-        self.assertEqual(page_one.count("office-history-row"), 10)
+        self.assertEqual(page_one.count("office-history-row"), 8)
         self.assertIn("Page 1 of 2", page_one)
+        page_two = self.client.get(
+            reverse("office_history_fragment"), {"page": 2}
+        ).content.decode()
+        self.assertEqual(page_two.count("office-history-row"), 4)
+        self.assertIn("Page 2 of 2", page_two)
 
         # A search filter is carried through the fragment, not ignored.
         filtered = self.client.get(
@@ -116,17 +121,19 @@ class OfficeLiveUpdateTests(TestCase):
         self.assertIn("Mine", html)
         self.assertNotIn("Theirs", html)
 
-    def test_starting_balance_saves_without_a_button_or_modal(self):
-        """The bug: typing a new starting balance changed nothing on screen
-        until Save Balance was pressed and a modal confirmed it."""
+    def test_starting_balance_saves_only_when_the_user_saves_it(self):
+        """Typing previews the new figure but must not persist it. The
+        balance changes only via Save Balance or Enter."""
         html = self.client.get(reverse("office")).content.decode()
-        # Previews as you type, then persists on blur/debounce.
         self.assertIn("previewOpening", html)
-        self.assertIn("scheduleOpeningSave", html)
-        # The totals it previews against.
-        self.assertIn("cameEl.dataset.value", html)
-        self.assertIn("takenEl.dataset.value", html)
-        # No modal in the way any more.
+        # Nothing reaches the server on a timer or on blur.
+        self.assertNotIn("scheduleOpeningSave", html)
+        self.assertNotIn("openingSaveTimer", html)
+        self.assertIn("openingInput.addEventListener('input', previewOpening)", html)
+        # The only two ways to persist it.
+        self.assertIn("balanceSave.addEventListener('click'", html)
+        self.assertIn("saveBalance();", html)
+        # No confirmation modal in the way.
         self.assertNotIn("officeBalanceDialog", html)
         self.assertNotIn("balanceConfirm", html)
 
@@ -176,8 +183,11 @@ class OfficeLiveUpdateTests(TestCase):
 
         # Unknown values fall back to everything rather than an empty list.
         every = fragment(dir="nonsense")
-        self.assertIn("In0", every)
+        self.assertEqual(every.count("office-history-row"), 8)
         self.assertIn("Out0", every)
+        older = fragment(dir="nonsense", page=2)
+        self.assertIn("In0", older)
+        self.assertEqual(older.count("office-history-row"), 2)
 
     def test_search_and_direction_filter_combine(self):
         OfficeEntry.objects.create(
@@ -206,7 +216,7 @@ class OfficeLiveUpdateTests(TestCase):
         filtered = self.client.get(
             reverse("office_history_fragment"), {"q": "Match"}
         ).content.decode()
-        # Narrowed from ten per page to eight.
+        # Search uses the same eight-row page size.
         self.assertEqual(filtered.count("office-history-row"), 8)
         self.assertIn("12 entries", filtered)  # caption reports every match
         self.assertIn("Page 1 of 2", filtered)
