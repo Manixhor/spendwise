@@ -7,3 +7,36 @@ db.sqlite3
 node_modules/
 staticfiles/
 .aider*
+
+# Python build / cache artefacts
+*.egg-info/
+.eggs/
+build/
+dist/
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Local environments and secrets
+.env.*
+!.env.example
+*.pem
+*.key
+
+# User uploads and other runtime media
+media/
+tmp/
+
+# Editor / OS noise
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+
+# Editor scratch output
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v4/

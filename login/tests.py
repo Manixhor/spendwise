@@ -1,4 +1,5 @@
 import json
+import re
 from unittest.mock import patch
 from datetime import date, datetime, timedelta
 from decimal import Decimal
@@ -9,7 +10,16 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import MonthlyAnalysisMailSetting, PageView, SavingsGoal, Transaction, UserProfile
+from .models import (
+    MonthlyAnalysisMailSetting,
+    OfficeBalance,
+    OfficeEntry,
+    OfficeHiddenSuggestion,
+    PageView,
+    SavingsGoal,
+    Transaction,
+    UserProfile,
+)
 
 
 class SignupOtpTests(TestCase):
@@ -821,3 +831,344 @@ class MonthlyAnalysisTests(TestCase):
         self.assertIn('May 2026', mail.outbox[0].subject)
         self.assertIn('Rent', mail.outbox[0].body)
         self.assertIn('₹3,200.00', mail.outbox[0].body)
+
+
+class OfficeMoneyFlowTests(TestCase):
+    """The office tracker is a standalone flow: opening balance + came - taken."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='office@example.com',
+            email='office@example.com',
+            password='secret123',
+        )
+        self.client.force_login(self.user)
+
+    def _add(self, **payload):
+        return self.client.post(
+            reverse('api_office_add_entry'),
+            data=json.dumps(payload),
+            content_type='application/json',
+        )
+
+    def test_balance_change_recalculates_total_without_changing_entries(self):
+        self.client.post(
+            reverse('api_office_set_balance'),
+            data=json.dumps({'amount': '100'}),
+            content_type='application/json',
+        )
+        self._add(direction='came', name='Ravi', amount='50')
+        entry = OfficeEntry.objects.get(user=self.user)
+
+        response = self.client.post(
+            reverse('api_office_set_balance'),
+            data=json.dumps({'amount': '200'}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['total'], '250.00')
+        entry.refresh_from_db()
+        self.assertEqual(entry.amount, Decimal('50'))
+        self.assertEqual(entry.name, 'Ravi')
+        self.assertEqual(OfficeEntry.objects.filter(user=self.user).count(), 1)
+
+    def test_office_navigation_and_balance_warning_are_self_contained(self):
+        page = self.client.get(reverse('office')).content.decode()
+        for target in ('officeOverview', 'officeEntry', 'officeHistorySection'):
+            self.assertIn(f'data-office-target="{target}"', page)
+            self.assertIn(f'id="{target}"', page)
+        self.assertIn('Changing this value will recalculate the current balance', page)
+        self.assertIn('Your existing entries and dates will stay the same', page)
+        self.assertIn('id="officeBalanceConfirm"', page)
+        self.assertNotIn('href="/dashboard/"', page)
+
+    def test_recent_entries_are_paginated_and_searchable(self):
+        for i in range(28):
+            OfficeEntry.objects.create(
+                user=self.user, direction='came', amount=Decimal('10.00'),
+                name='Needle' if i == 20 else f'Person {i}',
+                entry_date=date.today() - timedelta(days=i),
+            )
+        first = self.client.get(reverse('office'))
+        self.assertEqual(len(first.context['entries_page']), 10)
+        self.assertEqual(first.context['entries_page'].paginator.count, 28)
+        self.assertEqual(first.context['entries_page'][0].name, 'Person 0')
+
+        last = self.client.get(reverse('office'), {'page': 3})
+        self.assertEqual(len(last.context['entries_page']), 8)
+        middle = self.client.get(reverse('office'), {'page': 2})
+        self.assertEqual(middle.context['entries_page'][0].name, 'Person 10')
+
+        found = self.client.get(reverse('office'), {'q': 'Needle'})
+        self.assertEqual(found.context['entries_page'].paginator.count, 1)
+        self.assertEqual(found.context['entries_page'][0].name, 'Needle')
+
+    def test_deleted_and_older_entries_are_hidden_from_the_page(self):
+        keep = self._add(direction='came', name='Visible', amount='100')
+        self.assertEqual(keep.status_code, 200)
+        entry = OfficeEntry.objects.get(user=self.user)
+
+        removed = self.client.post(
+            reverse('api_office_delete_entry', kwargs={'entry_id': entry.id}),
+            data=json.dumps({}), content_type='application/json',
+        )
+        self.assertEqual(removed.status_code, 200)
+
+        page = self.client.get(reverse('office'))
+        self.assertEqual(page.context['entries_page'].paginator.count, 0)
+        markup = page.content.decode()
+        # No archive/trash sections, and the soft-deleted row is not rendered.
+        self.assertNotIn('officeArchiveSection', markup)
+        self.assertNotIn('officeTrash', markup)
+        self.assertNotIn('Visible', markup)
+        # Totals still exclude it.
+        self.assertEqual(page.context['office_total'], Decimal('0.00'))
+
+    def test_recommendations_rank_most_used_names_first(self):
+        for _ in range(3):
+            self._add(direction='came', name='Ravi', amount='10')
+        self._add(direction='came', name='Anita', amount='10')
+        self._add(direction='came', name='Bala', amount='10')
+
+        page = self.client.get(reverse('office'))
+        self.assertEqual(page.context['name_suggestions'][0], 'Ravi')
+        self.assertEqual(
+            set(page.context['name_suggestions']),
+            {'Ravi', 'Anita', 'Bala'},
+        )
+        markup = page.content.decode()
+        self.assertIn('id="officeCameRecommendChips"', markup)
+        self.assertIn('id="officeTakenRecommendChips"', markup)
+
+    def test_each_recommendation_can_be_removed_individually(self):
+        self._add(direction='came', name='Ravi', amount='10')
+        self._add(direction='came', name='Anita', amount='10')
+        page = self.client.get(reverse('office'))
+        self.assertEqual(
+            list(page.context['name_suggestions']),
+            ['Anita', 'Ravi'],  # both used once, alphabetical
+        )
+
+        # Case must not matter, and the entry itself is untouched.
+        hide = self.client.post(
+            reverse('api_office_hide_suggestion'),
+            data=json.dumps({'name': 'rAVI'}), content_type='application/json',
+        )
+        self.assertEqual(hide.status_code, 200)
+        self.assertTrue(OfficeEntry.objects.filter(name='Ravi').exists())
+
+        after = self.client.get(reverse('office'))
+        self.assertEqual(after.context['name_suggestions'], ['Anita'])
+        # Gone from the payload the chips are built from, so it cannot reappear.
+        # The entry itself is untouched and still shows in History.
+        payload = re.search(
+            r'id="officeNameSuggestions"[^>]*>(.*?)</script>',
+            after.content.decode(), re.S,
+        ).group(1)
+        self.assertNotIn('Ravi', payload)
+        self.assertIn('Ravi', after.content.decode())
+        self.assertNotIn('office-edit', after.content.decode())
+
+    def test_dismissed_suggestion_is_saved_per_account(self):
+        self._add(direction='came', name='Ravi', amount='25')
+        hide = self.client.post(
+            reverse('api_office_hide_suggestion'),
+            data=json.dumps({'name': 'rAVI'}), content_type='application/json',
+        )
+        self.assertEqual(hide.status_code, 200)
+        self.assertTrue(OfficeHiddenSuggestion.objects.filter(user=self.user, name_key='ravi').exists())
+        self.assertNotIn('Ravi', self.client.get(reverse('office')).context['name_suggestions'])
+
+        other = User.objects.create_user(username='other-office@example.com', password='secret123')
+        OfficeEntry.objects.create(user=other, direction='came', amount=Decimal('10'), name='Ravi')
+        self.client.force_login(other)
+        self.assertIn('Ravi', self.client.get(reverse('office')).context['name_suggestions'])
+        self.client.force_login(self.user)
+        self._add(direction='came', name='Ravi', amount='5')
+        self.assertIn('Ravi', self.client.get(reverse('office')).context['name_suggestions'])
+
+    def test_edit_delete_and_restore_preserve_entry(self):
+        self._add(direction='came', name='Ravi', amount='50')
+        entry = OfficeEntry.objects.get(user=self.user)
+        edited_date = (date.today() - timedelta(days=2)).isoformat()
+        edit = self.client.post(
+            reverse('api_office_edit_entry', kwargs={'entry_id': entry.id}),
+            data=json.dumps({'direction': 'taken', 'name': 'Office', 'amount': '30.00', 'entry_date': edited_date}),
+            content_type='application/json',
+        )
+        self.assertEqual(edit.status_code, 200)
+        self.assertEqual(edit.json()['total'], '-30.00')
+        entry.refresh_from_db()
+        self.assertEqual(entry.name, 'Office')
+        self.assertEqual(entry.entry_date.isoformat(), edited_date)
+
+        delete = self.client.post(reverse('api_office_delete_entry', kwargs={'entry_id': entry.id}))
+        self.assertEqual(delete.status_code, 200)
+        self.assertEqual(delete.json()['total'], '0.00')
+        entry.refresh_from_db()
+        self.assertIsNotNone(entry.deleted_at)
+        # Soft-deleted rows stay out of the page, but the restore path still works.
+        self.assertEqual(OfficeEntry.objects.filter(user=self.user, deleted_at__isnull=False).count(), 1)
+        self.assertEqual(self.client.get(reverse('office')).context['entries_page'].paginator.count, 0)
+
+        restore = self.client.post(reverse('api_office_restore_entry', kwargs={'entry_id': entry.id}))
+        self.assertEqual(restore.status_code, 200)
+        self.assertEqual(restore.json()['total'], '-30.00')
+        entry.refresh_from_db()
+        self.assertIsNone(entry.deleted_at)
+
+    def test_edit_rejects_invalid_values_and_other_users(self):
+        self._add(direction='came', name='Ravi', amount='50')
+        entry = OfficeEntry.objects.get(user=self.user)
+        edit_url = reverse('api_office_edit_entry', kwargs={'entry_id': entry.id})
+        payload = {'direction': 'came', 'name': 'Ravi', 'entry_date': date.today().isoformat()}
+        for bad_amount in ('NaN', '0', '1.234'):
+            response = self.client.post(
+                edit_url, data=json.dumps({**payload, 'amount': bad_amount}),
+                content_type='application/json',
+            )
+            self.assertEqual(response.status_code, 400)
+        intruder = User.objects.create_user(username='intruder-edit@example.com', password='secret123')
+        self.client.force_login(intruder)
+        response = self.client.post(
+            edit_url, data=json.dumps({**payload, 'amount': '20'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 404)
+        entry.refresh_from_db()
+        self.assertEqual(entry.amount, Decimal('50'))
+
+    def test_search_finds_date_and_amount_but_ignores_deleted_entries(self):
+        chosen_date = date.today() - timedelta(days=10)
+        target = OfficeEntry.objects.create(
+            user=self.user, direction='taken', name='Older item',
+            amount=Decimal('432.10'), entry_date=chosen_date,
+        )
+        OfficeEntry.objects.create(
+            user=self.user, direction='came', name='Current item',
+            amount=Decimal('20.00'), entry_date=date.today(),
+        )
+        for query in ('432.10', chosen_date.isoformat()):
+            page = self.client.get(reverse('office'), {'q': query})
+            self.assertEqual(page.context['entries_page'].paginator.count, 1)
+            self.assertEqual(page.context['entries_page'][0].id, target.id)
+        self.client.post(reverse('api_office_delete_entry', kwargs={'entry_id': target.id}))
+        page = self.client.get(reverse('office'), {'q': 'Older item'})
+        self.assertEqual(page.context['entries_page'].paginator.count, 0)
+
+    def test_deleted_entry_cannot_be_edited_or_deleted_twice(self):
+        self._add(direction='came', name='Ravi', amount='50')
+        entry = OfficeEntry.objects.get(user=self.user)
+        delete_url = reverse('api_office_delete_entry', kwargs={'entry_id': entry.id})
+        restore_url = reverse('api_office_restore_entry', kwargs={'entry_id': entry.id})
+        edit_url = reverse('api_office_edit_entry', kwargs={'entry_id': entry.id})
+        self.assertEqual(self.client.post(delete_url).status_code, 200)
+        self.assertEqual(self.client.post(delete_url).status_code, 404)
+        self.assertEqual(self.client.post(edit_url, data='{}', content_type='application/json').status_code, 404)
+        self.assertEqual(self.client.post(restore_url).status_code, 200)
+        self.assertEqual(self.client.post(restore_url).status_code, 404)
+
+    def test_total_moves_with_coming_and_taken_entries(self):
+        response = self.client.post(
+            reverse('api_office_set_balance'),
+            data=json.dumps({'amount': '1000'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['total'], '1000.00')
+
+        came = self._add(direction='came', name='Ravi', amount='500')
+        self.assertEqual(came.status_code, 200)
+        self.assertEqual(came.json()['total'], '1500.00')
+
+        taken = self._add(direction='taken', name='Ravi', amount='250')
+        self.assertEqual(taken.status_code, 200)
+        self.assertEqual(taken.json()['total'], '1250.00')
+        self.assertEqual(taken.json()['came_total'], '500.00')
+        self.assertEqual(taken.json()['taken_total'], '250.00')
+
+    def test_taken_can_drive_the_total_negative(self):
+        self.client.post(
+            reverse('api_office_set_balance'),
+            data=json.dumps({'amount': '100'}),
+            content_type='application/json',
+        )
+        response = self._add(direction='taken', name='Rent', amount='450')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['total'], '-350.00')
+
+        page = self.client.get(reverse('office')).content.decode()
+        self.assertIn('is-negative', page)
+
+    def test_office_entries_are_rejected_when_malformed(self):
+        cases = [
+            ({'direction': 'sideways', 'amount': '10'}, "Direction must be 'taken' or 'came'."),
+            ({'direction': 'came', 'amount': '0'}, 'Amount must be greater than 0.'),
+            ({'direction': 'came', 'amount': '-5'}, 'Amount must be greater than 0.'),
+            ({'direction': 'came', 'amount': 'abc'}, 'Enter a valid amount.'),
+            ({'direction': 'came', 'amount': '10', 'name': 'n' * 81}, 'Name must be 80 characters or less.'),
+            ({'direction': 'came', 'amount': '10', 'entry_date': '2999-01-01'}, 'Date cannot be in the future.'),
+            ({'direction': 'came', 'amount': '10', 'entry_date': 'not-a-date'}, 'Enter a valid date.'),
+        ]
+        for payload, expected in cases:
+            with self.subTest(payload=payload):
+                response = self._add(**payload)
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.json()['error'], expected)
+
+        self.assertEqual(OfficeEntry.objects.count(), 0)
+
+    def test_name_is_optional_and_back_dated_entries_keep_their_date(self):
+        nameless = self._add(direction='came', amount='75')
+        self.assertEqual(nameless.status_code, 200)
+        self.assertEqual(nameless.json()['name'] if 'name' in nameless.json() else '', '')
+
+        past = (date.today() - timedelta(days=3)).isoformat()
+        dated = self._add(direction='taken', name='Ravi', amount='25', entry_date=past)
+        self.assertEqual(dated.status_code, 200)
+        self.assertEqual(dated.json()['entry_date'], past)
+
+        page = self.client.get(reverse('office')).content.decode()
+        self.assertIn('No name', page)
+
+    def test_office_stays_separate_from_spendwise_and_hides_its_nav(self):
+        self.client.post(
+            reverse('api_office_set_balance'),
+            data=json.dumps({'amount': '500'}),
+            content_type='application/json',
+        )
+        self._add(direction='came', name='Ravi', amount='200')
+
+        # Office money must not leak into the SpendWise transaction ledger.
+        self.assertEqual(Transaction.objects.count(), 0)
+        dashboard = self.client.get(reverse('dashboard')).content.decode()
+        self.assertNotIn('Ravi', dashboard)
+
+        # And the office page keeps the other app sections out of its nav.
+        office_page = self.client.get(reverse('office')).content.decode()
+        for url in ('dashboard', 'monthly', 'lend', 'savings'):
+            self.assertNotIn(f'href="/{url}/"', office_page)
+        # ...while a normal page still shows all of them.
+        for url in ('dashboard', 'monthly', 'lend', 'savings'):
+            self.assertIn(f'href="/{url}/"', dashboard)
+
+    def test_entry_deletion_is_scoped_to_the_owner(self):
+        self._add(direction='came', name='Ravi', amount='200')
+        entry = OfficeEntry.objects.get(user=self.user)
+
+        intruder = User.objects.create_user(
+            username='intruder@example.com',
+            email='intruder@example.com',
+            password='secret123',
+        )
+        self.client.force_login(intruder)
+        response = self.client.post(
+            reverse('api_office_delete_entry', kwargs={'entry_id': entry.id}),
+            data=json.dumps({}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(OfficeEntry.objects.filter(id=entry.id).exists())

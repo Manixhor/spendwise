@@ -15,6 +15,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives
+from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.db.models import Sum, Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -26,7 +27,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from .models import Transaction, UserProfile, SavingsGoal
+from .models import OfficeBalance, OfficeEntry, OfficeHiddenSuggestion, Transaction, UserProfile, SavingsGoal
 from .spending_coach import (
     dad_joke_fallback,
     fetch_dad_joke,
@@ -2654,6 +2655,276 @@ def lend(request: HttpRequest) -> HttpResponse:
             "lend_count": len(lends),
         },
     )
+
+
+# ── Office ────────────────────────────────────────────────
+def _office_totals(user) -> dict:
+    balance = OfficeBalance.objects.filter(user=user).first()
+    opening = balance.amount if balance else Decimal("0")
+    totals = OfficeEntry.objects.filter(user=user, deleted_at__isnull=True).aggregate(
+        came=Sum("amount", filter=Q(direction="came")),
+        taken=Sum("amount", filter=Q(direction="taken")),
+    )
+    came_total = (totals["came"] or Decimal("0")).quantize(Decimal("0.01"))
+    taken_total = (totals["taken"] or Decimal("0")).quantize(Decimal("0.01"))
+    return {
+        "opening": opening,
+        "came_total": came_total,
+        "taken_total": taken_total,
+        "total": opening + came_total - taken_total,
+    }
+
+
+@login_required(login_url="/login/")
+def office(request: HttpRequest) -> HttpResponse:
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    totals = _office_totals(request.user)
+    active_entries = OfficeEntry.objects.filter(user=request.user, deleted_at__isnull=True)
+    search = request.GET.get("q", "").strip()[:100]
+    visible_entries = active_entries
+    if search:
+        criteria = Q(name__icontains=search) | Q(note__icontains=search)
+        try:
+            criteria |= Q(entry_date=date.fromisoformat(search))
+        except ValueError:
+            pass
+        try:
+            searched_amount = Decimal(search.replace(",", ""))
+            if searched_amount.is_finite():
+                criteria |= Q(amount=searched_amount)
+        except decimal.InvalidOperation:
+            pass
+        if search.lower() in ("received", "receipt", "in"):
+            criteria |= Q(direction="came")
+        if search.lower() in ("paid", "payment", "out"):
+            criteria |= Q(direction="taken")
+        visible_entries = visible_entries.filter(criteria)
+    # Only the live, most recent entries are surfaced. The soft-deleted
+    # "trash" is intentionally not rendered for now; the restore endpoint
+    # stays in place so nothing is lost if it comes back.
+    entries_page = Paginator(visible_entries, 10).get_page(request.GET.get("page"))
+    name_counts: dict[str, int] = {}
+    for entry in active_entries.only("name"):
+        key = entry.name.strip()
+        if key:
+            name_counts[key] = name_counts.get(key, 0) + 1
+    hidden_names = set(OfficeHiddenSuggestion.objects.filter(user=request.user).values_list("name_key", flat=True))
+    name_suggestions = [
+        name for name, _ in sorted(name_counts.items(), key=lambda kv: (-kv[1], kv[0].lower()))
+        if name.casefold() not in hidden_names
+    ]
+    return render(
+        request,
+        "login/office.html",
+        {
+            "user": request.user,
+            "profile": profile,
+            "active_nav": "office",
+            "office_page": True,
+            "app_name": "Office",
+            "app_description": "Office money tracker.",
+            "today": date.today(),
+            "entries_page": entries_page,
+            "office_search": search,
+            "name_suggestions": name_suggestions[:50],
+            "office_opening": totals["opening"],
+            "office_came_total": totals["came_total"],
+            "office_taken_total": totals["taken_total"],
+            "office_total": totals["total"],
+        },
+    )
+
+
+@login_required(login_url="/login/")
+@require_POST
+def api_office_set_balance(request: HttpRequest) -> JsonResponse:
+    try:
+        data = json.loads(request.body or "{}")
+    except (json.JSONDecodeError, TypeError):
+        return JsonResponse({"error": "Invalid request."}, status=400)
+
+    try:
+        amount = Decimal(str(data.get("amount", "0")).strip())
+    except (decimal.InvalidOperation, TypeError, ValueError):
+        return JsonResponse({"error": "Enter a valid amount."}, status=400)
+
+    if not amount.is_finite() or amount >= Decimal("1000000000000"):
+        return JsonResponse({"error": "Enter a valid amount."}, status=400)
+    if amount < 0:
+        return JsonResponse(
+            {"error": "Starting balance cannot be negative."}, status=400
+        )
+    if amount != amount.quantize(Decimal("0.01")):
+        return JsonResponse({"error": "Use no more than two decimal places."}, status=400)
+
+    balance, _ = OfficeBalance.objects.get_or_create(
+        user=request.user, defaults={"amount": amount}
+    )
+    if balance.amount != amount:
+        balance.amount = amount
+        balance.save(update_fields=["amount", "updated_at"])
+
+    return JsonResponse({"ok": True, **_office_totals(request.user)})
+
+
+@login_required(login_url="/login/")
+@require_POST
+def api_office_add_entry(request: HttpRequest) -> JsonResponse:
+    try:
+        data = json.loads(request.body or "{}")
+    except (json.JSONDecodeError, TypeError):
+        return JsonResponse({"error": "Invalid request."}, status=400)
+
+    direction = str(data.get("direction", "")).strip()
+    if direction not in ("taken", "came"):
+        return JsonResponse(
+            {"error": "Direction must be 'taken' or 'came'."}, status=400
+        )
+
+    try:
+        amount = Decimal(str(data.get("amount", "")).strip())
+    except (decimal.InvalidOperation, TypeError, ValueError):
+        return JsonResponse({"error": "Enter a valid amount."}, status=400)
+
+    if not amount.is_finite() or amount >= Decimal("1000000000000"):
+        return JsonResponse({"error": "Enter a valid amount."}, status=400)
+    if amount <= 0:
+        return JsonResponse(
+            {"error": "Amount must be greater than 0."}, status=400
+        )
+    if amount != amount.quantize(Decimal("0.01")):
+        return JsonResponse({"error": "Use no more than two decimal places."}, status=400)
+
+    name = str(data.get("name", "")).strip()
+    if len(name) > 80:
+        return JsonResponse(
+            {"error": "Name must be 80 characters or less."}, status=400
+        )
+
+    note = str(data.get("note", "")).strip()
+    if len(note) > 200:
+        return JsonResponse(
+            {"error": "Note must be 200 characters or less."}, status=400
+        )
+
+    entry_date = date.today()
+    raw_date = str(data.get("entry_date", "")).strip()
+    if raw_date:
+        try:
+            entry_date = date.fromisoformat(raw_date)
+        except (ValueError, TypeError):
+            return JsonResponse(
+                {"error": "Enter a valid date."}, status=400
+            )
+        if entry_date > date.today():
+            return JsonResponse(
+                {"error": "Date cannot be in the future."}, status=400
+            )
+
+    entry = OfficeEntry.objects.create(
+        user=request.user,
+        direction=direction,
+        amount=amount,
+        name=name,
+        note=note,
+        entry_date=entry_date,
+    )
+    if name:
+        OfficeHiddenSuggestion.objects.filter(user=request.user, name_key=name.casefold()).delete()
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "id": entry.id,
+            "created_at": entry.created_at.isoformat(),
+            "entry_date": entry.entry_date.isoformat(),
+            **_office_totals(request.user),
+        }
+    )
+
+
+@login_required(login_url="/login/")
+@require_POST
+def api_office_delete_entry(request: HttpRequest, entry_id: int) -> JsonResponse:
+    changed = OfficeEntry.objects.filter(
+        user=request.user, id=entry_id, deleted_at__isnull=True
+    ).update(deleted_at=timezone.now())
+    if not changed:
+        return JsonResponse({"error": "Entry not found."}, status=404)
+
+    return JsonResponse({"ok": True, **_office_totals(request.user)})
+
+
+@login_required(login_url="/login/")
+@require_POST
+def api_office_restore_entry(request: HttpRequest, entry_id: int) -> JsonResponse:
+    changed = OfficeEntry.objects.filter(
+        user=request.user, id=entry_id, deleted_at__isnull=False
+    ).update(deleted_at=None)
+    if not changed:
+        return JsonResponse({"error": "Deleted entry not found."}, status=404)
+    return JsonResponse({"ok": True, **_office_totals(request.user)})
+
+
+@login_required(login_url="/login/")
+@require_POST
+def api_office_hide_suggestion(request: HttpRequest) -> JsonResponse:
+    try:
+        data = json.loads(request.body or "{}")
+    except (json.JSONDecodeError, TypeError):
+        return JsonResponse({"error": "Invalid request."}, status=400)
+    name = str(data.get("name", "")).strip()
+    if not name or len(name) > 80:
+        return JsonResponse({"error": "Enter a valid name."}, status=400)
+    OfficeHiddenSuggestion.objects.get_or_create(
+        user=request.user, name_key=name.casefold()
+    )
+    return JsonResponse({"ok": True})
+
+
+@login_required(login_url="/login/")
+@require_POST
+def api_office_edit_entry(request: HttpRequest, entry_id: int) -> JsonResponse:
+    entry = OfficeEntry.objects.filter(
+        user=request.user, id=entry_id, deleted_at__isnull=True
+    ).first()
+    if entry is None:
+        return JsonResponse({"error": "Entry not found."}, status=404)
+    try:
+        data = json.loads(request.body or "{}")
+    except (json.JSONDecodeError, TypeError):
+        return JsonResponse({"error": "Invalid request."}, status=400)
+
+    direction = str(data.get("direction", "")).strip()
+    if direction not in ("came", "taken"):
+        return JsonResponse({"error": "Choose a valid entry type."}, status=400)
+    try:
+        amount = Decimal(str(data.get("amount", "")).strip())
+    except (decimal.InvalidOperation, TypeError, ValueError):
+        return JsonResponse({"error": "Enter a valid amount."}, status=400)
+    if not amount.is_finite() or amount <= 0 or amount >= Decimal("1000000000000"):
+        return JsonResponse({"error": "Enter a valid amount greater than 0."}, status=400)
+    if amount != amount.quantize(Decimal("0.01")):
+        return JsonResponse({"error": "Use no more than two decimal places."}, status=400)
+    name = str(data.get("name", "")).strip()
+    if len(name) > 80:
+        return JsonResponse({"error": "Name must be 80 characters or less."}, status=400)
+    raw_date = str(data.get("entry_date", "")).strip()
+    try:
+        entry_date = date.fromisoformat(raw_date)
+    except (ValueError, TypeError):
+        return JsonResponse({"error": "Enter a valid date."}, status=400)
+    if entry_date > date.today():
+        return JsonResponse({"error": "Date cannot be in the future."}, status=400)
+
+    entry.direction = direction
+    entry.amount = amount
+    entry.name = name
+    entry.entry_date = entry_date
+    entry.save(update_fields=["direction", "amount", "name", "entry_date"])
+    if name:
+        OfficeHiddenSuggestion.objects.filter(user=request.user, name_key=name.casefold()).delete()
+    return JsonResponse({"ok": True, **_office_totals(request.user)})
 
 
 # ── API: Email Monthly Analysis ───────────────────────────

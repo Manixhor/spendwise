@@ -1,0 +1,1152 @@
+{% load static %}
+{% load currency_filters %}
+<!DOCTYPE html>
+<html lang="en" data-currency="inr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f4ef" />
+  <title>Office · Ledger</title>
+  <link rel="stylesheet" href="{% static 'login/office.css' %}" />
+</head>
+<body class="office-page">
+<div class="office-shell">
+  <aside class="office-sidebar" aria-label="Office sections" hidden>
+    <div class="office-sidebar-brand"><span class="office-brand-mark" aria-hidden="true">O</span><span class="office-brand-copy"><strong>Office</strong><small>Private ledger</small></span></div>
+    <p class="office-nav-heading">Workspace</p>
+    <nav class="office-nav" aria-label="Office navigation">
+      <button type="button" class="office-nav-button is-active" data-office-target="officeOverview" aria-current="page"><span class="office-nav-icon" aria-hidden="true">◫</span><span class="office-nav-text">Overview</span></button>
+      <button type="button" class="office-nav-button" data-office-target="officeEntry"><span class="office-nav-icon" aria-hidden="true">＋</span><span class="office-nav-text">New entry</span></button>
+      <button type="button" class="office-nav-button" data-office-target="officeHistorySection"><span class="office-nav-icon" aria-hidden="true">≡</span><span class="office-nav-text">History</span></button>
+    </nav>
+    <p class="office-sidebar-footer">Office workspace</p>
+  </aside>
+  <main class="office-main">
+    <header class="main-header">
+      <div>
+        <p class="office-eyebrow">Private workspace <span aria-hidden="true">/</span> Ledger</p>
+        <h1 class="welcome">Office</h1>
+      </div>
+      <div class="office-header-date">{{ today|date:"l, d F Y" }}</div>
+    </header>
+
+    <!-- ── Balance ──────────────────────────────────────── -->
+    <section class="card office-summary" id="officeOverview" aria-label="Office balance">
+      <div class="office-total-card">
+        <div>
+          <span class="card-label">Current balance</span>
+          <p class="office-total-amount {% if office_total < 0 %}is-negative{% endif %}"
+             id="officeTotal"
+             data-total="{{ office_total }}">{{ office_total|currency:"inr" }}</p>
+        </div>
+        <div class="office-opening-field">
+          <label class="card-label" for="officeOpeningInput">Starting Balance</label>
+          <div class="office-amount-wrap office-opening-wrap">
+            <span class="office-rupee" aria-hidden="true">₹</span>
+            <input type="text" inputmode="decimal" id="officeOpeningInput"
+                   class="office-input office-amount-input" autocomplete="off"
+                   value="{{ office_opening|indian_number }}"
+                   aria-label="Starting balance" aria-describedby="officeBalanceNotice" />
+          </div>
+          <p class="office-balance-notice" id="officeBalanceNotice" hidden>Changing this value will recalculate the current balance and summary. Existing entries will stay the same.</p>
+          <button type="button" class="office-save" id="officeBalanceSave">Save Balance</button>
+          <p class="office-error" id="officeBalanceMsg"></p>
+        </div>
+      </div>
+      <div class="office-breakdown">
+        <div class="office-breakdown-item">
+          <span class="card-label">Starting</span>
+          <span class="office-breakdown-value" id="officeOpening" data-value="{{ office_opening }}">{{ office_opening|currency:"inr" }}</span>
+        </div>
+        <div class="office-breakdown-item">
+          <span class="card-label">Received</span>
+          <span class="office-breakdown-value positive" id="officeCame" data-value="{{ office_came_total }}">{{ office_came_total|currency_plus:"inr" }}</span>
+        </div>
+        <div class="office-breakdown-item">
+          <span class="card-label">Paid</span>
+          <span class="office-breakdown-value negative" id="officeTaken" data-value="{{ office_taken_total }}">−{{ office_taken_total|currency:"inr" }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Add entries ──────────────────────────────────── -->
+    <div class="office-section-heading" id="officeEntry">
+      <div><span class="office-section-kicker">01 / Record</span><h2>New entry</h2></div>
+      <p>Keep the ledger up to date.</p>
+    </div>
+    <section class="office-forms" aria-label="Add an office entry">
+      <form class="card office-form" id="officeCameForm" autocomplete="off">
+        <p class="office-form-title">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Receipt
+        </p>
+        <div class="office-field">
+          <label class="office-field-label" for="officeCameName">Name <span class="office-optional">Optional</span></label>
+          <div class="office-name-wrap">
+            <input class="office-input" type="text" id="officeCameName" name="name"
+                   maxlength="80" placeholder="Received from" autocomplete="off"
+                   aria-autocomplete="list" aria-controls="officeCameSuggestions" aria-expanded="false" />
+            <button type="button" class="office-name-clear" data-clear="officeCameName"
+                    aria-label="Clear name" title="Clear" hidden>
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+            <div class="office-name-suggestions" id="officeCameSuggestions" role="listbox" aria-label="Suggested names" hidden></div>
+          </div>
+          <div class="office-name-recommend" id="officeCameRecommend" hidden>
+            <span class="office-name-recommend-label">Recent</span>
+            <div class="office-name-recommend-chips" id="officeCameRecommendChips"></div>
+          </div>
+        </div>
+        <div class="office-field">
+          <label class="office-field-label" for="officeCameDateBtn">Date</label>
+          <div class="office-date" data-date-for="officeCameDate">
+            <button type="button" class="office-date-trigger" id="officeCameDateBtn"
+                    aria-haspopup="dialog" aria-expanded="false">
+              <svg class="office-date-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+              </svg>
+              <span class="office-date-text">Today</span>
+              <svg class="office-date-caret" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="office-cal" role="dialog" aria-label="Choose a date" hidden>
+              <div class="office-cal-head">
+                <button type="button" class="office-cal-nav" data-step="-1" aria-label="Previous month">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <span class="office-cal-title"></span>
+                <button type="button" class="office-cal-nav" data-step="1" aria-label="Next month" disabled>
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
+              <div class="office-cal-dow">
+                <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+              </div>
+              <div class="office-cal-grid"></div>
+              <div class="office-cal-foot">
+                <button type="button" class="office-cal-today">Today</button>
+              </div>
+            </div>
+            <input type="hidden" id="officeCameDate" name="entry_date" value="{{ today|date:'Y-m-d' }}" />
+          </div>
+        </div>
+        <div class="office-field">
+          <label class="office-field-label" for="officeCameAmount">Amount</label>
+          <div class="office-amount-wrap">
+            <span class="office-rupee" aria-hidden="true">₹</span>
+            <input class="office-input office-amount-input" type="text" inputmode="decimal"
+                   autocomplete="off" id="officeCameAmount" name="amount" placeholder="0.00" />
+          </div>
+        </div>
+        <p class="office-error" id="officeCameError"></p>
+        <button type="submit" class="office-submit came">Record receipt</button>
+      </form>
+
+      <form class="card office-form" id="officeTakenForm" autocomplete="off">
+        <p class="office-form-title">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
+          Payment
+        </p>
+        <div class="office-field">
+          <label class="office-field-label" for="officeTakenName">Name <span class="office-optional">Optional</span></label>
+          <div class="office-name-wrap">
+            <input class="office-input" type="text" id="officeTakenName" name="name"
+                   maxlength="80" placeholder="Paid to" autocomplete="off"
+                   aria-autocomplete="list" aria-controls="officeTakenSuggestions" aria-expanded="false" />
+            <button type="button" class="office-name-clear" data-clear="officeTakenName"
+                    aria-label="Clear name" title="Clear" hidden>
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+            <div class="office-name-suggestions" id="officeTakenSuggestions" role="listbox" aria-label="Suggested names" hidden></div>
+          </div>
+          <div class="office-name-recommend" id="officeTakenRecommend" hidden>
+            <span class="office-name-recommend-label">Recent</span>
+            <div class="office-name-recommend-chips" id="officeTakenRecommendChips"></div>
+          </div>
+        </div>
+        <div class="office-field">
+          <label class="office-field-label" for="officeTakenDateBtn">Date</label>
+          <div class="office-date" data-date-for="officeTakenDate">
+            <button type="button" class="office-date-trigger" id="officeTakenDateBtn"
+                    aria-haspopup="dialog" aria-expanded="false">
+              <svg class="office-date-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+              </svg>
+              <span class="office-date-text">Today</span>
+              <svg class="office-date-caret" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="office-cal" role="dialog" aria-label="Choose a date" hidden>
+              <div class="office-cal-head">
+                <button type="button" class="office-cal-nav" data-step="-1" aria-label="Previous month">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <span class="office-cal-title"></span>
+                <button type="button" class="office-cal-nav" data-step="1" aria-label="Next month" disabled>
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
+              <div class="office-cal-dow">
+                <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+              </div>
+              <div class="office-cal-grid"></div>
+              <div class="office-cal-foot">
+                <button type="button" class="office-cal-today">Today</button>
+              </div>
+            </div>
+            <input type="hidden" id="officeTakenDate" name="entry_date" value="{{ today|date:'Y-m-d' }}" />
+          </div>
+        </div>
+        <div class="office-field">
+          <label class="office-field-label" for="officeTakenAmount">Amount</label>
+          <div class="office-amount-wrap">
+            <span class="office-rupee" aria-hidden="true">₹</span>
+            <input class="office-input office-amount-input" type="text" inputmode="decimal"
+                   autocomplete="off" id="officeTakenAmount" name="amount" placeholder="0.00" />
+          </div>
+        </div>
+        <p class="office-error" id="officeTakenError"></p>
+        <button type="submit" class="office-submit taken">Record payment</button>
+      </form>
+    </section>
+
+    {{ name_suggestions|json_script:"officeNameSuggestions" }}
+
+    <!-- ── History ──────────────────────────────────────── -->
+    <section class="card office-history" id="officeHistorySection" aria-label="Recent entries">
+      <div class="office-history-heading"><div><span class="office-section-kicker">02 / Review</span><h2>{% if office_search %}Search results{% else %}Recent entries{% endif %}</h2></div><span class="office-history-caption" data-total="{{ entries_page.paginator.count }}">{{ entries_page.paginator.count }} {% if entries_page.paginator.count == 1 %}entry{% else %}entries{% endif %}</span></div>
+      <form class="office-search" method="get" action="{% url 'office' %}#officeHistorySection" role="search">
+        <label for="officeSearchInput">Find an entry</label>
+        <div class="office-search-row"><input id="officeSearchInput" name="q" type="search" value="{{ office_search }}" placeholder="Search name, date, or amount" /><button type="submit">Search</button>{% if office_search %}<button type="button" class="office-clear-search" id="officeClearSearch">Clear</button>{% endif %}</div>
+      </form>
+      <ul class="office-history-list" id="officeHistory">
+        {% for entry in entries_page %}
+          <li class="office-history-row" data-id="{{ entry.id }}" data-direction="{{ entry.direction }}" data-name="{{ entry.name }}" data-entry-date="{{ entry.entry_date|date:'Y-m-d' }}" data-amount="{{ entry.amount }}">
+            <span class="office-history-badge {{ entry.direction }}">{% if entry.direction == "came" %}Received{% else %}Paid{% endif %}</span>
+            <div class="office-history-main">
+              <p class="office-history-name {% if not entry.name %}is-empty{% endif %}">
+                {{ entry.name|default:"No name" }}
+              </p>
+              <p class="office-history-meta">{{ entry.entry_date|date:"d M Y" }}{% if entry.note %} · {{ entry.note }}{% endif %}</p>
+            </div>
+            <span class="office-history-amount {{ entry.direction }}"
+                  data-amount="{{ entry.signed_amount }}">
+              {% if entry.direction == "came" %}{{ entry.amount|currency_plus:"inr" }}{% else %}−{{ entry.amount|currency:"inr" }}{% endif %}
+            </span>
+            <button type="button" class="office-delete" title="Delete entry" aria-label="Delete entry">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </li>
+        {% empty %}
+          <li class="office-empty" id="officeHistoryEmpty">{% if office_search %}No matching entries.{% else %}No entries yet.{% endif %}</li>
+        {% endfor %}
+      </ul>
+      {% if entries_page.has_other_pages %}
+      <form class="office-pagination" method="get" action="{% url 'office' %}#officeHistorySection">
+        <input type="hidden" name="q" value="{{ office_search }}" />
+        {% if entries_page.has_previous %}<button type="submit" name="page" value="{{ entries_page.previous_page_number }}" rel="prev">Previous</button>{% endif %}
+        <span>Page {{ entries_page.number }} of {{ entries_page.paginator.num_pages }}</span>
+        {% if entries_page.has_next %}<button type="submit" name="page" value="{{ entries_page.next_page_number }}" rel="next">Next</button>{% endif %}
+      </form>
+      {% endif %}
+    </section>
+  </main>
+
+</div>
+
+<div class="office-balance-backdrop" id="officeBalanceDialog" hidden>
+  <div class="office-balance-dialog" role="alertdialog" aria-modal="true" aria-labelledby="officeBalanceDialogTitle" aria-describedby="officeBalanceDialogText">
+    <span class="office-dialog-kicker">Before you save</span>
+    <h2 id="officeBalanceDialogTitle">Change starting balance?</h2>
+    <p id="officeBalanceDialogText">This will recalculate the current balance and summary. Your existing entries and dates will stay the same.</p>
+    <div class="office-dialog-actions">
+      <button type="button" class="office-dialog-cancel" id="officeBalanceCancel">Cancel</button>
+      <button type="button" class="office-dialog-confirm" id="officeBalanceConfirm">Update balance</button>
+    </div>
+  </div>
+</div>
+
+<div class="office-toast" id="officeToast" role="status" aria-live="polite" hidden>
+  <span class="office-toast-icon" id="officeToastIcon" aria-hidden="true"></span>
+  <span class="office-toast-text" id="officeToastText"></span>
+</div>
+<div class="office-undo-toast" id="officeUndoToast" role="status" hidden><span>Entry deleted.</span><button type="button" id="officeUndoButton">Undo</button></div>
+
+<script>
+  (() => {
+    const CSRF = '{{ csrf_token }}';
+
+    const totalEl = document.getElementById('officeTotal');
+    const openingEl = document.getElementById('officeOpening');
+    const cameEl = document.getElementById('officeCame');
+    const takenEl = document.getElementById('officeTaken');
+    const openingInput = document.getElementById('officeOpeningInput');
+    const balanceMsg = document.getElementById('officeBalanceMsg');
+
+    const navButtons = [...document.querySelectorAll('.office-nav-button')];
+    const setActiveNav = (active) => navButtons.forEach((button) => {
+      const selected = button === active;
+      button.classList.toggle('is-active', selected);
+      if (selected) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
+    });
+    navButtons.forEach((button) => button.addEventListener('click', () => {
+      const target = document.getElementById(button.dataset.officeTarget);
+      if (!target) return;
+      setActiveNav(button);
+      target.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    }));
+    window.addEventListener('scroll', () => {
+      const current = [...navButtons].reverse().find((button) =>
+        document.getElementById(button.dataset.officeTarget)?.getBoundingClientRect().top <= window.innerHeight * 0.38
+      );
+      if (current) setActiveNav(current);
+    }, { passive: true });
+
+    // Indian numbering: 12,34,567.89
+    const indianGroup = (intPart) => {
+      if (intPart.length <= 3) return intPart;
+      const last3 = intPart.slice(-3);
+      let rest = intPart.slice(0, -3);
+      const parts = [];
+      // slice(0, -2), not slice(-2): a 1-2 char tail would never shrink otherwise.
+      while (rest.length) { parts.unshift(rest.slice(-2)); rest = rest.slice(0, -2); }
+      return parts.join(',') + ',' + last3;
+    };
+
+    // '1,23,456.7' -> '123456.7' (what the server expects)
+    const parseAmount = (raw) => String(raw || '').replace(/,/g, '').trim();
+
+    const stripGrouping = (value) => String(value || '').replace(/,/g, '');
+
+    // Commas appear as you type. The caret is tracked by counting digits rather
+    // than characters, so inserting a comma never moves the user's cursor.
+    const formatLive = (input) => {
+      const caret = input.selectionStart ?? input.value.length;
+      const raw = stripGrouping(input.value);
+      const dotAt = raw.indexOf('.');
+      let intPart = dotAt === -1 ? raw : raw.slice(0, dotAt);
+      let decPart = dotAt === -1 ? '' : raw.slice(dotAt + 1);
+
+      intPart = intPart.replace(/[^\d]/g, '');
+      decPart = decPart.replace(/[^\d]/g, '').slice(0, 2);
+
+      const head = intPart ? indianGroup(intPart) : '';
+      input.value = decPart
+        ? `${head || '0'}.${decPart}`
+        : (dotAt === -1 ? head : `${head || '0'}.`);
+
+      const digitsBefore = raw.slice(0, caret).replace(/[^\d]/g, '').length;
+      let pos = 0;
+      let seen = 0;
+      while (pos < input.value.length && seen < digitsBefore) {
+        if (/\d/.test(input.value[pos])) seen += 1;
+        pos += 1;
+      }
+      // Typing at the end must keep the caret at the end, otherwise the next
+      // keystroke lands before a trailing '.' and the decimals run together.
+      if (caret >= raw.length) pos = input.value.length;
+      input.setSelectionRange(pos, pos);
+    };
+
+    function formatAmount(value, { sign = false, negative = false } = {}) {
+      const num = Math.abs(Number(value) || 0);
+      const [intPart, decPart] = num.toFixed(2).split('.');
+      const body = `₹${indianGroup(intPart)}.${decPart}`;
+      if (negative) return `−${body}`;
+      if (sign && Number(value) > 0) return `+${body}`;
+      return body;
+    }
+
+    function renderTotals(data) {
+      totalEl.textContent = formatAmount(data.total, { negative: Number(data.total) < 0 });
+      totalEl.classList.toggle('is-negative', Number(data.total) < 0);
+      totalEl.dataset.total = data.total;
+      openingEl.textContent = formatAmount(data.opening);
+      openingEl.dataset.value = data.opening;
+      cameEl.textContent = formatAmount(data.came_total, { sign: true });
+      cameEl.dataset.value = data.came_total;
+      takenEl.textContent = Number(data.taken_total) > 0
+        ? `−${formatAmount(data.taken_total)}`
+        : formatAmount(0);
+      takenEl.dataset.value = data.taken_total;
+    }
+
+    const nameKey = (name) => name.trim().toLocaleLowerCase();
+    const legacySuggestionKey = 'office-hidden-suggestions-{{ user.pk }}';
+    let legacyHiddenNames = [];
+    try {
+      const saved = JSON.parse(localStorage.getItem(legacySuggestionKey) || '[]');
+      if (Array.isArray(saved)) legacyHiddenNames = saved.filter((name) => typeof name === 'string' && name.trim() && name.length <= 80);
+    } catch (_) {}
+    const legacyHiddenKeys = new Set(legacyHiddenNames.map(nameKey));
+    const seenSuggestions = new Set();
+    const suggestedNames = JSON.parse(document.getElementById('officeNameSuggestions').textContent)
+      .filter((name) => {
+        const key = nameKey(name);
+        if (!key || seenSuggestions.has(key) || legacyHiddenKeys.has(key)) return false;
+        seenSuggestions.add(key);
+        return true;
+      });
+    function hideNameSuggestions(wrap) {
+      const list = wrap.querySelector('.office-name-suggestions');
+      list.hidden = true;
+      wrap.querySelector('input[name="name"]').setAttribute('aria-expanded', 'false');
+    }
+
+    function showNameSuggestions(wrap) {
+      const input = wrap.querySelector('input[name="name"]');
+      const list = wrap.querySelector('.office-name-suggestions');
+      const query = nameKey(input.value);
+      // Empty fields use the recommendation chips below, not an overlapping menu.
+      if (!query) {
+        hideNameSuggestions(wrap);
+        return;
+      }
+      const matches = suggestedNames.filter((name) => nameKey(name).includes(query)).slice(0, 8);
+      list.replaceChildren();
+      matches.forEach((name) => {
+        const row = document.createElement('div');
+        row.className = 'office-suggestion-row';
+        const select = document.createElement('button');
+        select.type = 'button';
+        select.className = 'office-suggestion-select';
+        select.textContent = name;
+        select.addEventListener('click', (event) => {
+          event.stopPropagation();
+          input.value = name;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          input.focus();
+          hideNameSuggestions(wrap);
+        });
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'office-suggestion-remove';
+        remove.setAttribute('aria-label', `Remove ${name} from suggestions`);
+        remove.title = 'Remove suggestion';
+        remove.textContent = '×';
+        remove.addEventListener('click', async (event) => {
+          event.stopPropagation();
+          remove.disabled = true;
+          try {
+            await hideSuggestion(name);
+            showNameSuggestions(wrap);
+            input.focus();
+          } catch (error) {
+            remove.disabled = false;
+            alert(error.message || 'Could not remove this suggestion.');
+          }
+        });
+        row.append(select, remove);
+        list.append(row);
+      });
+      list.hidden = matches.length === 0;
+      input.setAttribute('aria-expanded', String(matches.length > 0));
+    }
+
+    // ── Recommended names ──────────────────────────────
+    // Most-used names surface as tappable chips while the name field is empty,
+    // so the common case needs no typing. Once you type, the filtered
+    // dropdown above takes over and the chips step aside.
+    const RECOMMEND_LIMIT = 6;
+
+    // Shared by the dropdown rows and the chips: hides a name for good.
+    function hideSuggestion(name) {
+      const index = suggestedNames.findIndex((item) => nameKey(item) === nameKey(name));
+      if (index === -1) return Promise.resolve();
+      return post("{% url 'api_office_hide_suggestion' %}", { name }).then(({ ok, data }) => {
+        if (!ok) throw new Error(data.error || 'Could not remove this suggestion.');
+        suggestedNames.splice(index, 1);
+        document.querySelectorAll('.office-name-wrap').forEach((other) => {
+          buildRecommendChips(other);
+          updateRecommend(other);
+        });
+      });
+    }
+
+    function buildRecommendChips(wrap) {
+      const panel = wrap.parentElement.querySelector('.office-name-recommend');
+      if (!panel) return;
+      const chips = panel.querySelector('.office-name-recommend-chips');
+      const input = wrap.querySelector('input[name="name"]');
+      chips.replaceChildren();
+
+      suggestedNames.slice(0, RECOMMEND_LIMIT).forEach((name) => {
+        const chip = document.createElement('span');
+        chip.className = 'office-name-chip';
+        const use = document.createElement('button');
+        use.type = 'button';
+        use.className = 'office-name-chip-use';
+        use.textContent = name;
+        use.title = `Use ${name}`;
+        use.addEventListener('click', (event) => {
+          event.stopPropagation();
+          input.value = name;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          hideNameSuggestions(wrap);
+          wrap.closest('.office-form')?.querySelector('.office-amount-input')?.focus();
+        });
+
+        // Each recommendation can be dropped for good, independently.
+        const drop = document.createElement('button');
+        drop.type = 'button';
+        drop.className = 'office-name-chip-remove';
+        drop.setAttribute('aria-label', `Remove ${name} from recommendations`);
+        drop.title = 'Remove recommendation';
+        drop.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+        drop.addEventListener('click', async (event) => {
+          event.stopPropagation();
+          chip.classList.add('is-busy');
+          try {
+            await hideSuggestion(name);
+          } catch (error) {
+            chip.classList.remove('is-busy');
+            alert(error.message || 'Could not remove this suggestion.');
+          }
+        });
+
+        chip.append(use, drop);
+        chips.append(chip);
+      });
+    }
+
+    function updateRecommend(wrap) {
+      const panel = wrap.parentElement.querySelector('.office-name-recommend');
+      if (!panel) return;
+      const input = wrap.querySelector('input[name="name"]');
+      const hasText = input.value.trim().length > 0;
+      const empty = panel.querySelector('.office-name-recommend-chips').childElementCount === 0;
+      panel.hidden = hasText || empty;
+    }
+
+    async function post(url, body) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify(body),
+      });
+      return { ok: res.ok, data: await res.json() };
+    }
+
+    // ── Toast ─────────────────────────────────────────
+    const toast = document.getElementById('officeToast');
+    const toastText = document.getElementById('officeToastText');
+    const toastIcon = document.getElementById('officeToastIcon');
+    let toastTimer = null;
+
+    function showToast(message, { tone = 'success' } = {}) {
+      if (toastTimer) clearTimeout(toastTimer);
+      toastText.textContent = message;
+      toastIcon.textContent = tone === 'error' ? '!' : '✓';
+      toast.classList.toggle('is-error', tone === 'error');
+      // Unhide first so the transition has a starting frame to animate from.
+      toast.hidden = false;
+      void toast.offsetWidth;
+      toast.classList.add('is-visible');
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('is-visible');
+        toastTimer = setTimeout(() => { toast.hidden = true; }, 300);
+      }, 2600);
+    }
+
+    // ── Live history updates ──────────────────────────
+    // Rows are built client-side so recording an entry never needs a reload.
+    const historyList = document.getElementById('officeHistory');
+    const HISTORY_ROW_TEMPLATE = historyList.querySelector('.office-history-row');
+    const historyEmpty = historyList.querySelector('.office-empty');
+    let historyRowCount = historyList.querySelectorAll('.office-history-row').length;
+    // Must match Paginator(visible_entries, 10) in login.views.office.
+    const PAGE_SIZE = {{ entries_page.paginator.per_page|default:10 }};
+
+    function historyMeta(stamp) {
+      const d = stamp ? new Date(`${stamp}T00:00:00`) : null;
+      return d && !Number.isNaN(d.getTime())
+        ? d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        : '';
+    }
+
+    function buildHistoryRow({ id, direction, name, amount, entry_date, created_at }) {
+      const row = HISTORY_ROW_TEMPLATE
+        ? HISTORY_ROW_TEMPLATE.cloneNode(true)
+        : document.createElement('li');
+      const received = direction === 'came';
+
+      row.className = `office-history-row${historyRowCount % 2 ? ' is-odd' : ''}`;
+      row.dataset.id = id;
+      row.dataset.direction = direction;
+      row.dataset.name = name || '';
+      row.dataset.entryDate = entry_date || '';
+      row.dataset.amount = amount;
+
+      const badge = row.querySelector('.office-history-badge');
+      if (badge) {
+        badge.className = `office-history-badge ${direction}`;
+        badge.textContent = received ? 'Received' : 'Paid';
+      }
+      const nameEl = row.querySelector('.office-history-name');
+      if (nameEl) {
+        nameEl.className = `office-history-name${name ? '' : ' is-empty'}`;
+        nameEl.textContent = name || 'No name';
+      }
+      const metaEl = row.querySelector('.office-history-meta');
+      if (metaEl) metaEl.textContent = historyMeta(entry_date || (created_at || '').slice(0, 10));
+
+      const amountEl = row.querySelector('.office-history-amount');
+      if (amountEl) {
+        amountEl.className = `office-history-amount ${direction}`;
+        amountEl.dataset.amount = received ? amount : -Number(amount);
+        amountEl.textContent = received
+          ? formatAmount(amount, { sign: true })
+          : `−${formatAmount(amount)}`;
+      }
+      return row;
+    }
+
+    function prependHistoryRow(payload) {
+      if (historyEmpty) historyEmpty.remove();
+      historyList.querySelector('.office-empty')?.remove();
+      const row = buildHistoryRow(payload);
+      historyList.prepend(row);
+      historyRowCount += 1;
+      // Keep the on-screen list the same size as the server-rendered page.
+      const rows = historyList.querySelectorAll('.office-history-row');
+      const overflow = rows.length - PAGE_SIZE;
+      for (let i = rows.length - 1; i >= rows.length - Math.max(0, overflow); i -= 1) {
+        rows[i].remove();
+      }
+      const caption = document.querySelector('.office-history-caption');
+      if (caption) {
+        const total = Number(caption.dataset.total || 0) + 1;
+        caption.dataset.total = String(total);
+        caption.textContent = `${total} ${total === 1 ? 'entry' : 'entries'}`;
+      }
+    }
+
+    // Move suggestions dismissed in older versions from this browser to the account.
+    if (legacyHiddenNames.length) {
+      (async () => {
+        try {
+          for (const name of legacyHiddenNames) {
+            const { ok } = await post("{% url 'api_office_hide_suggestion' %}", { name });
+            if (!ok) return;
+          }
+          localStorage.removeItem(legacySuggestionKey);
+        } catch (_) {}
+      })();
+    }
+
+    // The calendar is re-parented to <body>, so the reset has to go through
+    // the handle each picker stores on its wrapper.
+    function resetDateField(dateInput) {
+      const wrap = dateInput.closest('.office-date');
+      if (wrap?.officeResetToToday) {
+        wrap.officeResetToToday();
+        return;
+      }
+      const todayValue = new Date().toISOString().slice(0, 10);
+      dateInput.value = todayValue;
+      const label = wrap?.querySelector('.office-date-text');
+      if (label) label.textContent = 'Today';
+    }
+
+    function bindEntryForm(formId, direction) {
+      const form = document.getElementById(formId);
+      const errorEl = document.getElementById(`office${direction === 'came' ? 'Came' : 'Taken'}Error`);
+      const nameInput = form.querySelector('input[name="name"]');
+      const amountInput = form.querySelector('input[name="amount"]');
+      const dateInput = form.querySelector('input[name="entry_date"]');
+      const button = form.querySelector('button[type="submit"]');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        errorEl.textContent = '';
+        const name = nameInput.value.trim();
+        const amount = parseAmount(amountInput.value);
+        const entryDate = dateInput.value;
+
+        if (!amount || Number(amount) <= 0) {
+          errorEl.textContent = 'Enter an amount greater than 0.';
+          amountInput.focus();
+          return;
+        }
+
+        button.disabled = true;
+        try {
+          const { ok, data } = await post("{% url 'api_office_add_entry' %}", {
+            direction, name, amount, entry_date: entryDate,
+          });
+          if (!ok) {
+            errorEl.textContent = data.error || 'Could not save this entry.';
+            showToast(data.error || 'Could not save this entry.', { tone: 'error' });
+            return;
+          }
+          // Update in place. Reloading here would drop the toast and reset
+          // every field the user has already filled in.
+          renderTotals(data);
+          prependHistoryRow({
+            id: data.id,
+            direction,
+            name,
+            amount,
+            entry_date: data.entry_date,
+            created_at: data.created_at,
+          });
+          showToast(
+            direction === 'came'
+              ? `Recorded ${formatAmount(amount)} received${name ? ` from ${name}` : ''}`
+              : `Recorded ${formatAmount(amount)} paid${name ? ` to ${name}` : ''}`,
+          );
+
+          nameInput.value = '';
+          nameInput.dispatchEvent(new Event('change', { bubbles: true }));
+          amountInput.value = '';
+          resetDateField(dateInput);
+          nameInput.focus();
+        } catch (err) {
+          errorEl.textContent = 'Network error. Try again.';
+          showToast('Network error. Try again.', { tone: 'error' });
+        } finally {
+          button.disabled = false;
+        }
+      });
+    }
+
+    bindEntryForm('officeCameForm', 'came');
+    bindEntryForm('officeTakenForm', 'taken');
+
+    // The field X clears typed text; each suggestion row and recommendation
+    // chip can be dismissed on its own.
+    document.querySelectorAll('.office-name-wrap').forEach((wrap) => {
+      const input = wrap.querySelector('input[name="name"]');
+      const btn = wrap.querySelector('.office-name-clear');
+      const sync = () => { btn.hidden = input.value.length === 0; };
+      buildRecommendChips(wrap);
+      input.addEventListener('input', () => { sync(); showNameSuggestions(wrap); updateRecommend(wrap); });
+      input.addEventListener('change', sync);
+      input.addEventListener('focus', () => { showNameSuggestions(wrap); updateRecommend(wrap); });
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { hideNameSuggestions(wrap); updateRecommend(wrap); }
+        if (event.key === 'ArrowDown' && !wrap.querySelector('.office-name-suggestions').hidden) {
+          event.preventDefault();
+          wrap.querySelector('.office-suggestion-select')?.focus();
+        }
+      });
+      wrap.addEventListener('focusout', () => {
+        // On touch browsers relatedTarget can be null. Defer closing until the
+        // click has had a chance to select or remove the suggestion.
+        setTimeout(() => {
+          if (!wrap.contains(document.activeElement)) hideNameSuggestions(wrap);
+          updateRecommend(wrap);
+        }, 0);
+      });
+      btn.addEventListener('click', () => {
+        input.value = '';
+        sync();
+        input.focus();
+        showNameSuggestions(wrap);
+        updateRecommend(wrap);
+      });
+      sync();
+      updateRecommend(wrap);
+    });
+    document.addEventListener('click', (event) => {
+      document.querySelectorAll('.office-name-wrap').forEach((wrap) => {
+        if (!wrap.contains(event.target)) {
+          hideNameSuggestions(wrap);
+          updateRecommend(wrap);
+        }
+      });
+    });
+
+    // Amount fields: Indian commas live as the user types.
+    document.querySelectorAll('.office-amount-input').forEach((input) => {
+      input.addEventListener('input', () => formatLive(input));
+      input.addEventListener('focus', () => {
+        input.value = stripGrouping(input.value);
+        input.select();
+      });
+    });
+
+    async function saveBalance() {
+      balanceMsg.textContent = '';
+      balanceMsg.classList.remove('is-success');
+      const amount = parseAmount(openingInput.value);
+      if (amount === '' || Number(amount) < 0) {
+        balanceMsg.textContent = 'Enter a valid starting balance.';
+        return;
+      }
+      balanceSave.disabled = true;
+      try {
+        const { ok, data } = await post("{% url 'api_office_set_balance' %}", { amount });
+        if (!ok) {
+          balanceMsg.textContent = data.error || 'Could not save the balance.';
+          return;
+        }
+        renderTotals(data);
+        openingInput.value = formatAmount(data.opening).replace('\u20b9', '');
+        balanceMsg.textContent = 'Balance saved.';
+        balanceMsg.classList.add('is-success');
+      } catch (err) {
+        balanceMsg.textContent = 'Network error. Try again.';
+      } finally {
+        balanceSave.disabled = false;
+      }
+    }
+
+    const balanceSave = document.getElementById('officeBalanceSave');
+    const balanceNotice = document.getElementById('officeBalanceNotice');
+    const balanceDialog = document.getElementById('officeBalanceDialog');
+    const balanceCancel = document.getElementById('officeBalanceCancel');
+    const balanceConfirm = document.getElementById('officeBalanceConfirm');
+    openingInput.addEventListener('focus', () => { balanceNotice.hidden = false; });
+    openingInput.addEventListener('click', () => { balanceNotice.hidden = false; });
+
+    const closeBalanceDialog = () => {
+      balanceDialog.hidden = true;
+      document.body.classList.remove('office-modal-open');
+      balanceSave.focus();
+    };
+    const requestBalanceSave = () => {
+      balanceMsg.textContent = '';
+      balanceMsg.classList.remove('is-success');
+      const amount = parseAmount(openingInput.value);
+      if (!amount || !Number.isFinite(Number(amount)) || Number(amount) < 0) {
+        balanceMsg.textContent = 'Enter a valid starting balance.';
+        openingInput.focus();
+        return;
+      }
+      if (Number(amount) === Number(openingEl.dataset.value)) {
+        balanceMsg.textContent = 'No changes to save.';
+        balanceMsg.classList.add('is-success');
+        return;
+      }
+      balanceDialog.hidden = false;
+      document.body.classList.add('office-modal-open');
+      balanceCancel.focus();
+    };
+    balanceSave.addEventListener('click', requestBalanceSave);
+    balanceCancel.addEventListener('click', closeBalanceDialog);
+    balanceConfirm.addEventListener('click', async () => {
+      closeBalanceDialog();
+      await saveBalance();
+    });
+    balanceDialog.addEventListener('click', (event) => {
+      if (event.target === balanceDialog) closeBalanceDialog();
+    });
+    balanceDialog.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') { closeBalanceDialog(); return; }
+      if (event.key === 'Tab') {
+        if (event.shiftKey && document.activeElement === balanceCancel) {
+          event.preventDefault(); balanceConfirm.focus();
+        } else if (!event.shiftKey && document.activeElement === balanceConfirm) {
+          event.preventDefault(); balanceCancel.focus();
+        }
+      }
+    });
+
+    // Enter saves the balance or moves through entry fields.
+    const FLOW = [
+      openingInput,
+      document.getElementById('officeCameName'),
+      document.getElementById('officeCameDateBtn'),
+      document.getElementById('officeCameAmount'),
+      document.getElementById('officeTakenName'),
+      document.getElementById('officeTakenDateBtn'),
+      document.getElementById('officeTakenAmount'),
+    ].filter(Boolean);
+
+    FLOW.forEach((input, index) => {
+      input.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' || event.shiftKey) return;
+        if (input.classList.contains('office-date-trigger')) return;
+        event.preventDefault();
+        if (input === openingInput) { requestBalanceSave(); return; }
+
+        const next = FLOW[index + 1];
+        if (next) {
+          next.focus();
+          if (next.select) next.select();
+          return;
+        }
+
+        // Nothing left to fill in, so save whatever form we are inside of.
+        const form = input.closest('form');
+        if (form) {
+          form.requestSubmit();
+        }
+      });
+    });
+
+    // ── Date pickers ──────────────────────────────────
+    const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    const labelFor = (value) => {
+      const today = iso(new Date());
+      if (value === today) return 'Today';
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (value === iso(yesterday)) return 'Yesterday';
+      const d = new Date(`${value}T00:00:00`);
+      if (Number.isNaN(d.getTime())) return value;
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+
+    const closeAllPickers = (except) => {
+      document.querySelectorAll('.office-date.is-open').forEach((wrap) => {
+        if (wrap === except) return;
+        wrap.officeClose();
+      });
+    };
+
+    document.querySelectorAll('.office-date').forEach((wrap) => {
+      const hidden = document.getElementById(wrap.dataset.dateFor);
+      const trigger = wrap.querySelector('.office-date-trigger');
+      const label = wrap.querySelector('.office-date-text');
+      const cal = wrap.querySelector('.office-cal');
+      const title = wrap.querySelector('.office-cal-title');
+      const grid = wrap.querySelector('.office-cal-grid');
+      const nextBtn = wrap.querySelector('.office-cal-nav[data-step="1"]');
+      const prevBtn = wrap.querySelector('.office-cal-nav[data-step="-1"]');
+      // Keep the calendar in this page's body so the form card cannot clip it.
+      wrap.officeCalendar = cal;
+      document.body.append(cal);
+
+      let view = new Date(`${hidden.value}T00:00:00`);
+
+      // The popover is position:fixed so it escapes the form card's
+      // overflow:hidden. Anchor it to the trigger, flipping above when the
+      // viewport is too short (common on phones, where the field sits low).
+      const positionPicker = () => {
+        if (cal.hidden) return;
+        const anchor = trigger.getBoundingClientRect();
+        const viewport = window.visualViewport;
+        const topEdge = viewport ? viewport.offsetTop : 0;
+        const bottomEdge = topEdge + (viewport ? viewport.height : window.innerHeight);
+        const rightEdge = (viewport ? viewport.offsetLeft + viewport.width : window.innerWidth);
+        const gap = 8;
+        const margin = 10;
+        const naturalHeight = cal.scrollHeight;
+        const roomBelow = bottomEdge - anchor.bottom - gap - margin;
+        const roomAbove = anchor.top - topEdge - gap - margin;
+        const flip = roomAbove > roomBelow && roomBelow < naturalHeight;
+        const available = Math.max(120, flip ? roomAbove : roomBelow);
+        cal.style.maxHeight = `${Math.floor(available)}px`;
+        const box = cal.getBoundingClientRect();
+        const wantedTop = flip ? anchor.top - gap - box.height : anchor.bottom + gap;
+        cal.style.top = `${Math.round(Math.max(topEdge + margin, Math.min(wantedTop, bottomEdge - box.height - margin)))}px`;
+        cal.classList.toggle('is-above', flip);
+        const left = Math.max(margin, Math.min(anchor.left, rightEdge - box.width - margin));
+        cal.style.left = `${Math.round(left)}px`;
+      };
+
+      // Keep the popover glued to its trigger while the page scrolls.
+      let reposition = null;
+      const startTracking = () => {
+        if (reposition) return;
+        reposition = () => positionPicker();
+        window.addEventListener('scroll', reposition, true);
+        window.addEventListener('resize', reposition);
+        window.visualViewport?.addEventListener('resize', reposition);
+        window.visualViewport?.addEventListener('scroll', reposition);
+      };
+      const stopTracking = () => {
+        if (!reposition) return;
+        window.removeEventListener('scroll', reposition, true);
+        window.removeEventListener('resize', reposition);
+        window.visualViewport?.removeEventListener('resize', reposition);
+        window.visualViewport?.removeEventListener('scroll', reposition);
+        reposition = null;
+      };
+
+      const render = () => {
+        const year = view.getFullYear();
+        const month = view.getMonth();
+        title.textContent = view.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+
+        // Only future months are off limits — an entry can be back-dated, so the
+        // previous arrow must stay live in the current month too.
+        const now = new Date();
+        nextBtn.disabled = year > now.getFullYear()
+          || (year === now.getFullYear() && month >= now.getMonth());
+        prevBtn.disabled = false;
+
+        const first = new Date(year, month, 1);
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const lead = (first.getDay() + 6) % 7; // weeks start Monday
+
+        grid.textContent = '';
+        for (let i = 0; i < lead; i += 1) {
+          const blank = document.createElement('span');
+          blank.className = 'office-cal-day is-empty';
+          grid.append(blank);
+        }
+
+        const todayIso = iso(new Date());
+        for (let day = 1; day <= daysInMonth; day += 1) {
+          const value = iso(new Date(year, month, day));
+          const cell = document.createElement('button');
+          cell.type = 'button';
+          cell.className = 'office-cal-day';
+          cell.textContent = String(day);
+          cell.dataset.value = value;
+          if (value === todayIso) cell.classList.add('is-today');
+          if (value === hidden.value) cell.classList.add('is-selected');
+          if (value > todayIso) cell.disabled = true;
+          grid.append(cell);
+        }
+
+        // Pad the trailing week so the popover does not resize as you page
+        // through months that need 4, 5 or 6 rows.
+        const used = lead + daysInMonth;
+        const tail = (7 - (used % 7)) % 7;
+        for (let i = 0; i < tail; i += 1) {
+          const blank = document.createElement('span');
+          blank.className = 'office-cal-day is-empty';
+          grid.append(blank);
+        }
+      };
+
+      const open = () => {
+        closeAllPickers(wrap);
+        view = new Date(`${hidden.value}T00:00:00`);
+        render();
+        cal.hidden = false;
+        wrap.classList.add('is-open');
+        trigger.setAttribute('aria-expanded', 'true');
+        // Measure after unhiding, then follow the trigger on scroll/resize.
+        positionPicker();
+        startTracking();
+      };
+
+      const close = () => {
+        cal.hidden = true;
+        cal.classList.remove('is-above');
+        wrap.classList.remove('is-open');
+        trigger.setAttribute('aria-expanded', 'false');
+        stopTracking();
+      };
+      wrap.officeClose = close;
+
+      // Clear a date back to today. The grid can live in a month that is no
+      // longer on screen, so re-render before hunting for the cell.
+      wrap.officeResetToToday = () => {
+        const todayValue = iso(new Date());
+        hidden.value = todayValue;
+        label.textContent = labelFor(todayValue);
+        view = new Date(`${todayValue}T00:00:00`);
+        render();
+      };
+
+      const pick = (value) => {
+        hidden.value = value;
+        label.textContent = labelFor(value);
+        render();
+        close();
+        trigger.focus();
+      };
+
+      trigger.addEventListener('click', () => {
+        if (wrap.classList.contains('is-open')) close();
+        else open();
+      });
+
+      cal.querySelectorAll('.office-cal-nav').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          view = new Date(view.getFullYear(), view.getMonth() + Number(btn.dataset.step), 1);
+          render();
+          positionPicker();
+        });
+      });
+
+      cal.querySelector('.office-cal-today').addEventListener('click', () => {
+        pick(iso(new Date()));
+      });
+
+      grid.addEventListener('click', (event) => {
+        const cell = event.target.closest('.office-cal-day');
+        if (!cell || cell.disabled || !cell.dataset.value) return;
+        pick(cell.dataset.value);
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!wrap.contains(event.target) && !cal.contains(event.target)) close();
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && wrap.classList.contains('is-open')) {
+          close();
+          trigger.focus();
+        }
+      });
+
+      label.textContent = labelFor(hidden.value);
+    });
+
+    const entryUrl = (action, id) => {
+      const routes = {
+        delete: "{% url 'api_office_delete_entry' entry_id=0 %}",
+        restore: "{% url 'api_office_restore_entry' entry_id=0 %}",
+      };
+      return routes[action].replace('/0/', `/${id}/`);
+    };
+
+    const undoKey = 'office-undo-{{ user.pk }}';
+    const undoToast = document.getElementById('officeUndoToast');
+    let undoId = null;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(undoKey) || 'null');
+      if (saved && Date.now() - saved.at < 10000) undoId = saved.id;
+      else sessionStorage.removeItem(undoKey);
+    } catch (_) {}
+    if (undoId) {
+      undoToast.hidden = false;
+      window.setTimeout(() => {
+        undoToast.hidden = true;
+        try { sessionStorage.removeItem(undoKey); } catch (_) {}
+      }, 10000);
+    }
+    document.getElementById('officeUndoButton').addEventListener('click', async () => {
+      if (!undoId) return;
+      try {
+        const { ok, data } = await post(entryUrl('restore', undoId), {});
+        if (!ok) throw new Error(data.error || 'Could not restore this entry.');
+        try { sessionStorage.removeItem(undoKey); } catch (_) {}
+        window.location.reload();
+      } catch (error) { alert(error.message || 'Could not restore this entry.'); }
+    });
+
+    document.getElementById('officeClearSearch')?.addEventListener('click', () => {
+      window.location.assign("{% url 'office' %}#officeHistorySection");
+    });
+    document.addEventListener('click', async (event) => {
+      const row = event.target.closest('.office-history-row[data-id]');
+      if (!row) return;
+      const restoreButton = event.target.closest('.office-restore');
+      if (restoreButton) {
+        restoreButton.disabled = true;
+        try {
+          const { ok, data } = await post(entryUrl('restore', row.dataset.id), {});
+          if (!ok) throw new Error(data.error || 'Could not restore this entry.');
+          window.location.reload();
+        } catch (error) {
+          restoreButton.disabled = false;
+          alert(error.message || 'Could not restore this entry.');
+        }
+        return;
+      }
+      const deleteButton = event.target.closest('.office-delete');
+      if (!deleteButton || !confirm('Move this entry to Deleted entries? You can restore it later.')) return;
+      deleteButton.disabled = true;
+      try {
+        const { ok, data } = await post(entryUrl('delete', row.dataset.id), {});
+        if (!ok) throw new Error(data.error || 'Could not delete this entry.');
+        try { sessionStorage.setItem(undoKey, JSON.stringify({ id: row.dataset.id, at: Date.now() })); } catch (_) {}
+        window.location.reload();
+      } catch (error) {
+        deleteButton.disabled = false;
+        alert(error.message || 'Could not delete this entry.');
+      }
+    });
+  })();
+</script>
+</body>
+</html>

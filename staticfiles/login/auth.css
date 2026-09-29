@@ -579,6 +579,57 @@ body.ios-keyboard-open .brand {
 }
 .field-input::placeholder { color: var(--muted); }
 
+.currency-choice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 16px;
+  cursor: pointer;
+  background: rgba(255,255,255,0.60);
+  border: 1px solid rgba(200,200,210,0.60);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  backdrop-filter: blur(8px);
+}
+
+.currency-choice:focus-within {
+  border-color: var(--accent);
+  background: rgba(255,255,255,0.80);
+  box-shadow: 0 0 0 3px rgba(94,92,230,0.12);
+}
+
+.currency-choice .field-label {
+  margin: 0 12px 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.currency-select {
+  width: 100%;
+  appearance: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.92rem;
+  padding: 0 24px 0 0;
+}
+
+.currency-chevron {
+  position: absolute;
+  right: 18px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  pointer-events: none;
+  transform: rotate(45deg) translateY(-3px);
+}
+
 /* ── Terms ──────────────────────────────────────────────── */
 .terms-copy {
   margin-top: 12px;

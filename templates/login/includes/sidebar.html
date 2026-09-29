@@ -1,8 +1,10 @@
 {% load static %}
 <aside class="sidebar">
-  <a href="{% url 'dashboard' %}" class="desktop-sidebar-logo" aria-label="SpendWise dashboard" title="SpendWise">
-    <img src="{% static 'icons/spendwise-sw-icon-180.png' %}" alt="SpendWise" />
+  {% if not office_page %}
+  <a href="{% url 'dashboard' %}" class="desktop-sidebar-logo" aria-label="{{ app_name|default:'SpendWise' }} dashboard" title="{{ app_name|default:'SpendWise' }}">
+    <img src="{% static 'icons/spendwise-sw-icon-180.png' %}" alt="{{ app_name|default:'SpendWise' }}" />
   </a>
+  {% endif %}
   <div class="avatar-wrap profile-avatar-wrap">
     <a href="{% url 'profile' %}" class="avatar-link" title="Edit Profile">
       {% if profile.avatar %}
@@ -16,6 +18,7 @@
     <!-- <span class="avatar-dot"></span> -->
   </div>
   <nav class="nav-icons">
+    {% if not office_page %}
     <a href="{% url 'dashboard' %}" class="nav-icon {% if active_nav == 'dashboard' %}active{% endif %}" aria-label="Dashboard" title="Dashboard">
       <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
     </a>
@@ -41,6 +44,7 @@
         <path d="M12 6v6l4 2"/>
       </svg>
     </a>
+    {% endif %}
     <form method="post" action="{% url 'logout' %}" class="logout-form">
       {% csrf_token %}
       <button type="submit" class="nav-icon" aria-label="Logout" title="Logout">
@@ -69,7 +73,6 @@
     const storageKey = 'spendwise-theme';
     const body = document.body;
     const buttons = document.querySelectorAll('.theme-btn');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     function updateButtons(theme) {
       buttons.forEach((button) => {
@@ -125,7 +128,7 @@
     }
 
     const savedTheme = window.localStorage.getItem(storageKey);
-    applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'), false);
+    applyTheme(savedTheme || 'light', false);
 
     buttons.forEach((button) => {
       button.addEventListener('click', () => applyTheme(button.dataset.themeValue, true, button));

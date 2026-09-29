@@ -1,4 +1,5 @@
 import datetime
+from datetime import date
 
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -138,6 +139,69 @@ class Transaction(models.Model):
     def __str__(self):
         sign = "+" if self.txn_type == "income" else "-"
         return f"{self.user.username} | {self.title} {sign}₹{self.amount}"
+
+
+class OfficeBalance(models.Model):
+    """Opening cash balance for the office tracker, kept separate from SpendWise."""
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="office_balance"
+    )
+    amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} – office opening balance {self.amount}"
+
+
+class OfficeEntry(models.Model):
+    """A single 'money out' or 'money in' movement in the office tracker."""
+
+    DIRECTION_CHOICES = [
+        ("taken", "Money Out"),
+        ("came", "Money In"),
+    ]
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="office_entries"
+    )
+    direction = models.CharField(max_length=5, choices=DIRECTION_CHOICES)
+    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    name = models.CharField(
+        max_length=80, blank=True, default="", db_index=True,
+        help_text="Person who sent (money in) or received (money out) it.",
+    )
+    note = models.CharField(max_length=200, blank=True, default="")
+    entry_date = models.DateField(
+        default=date.today, help_text="Date this movement belongs to."
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)
+
+    class Meta:
+        ordering = ["-entry_date", "-created_at"]
+
+    def __str__(self):
+        sign = "+" if self.direction == "came" else "-"
+        return f"{self.user.username} | office {self.direction} {sign}{self.amount}"
+
+    @property
+    def signed_amount(self):
+        return self.amount if self.direction == "came" else -self.amount
+
+
+class OfficeHiddenSuggestion(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="office_hidden_suggestions"
+    )
+    name_key = models.CharField(max_length=240)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "name_key"], name="office_hidden_name_per_user"
+            )
+        ]
 
 
 class SavingsGoal(models.Model):

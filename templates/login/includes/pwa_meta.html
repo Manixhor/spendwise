@@ -1,16 +1,16 @@
 {% load static %}
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-<meta name="application-name" content="SpendWise" />
+<meta name="application-name" content="{{ app_name|default:'SpendWise' }}" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="SpendWise" />
+<meta name="apple-mobile-web-app-title" content="{{ app_name|default:'SpendWise' }}" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
-<meta name="color-scheme" content="dark light" />
-<meta name="theme-color" content="#0b1020" />
+<meta name="color-scheme" content="light dark" />
+<meta name="theme-color" content="#e8e8ed" />
+<meta name="theme-color" content="#e8e8ed" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)" />
-<meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: light)" />
-<meta name="description" content="SpendWise helps you track expenses, savings, and monthly analysis in a clean app-like experience." />
+<meta name="description" content="{{ app_description|default:'SpendWise helps you track expenses, savings, and monthly analysis in a clean app-like experience.' }}" />
 <link rel="icon" type="image/png" sizes="192x192" href="{% static 'icons/spendwise-sw-icon-192.png' %}?v=20260804a" />
 <link rel="apple-touch-icon" sizes="180x180" href="{% static 'icons/spendwise-sw-icon-180.png' %}?v=20260804a" />
 <link rel="manifest" href="{% static 'manifest.json' %}?v=20260804a" />

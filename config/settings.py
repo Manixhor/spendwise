@@ -338,7 +338,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-if WHITENOISE_ENABLED:
+# Tests must not depend on a previously collected staticfiles manifest, or any
+# stylesheet added since the last collectstatic run breaks the whole suite.
+if WHITENOISE_ENABLED and not IS_TEST_RUN:
     STORAGES = {
         'default': {
             'BACKEND': 'django.core.files.storage.FileSystemStorage',
