@@ -75,73 +75,7 @@
       <p>Keep the ledger up to date.</p>
     </div>
     <section class="office-forms" aria-label="Add an office entry">
-      <form class="card office-form" id="officeCameForm" autocomplete="off">
-        <p class="office-form-title">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          Receipt
-        </p>
-        <div class="office-field">
-          <label class="office-field-label" for="officeCameName">Name <span class="office-optional">Optional</span></label>
-          <div class="office-name-wrap">
-            <input class="office-input" type="text" id="officeCameName" name="name"
-                   maxlength="80" placeholder="Received from" autocomplete="off"
-                   aria-autocomplete="list" aria-controls="officeCameSuggestions" aria-expanded="false" />
-            <button type="button" class="office-name-clear" data-clear="officeCameName"
-                    aria-label="Clear name" title="Clear" hidden>
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
-            <div class="office-name-suggestions" id="officeCameSuggestions" role="listbox" aria-label="Suggested names" hidden></div>
-          </div>
-          <div class="office-name-recommend" id="officeCameRecommend" hidden>
-            <span class="office-name-recommend-label">Recent</span>
-            <div class="office-name-recommend-chips" id="officeCameRecommendChips"></div>
-          </div>
-        </div>
-        <div class="office-field">
-          <label class="office-field-label" for="officeCameDateBtn">Date</label>
-          <div class="office-date" data-date-for="officeCameDate">
-            <button type="button" class="office-date-trigger" id="officeCameDateBtn"
-                    aria-haspopup="dialog" aria-expanded="false">
-              <svg class="office-date-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
-                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
-              </svg>
-              <span class="office-date-text">Today</span>
-              <svg class="office-date-caret" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
-            <div class="office-cal" role="dialog" aria-label="Choose a date" hidden>
-              <div class="office-cal-head">
-                <button type="button" class="office-cal-nav" data-step="-1" aria-label="Previous month">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                </button>
-                <span class="office-cal-title"></span>
-                <button type="button" class="office-cal-nav" data-step="1" aria-label="Next month" disabled>
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                </button>
-              </div>
-              <div class="office-cal-dow">
-                <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
-              </div>
-              <div class="office-cal-grid"></div>
-              <div class="office-cal-foot">
-                <button type="button" class="office-cal-today">Today</button>
-              </div>
-            </div>
-            <input type="hidden" id="officeCameDate" name="entry_date" value="{{ today|date:'Y-m-d' }}" />
-          </div>
-        </div>
-        <div class="office-field">
-          <label class="office-field-label" for="officeCameAmount">Amount</label>
-          <div class="office-amount-wrap">
-            <span class="office-rupee" aria-hidden="true">₹</span>
-            <input class="office-input office-amount-input" type="text" inputmode="decimal"
-                   autocomplete="off" id="officeCameAmount" name="amount" placeholder="0.00" />
-          </div>
-        </div>
-        <p class="office-error" id="officeCameError"></p>
-        <button type="submit" class="office-submit came">Record receipt</button>
-      </form>
-
-      <form class="card office-form" id="officeTakenForm" autocomplete="off">
+      <form class="card office-form office-form--out" id="officeTakenForm" autocomplete="off">
         <p class="office-form-title">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
           Payment
@@ -206,48 +140,77 @@
         <p class="office-error" id="officeTakenError"></p>
         <button type="submit" class="office-submit taken">Record payment</button>
       </form>
+
+      <form class="card office-form office-form--in" id="officeCameForm" autocomplete="off">
+        <p class="office-form-title">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Receipt
+        </p>
+        <div class="office-field">
+          <label class="office-field-label" for="officeCameName">Name <span class="office-optional">Optional</span></label>
+          <div class="office-name-wrap">
+            <input class="office-input" type="text" id="officeCameName" name="name"
+                   maxlength="80" placeholder="Received from" autocomplete="off"
+                   aria-autocomplete="list" aria-controls="officeCameSuggestions" aria-expanded="false" />
+            <button type="button" class="office-name-clear" data-clear="officeCameName"
+                    aria-label="Clear name" title="Clear" hidden>
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+            <div class="office-name-suggestions" id="officeCameSuggestions" role="listbox" aria-label="Suggested names" hidden></div>
+          </div>
+          <div class="office-name-recommend" id="officeCameRecommend" hidden>
+            <span class="office-name-recommend-label">Recent</span>
+            <div class="office-name-recommend-chips" id="officeCameRecommendChips"></div>
+          </div>
+        </div>
+        <div class="office-field">
+          <label class="office-field-label" for="officeCameDateBtn">Date</label>
+          <div class="office-date" data-date-for="officeCameDate">
+            <button type="button" class="office-date-trigger" id="officeCameDateBtn"
+                    aria-haspopup="dialog" aria-expanded="false">
+              <svg class="office-date-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+              </svg>
+              <span class="office-date-text">Today</span>
+              <svg class="office-date-caret" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="office-cal" role="dialog" aria-label="Choose a date" hidden>
+              <div class="office-cal-head">
+                <button type="button" class="office-cal-nav" data-step="-1" aria-label="Previous month">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <span class="office-cal-title"></span>
+                <button type="button" class="office-cal-nav" data-step="1" aria-label="Next month" disabled>
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
+              <div class="office-cal-dow">
+                <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+              </div>
+              <div class="office-cal-grid"></div>
+              <div class="office-cal-foot">
+                <button type="button" class="office-cal-today">Today</button>
+              </div>
+            </div>
+            <input type="hidden" id="officeCameDate" name="entry_date" value="{{ today|date:'Y-m-d' }}" />
+          </div>
+        </div>
+        <div class="office-field">
+          <label class="office-field-label" for="officeCameAmount">Amount</label>
+          <div class="office-amount-wrap">
+            <span class="office-rupee" aria-hidden="true">₹</span>
+            <input class="office-input office-amount-input" type="text" inputmode="decimal"
+                   autocomplete="off" id="officeCameAmount" name="amount" placeholder="0.00" />
+          </div>
+        </div>
+        <p class="office-error" id="officeCameError"></p>
+        <button type="submit" class="office-submit came">Record receipt</button>
+      </form>
     </section>
 
     {{ name_suggestions|json_script:"officeNameSuggestions" }}
 
-    <!-- ── History ──────────────────────────────────────── -->
-    <section class="card office-history" id="officeHistorySection" aria-label="Recent entries">
-      <div class="office-history-heading"><div><span class="office-section-kicker">02 / Review</span><h2>{% if office_search %}Search results{% else %}Recent entries{% endif %}</h2></div><span class="office-history-caption" data-total="{{ entries_page.paginator.count }}">{{ entries_page.paginator.count }} {% if entries_page.paginator.count == 1 %}entry{% else %}entries{% endif %}</span></div>
-      <form class="office-search" method="get" action="{% url 'office' %}#officeHistorySection" role="search">
-        <label for="officeSearchInput">Find an entry</label>
-        <div class="office-search-row"><input id="officeSearchInput" name="q" type="search" value="{{ office_search }}" placeholder="Search name, date, or amount" /><button type="submit">Search</button>{% if office_search %}<button type="button" class="office-clear-search" id="officeClearSearch">Clear</button>{% endif %}</div>
-      </form>
-      <ul class="office-history-list" id="officeHistory">
-        {% for entry in entries_page %}
-          <li class="office-history-row" data-id="{{ entry.id }}" data-direction="{{ entry.direction }}" data-name="{{ entry.name }}" data-entry-date="{{ entry.entry_date|date:'Y-m-d' }}" data-amount="{{ entry.amount }}">
-            <span class="office-history-badge {{ entry.direction }}">{% if entry.direction == "came" %}Received{% else %}Paid{% endif %}</span>
-            <div class="office-history-main">
-              <p class="office-history-name {% if not entry.name %}is-empty{% endif %}">
-                {{ entry.name|default:"No name" }}
-              </p>
-              <p class="office-history-meta">{{ entry.entry_date|date:"d M Y" }}{% if entry.note %} · {{ entry.note }}{% endif %}</p>
-            </div>
-            <span class="office-history-amount {{ entry.direction }}"
-                  data-amount="{{ entry.signed_amount }}">
-              {% if entry.direction == "came" %}{{ entry.amount|currency_plus:"inr" }}{% else %}−{{ entry.amount|currency:"inr" }}{% endif %}
-            </span>
-            <button type="button" class="office-delete" title="Delete entry" aria-label="Delete entry">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
-          </li>
-        {% empty %}
-          <li class="office-empty" id="officeHistoryEmpty">{% if office_search %}No matching entries.{% else %}No entries yet.{% endif %}</li>
-        {% endfor %}
-      </ul>
-      {% if entries_page.has_other_pages %}
-      <form class="office-pagination" method="get" action="{% url 'office' %}#officeHistorySection">
-        <input type="hidden" name="q" value="{{ office_search }}" />
-        {% if entries_page.has_previous %}<button type="submit" name="page" value="{{ entries_page.previous_page_number }}" rel="prev">Previous</button>{% endif %}
-        <span>Page {{ entries_page.number }} of {{ entries_page.paginator.num_pages }}</span>
-        {% if entries_page.has_next %}<button type="submit" name="page" value="{{ entries_page.next_page_number }}" rel="next">Next</button>{% endif %}
-      </form>
-      {% endif %}
-    </section>
+    {% include "login/includes/office_history.html" %}
   </main>
 
 </div>
@@ -549,75 +512,51 @@
     }
 
     // ── Live history updates ──────────────────────────
-    // Rows are built client-side so recording an entry never needs a reload.
-    const historyList = document.getElementById('officeHistory');
-    const HISTORY_ROW_TEMPLATE = historyList.querySelector('.office-history-row');
-    const historyEmpty = historyList.querySelector('.office-empty');
-    let historyRowCount = historyList.querySelectorAll('.office-history-row').length;
-    // Must match Paginator(visible_entries, 10) in login.views.office.
-    const PAGE_SIZE = {{ entries_page.paginator.per_page|default:10 }};
+    // The server owns the markup. After an entry is saved we swap in the
+    // freshly rendered section, so the list is always correct: right page,
+    // right search filter, right count, and a real empty state for the very
+    // first entry. Building rows here produced a blank row when the list was
+    // empty, because there was no existing row to clone.
+    const historySection = document.getElementById('officeHistorySection');
+    // Must match the query in login.views._office_entries_page.
+    const HISTORY_QUERY = new URLSearchParams(window.location.search);
+    HISTORY_QUERY.delete('page');
 
-    function historyMeta(stamp) {
-      const d = stamp ? new Date(`${stamp}T00:00:00`) : null;
-      return d && !Number.isNaN(d.getTime())
-        ? d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-        : '';
-    }
+    async function refreshHistory() {
+      const url = new URL("{% url 'office_history_fragment' %}", window.location.origin);
+      HISTORY_QUERY.forEach((value, key) => url.searchParams.set(key, value));
+      // Keep the user on whichever page they were looking at.
+      const currentPage = new URLSearchParams(window.location.search).get('page');
+      if (currentPage) url.searchParams.set('page', currentPage);
 
-    function buildHistoryRow({ id, direction, name, amount, entry_date, created_at }) {
-      const row = HISTORY_ROW_TEMPLATE
-        ? HISTORY_ROW_TEMPLATE.cloneNode(true)
-        : document.createElement('li');
-      const received = direction === 'came';
+      const response = await fetch(url.toString(), {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+      if (!response.ok) throw new Error(`history ${response.status}`);
 
-      row.className = `office-history-row${historyRowCount % 2 ? ' is-odd' : ''}`;
-      row.dataset.id = id;
-      row.dataset.direction = direction;
-      row.dataset.name = name || '';
-      row.dataset.entryDate = entry_date || '';
-      row.dataset.amount = amount;
+      const html = await response.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const fresh = doc.getElementById('officeHistorySection');
+      if (!fresh) throw new Error('history fragment missing');
 
-      const badge = row.querySelector('.office-history-badge');
-      if (badge) {
-        badge.className = `office-history-badge ${direction}`;
-        badge.textContent = received ? 'Received' : 'Paid';
-      }
-      const nameEl = row.querySelector('.office-history-name');
-      if (nameEl) {
-        nameEl.className = `office-history-name${name ? '' : ' is-empty'}`;
-        nameEl.textContent = name || 'No name';
-      }
-      const metaEl = row.querySelector('.office-history-meta');
-      if (metaEl) metaEl.textContent = historyMeta(entry_date || (created_at || '').slice(0, 10));
+      const currentList = historySection.querySelector('.office-history-list');
+      const freshList = fresh.querySelector('.office-history-list');
+      if (currentList && freshList) currentList.replaceWith(freshList);
 
-      const amountEl = row.querySelector('.office-history-amount');
-      if (amountEl) {
-        amountEl.className = `office-history-amount ${direction}`;
-        amountEl.dataset.amount = received ? amount : -Number(amount);
-        amountEl.textContent = received
-          ? formatAmount(amount, { sign: true })
-          : `−${formatAmount(amount)}`;
-      }
-      return row;
-    }
+      const currentCaption = historySection.querySelector('.office-history-caption');
+      const freshCaption = fresh.querySelector('.office-history-caption');
+      if (currentCaption && freshCaption) currentCaption.replaceWith(freshCaption);
 
-    function prependHistoryRow(payload) {
-      if (historyEmpty) historyEmpty.remove();
-      historyList.querySelector('.office-empty')?.remove();
-      const row = buildHistoryRow(payload);
-      historyList.prepend(row);
-      historyRowCount += 1;
-      // Keep the on-screen list the same size as the server-rendered page.
-      const rows = historyList.querySelectorAll('.office-history-row');
-      const overflow = rows.length - PAGE_SIZE;
-      for (let i = rows.length - 1; i >= rows.length - Math.max(0, overflow); i -= 1) {
-        rows[i].remove();
-      }
-      const caption = document.querySelector('.office-history-caption');
-      if (caption) {
-        const total = Number(caption.dataset.total || 0) + 1;
-        caption.dataset.total = String(total);
-        caption.textContent = `${total} ${total === 1 ? 'entry' : 'entries'}`;
+      const currentSearch = historySection.querySelector('.office-search-row');
+      const freshSearch = fresh.querySelector('.office-search-row');
+      if (currentSearch && freshSearch) currentSearch.replaceWith(freshSearch);
+
+      const currentPages = historySection.querySelector('.office-pagination');
+      const freshPages = fresh.querySelector('.office-pagination');
+      if (currentPages) currentPages.remove();
+      if (freshPages) {
+        historySection.appendChild(document.importNode(freshPages, true));
       }
     }
 
@@ -679,22 +618,21 @@
             showToast(data.error || 'Could not save this entry.', { tone: 'error' });
             return;
           }
-          // Update in place. Reloading here would drop the toast and reset
-          // every field the user has already filled in.
+          // Totals come straight off the save response, then the history list
+          // is re-rendered from the server. If that fails we reload rather
+          // than leave a saved entry looking like it was lost.
           renderTotals(data);
-          prependHistoryRow({
-            id: data.id,
-            direction,
-            name,
-            amount,
-            entry_date: data.entry_date,
-            created_at: data.created_at,
-          });
           showToast(
             direction === 'came'
               ? `Recorded ${formatAmount(amount)} received${name ? ` from ${name}` : ''}`
               : `Recorded ${formatAmount(amount)} paid${name ? ` to ${name}` : ''}`,
           );
+          try {
+            await refreshHistory();
+          } catch (_) {
+            window.location.reload();
+            return;
+          }
 
           nameInput.value = '';
           nameInput.dispatchEvent(new Event('change', { bubbles: true }));
@@ -846,12 +784,12 @@
     // Enter saves the balance or moves through entry fields.
     const FLOW = [
       openingInput,
-      document.getElementById('officeCameName'),
-      document.getElementById('officeCameDateBtn'),
-      document.getElementById('officeCameAmount'),
       document.getElementById('officeTakenName'),
       document.getElementById('officeTakenDateBtn'),
       document.getElementById('officeTakenAmount'),
+      document.getElementById('officeCameName'),
+      document.getElementById('officeCameDateBtn'),
+      document.getElementById('officeCameAmount'),
     ].filter(Boolean);
 
     FLOW.forEach((input, index) => {
@@ -1114,7 +1052,9 @@
       } catch (error) { alert(error.message || 'Could not restore this entry.'); }
     });
 
-    document.getElementById('officeClearSearch')?.addEventListener('click', () => {
+    // Delegated, because the history fragment swap replaces this button.
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('#officeClearSearch')) return;
       window.location.assign("{% url 'office' %}#officeHistorySection");
     });
     document.addEventListener('click', async (event) => {

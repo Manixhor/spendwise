@@ -2675,12 +2675,13 @@ def _office_totals(user) -> dict:
     }
 
 
-@login_required(login_url="/login/")
-def office(request: HttpRequest) -> HttpResponse:
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
-    totals = _office_totals(request.user)
-    active_entries = OfficeEntry.objects.filter(user=request.user, deleted_at__isnull=True)
-    search = request.GET.get("q", "").strip()[:100]
+def _office_entries_page(active_entries, raw_search: str, raw_page: str | None):
+    """Filter, then paginate the live office entries.
+
+    Shared by the page and the history fragment so both agree on the search
+    rules and the current page.
+    """
+    search = (raw_search or "").strip()[:100]
     visible_entries = active_entries
     if search:
         criteria = Q(name__icontains=search) | Q(note__icontains=search)
@@ -2702,7 +2703,15 @@ def office(request: HttpRequest) -> HttpResponse:
     # Only the live, most recent entries are surfaced. The soft-deleted
     # "trash" is intentionally not rendered for now; the restore endpoint
     # stays in place so nothing is lost if it comes back.
-    entries_page = Paginator(visible_entries, 10).get_page(request.GET.get("page"))
+    return Paginator(visible_entries, 10).get_page(raw_page), search
+
+
+@login_required(login_url="/login/")
+def office(request: HttpRequest) -> HttpResponse:
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    totals = _office_totals(request.user)
+    active_entries = OfficeEntry.objects.filter(user=request.user, deleted_at__isnull=True)
+    entries_page, search = _office_entries_page(active_entries, request.GET.get("q", ""), request.GET.get("page"))
     name_counts: dict[str, int] = {}
     for entry in active_entries.only("name"):
         key = entry.name.strip()
@@ -2732,6 +2741,23 @@ def office(request: HttpRequest) -> HttpResponse:
             "office_taken_total": totals["taken_total"],
             "office_total": totals["total"],
         },
+    )
+
+
+@login_required(login_url="/login/")
+def office_history_fragment(request: HttpRequest) -> HttpResponse:
+    """Re-render the history list after an entry is added.
+
+    The page swaps this markup in instead of rebuilding rows in the browser,
+    so the list always matches the server: correct page, search filter, entry
+    count, and an empty state when the very first entry lands.
+    """
+    active_entries = OfficeEntry.objects.filter(user=request.user, deleted_at__isnull=True)
+    entries_page, search = _office_entries_page(active_entries, request.GET.get("q", ""), request.GET.get("page"))
+    return render(
+        request,
+        "login/includes/office_history.html",
+        {"entries_page": entries_page, "office_search": search},
     )
 
 

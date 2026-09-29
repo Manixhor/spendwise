@@ -1,0 +1,38 @@
+{% load currency_filters %}
+    <section class="card office-history" id="officeHistorySection" aria-label="Recent entries">
+      <div class="office-history-heading"><div><span class="office-section-kicker">02 / Review</span><h2>{% if office_search %}Search results{% else %}Recent entries{% endif %}</h2></div><span class="office-history-caption" data-total="{{ entries_page.paginator.count }}">{{ entries_page.paginator.count }} {% if entries_page.paginator.count == 1 %}entry{% else %}entries{% endif %}</span></div>
+      <form class="office-search" method="get" action="{% url 'office' %}#officeHistorySection" role="search">
+        <label for="officeSearchInput">Find an entry</label>
+        <div class="office-search-row"><input id="officeSearchInput" name="q" type="search" value="{{ office_search }}" placeholder="Search name, date, or amount" /><button type="submit">Search</button>{% if office_search %}<button type="button" class="office-clear-search" id="officeClearSearch">Clear</button>{% endif %}</div>
+      </form>
+      <ul class="office-history-list" id="officeHistory">
+        {% for entry in entries_page %}
+          <li class="office-history-row" data-id="{{ entry.id }}" data-direction="{{ entry.direction }}" data-name="{{ entry.name }}" data-entry-date="{{ entry.entry_date|date:'Y-m-d' }}" data-amount="{{ entry.amount }}">
+            <span class="office-history-badge {{ entry.direction }}">{% if entry.direction == "came" %}Received{% else %}Paid{% endif %}</span>
+            <div class="office-history-main">
+              <p class="office-history-name {% if not entry.name %}is-empty{% endif %}">
+                {{ entry.name|default:"No name" }}
+              </p>
+              <p class="office-history-meta">{{ entry.entry_date|date:"d M Y" }}{% if entry.note %} · {{ entry.note }}{% endif %}</p>
+            </div>
+            <span class="office-history-amount {{ entry.direction }}"
+                  data-amount="{{ entry.signed_amount }}">
+              {% if entry.direction == "came" %}{{ entry.amount|currency_plus:"inr" }}{% else %}−{{ entry.amount|currency:"inr" }}{% endif %}
+            </span>
+            <button type="button" class="office-delete" title="Delete entry" aria-label="Delete entry">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </li>
+        {% empty %}
+          <li class="office-empty" id="officeHistoryEmpty">{% if office_search %}No matching entries.{% else %}No entries yet.{% endif %}</li>
+        {% endfor %}
+      </ul>
+      {% if entries_page.has_other_pages %}
+      <form class="office-pagination" method="get" action="{% url 'office' %}#officeHistorySection">
+        <input type="hidden" name="q" value="{{ office_search }}" />
+        {% if entries_page.has_previous %}<button type="submit" name="page" value="{{ entries_page.previous_page_number }}" rel="prev">Previous</button>{% endif %}
+        <span>Page {{ entries_page.number }} of {{ entries_page.paginator.num_pages }}</span>
+        {% if entries_page.has_next %}<button type="submit" name="page" value="{{ entries_page.next_page_number }}" rel="next">Next</button>{% endif %}
+      </form>
+      {% endif %}
+    </section>

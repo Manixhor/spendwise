@@ -15,6 +15,7 @@ from .views import (
     lend,
     monthly,
     office,
+    office_history_fragment,
     api_office_set_balance,
     api_office_add_entry,
     api_office_delete_entry,
@@ -63,6 +64,7 @@ urlpatterns = [
     path("monthly/", monthly, name="monthly"),
     path("lend/", lend, name="lend"),
     path("office/", office, name="office"),
+    path("office/history/", office_history_fragment, name="office_history_fragment"),
     path(
         "api/office/balance/",
         api_office_set_balance,

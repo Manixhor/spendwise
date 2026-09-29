@@ -14,17 +14,22 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
-html { min-width: 320px; background: #f6f4ef; }
+/* Mobile-first: the base rules below target a phone, and each min-width
+   block adds capability as the screen grows. */
+html { min-width: 320px; background: #f6f4ef; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; overflow-x: hidden; }
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   font-family: Inter, "Avenir Next", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--ink);
-  background: radial-gradient(circle at 93% -10%, #e8eee6 0, transparent 34%), #f6f4ef;
+  background: radial-gradient(circle at 93% -10%, #e8eee6 0, transparent 34%), #f6f4ef);
   -webkit-font-smoothing: antialiased;
 }
 button, input { font: inherit; }
 button { cursor: pointer; }
+/* Stops the double-tap zoom delay on the tap-heavy controls. */
+button, .office-input, .office-date-trigger, .office-search-row input { touch-action: manipulation; }
 p, h1, h2 { margin: 0; }
 .office-shell { display: block; min-height: 100vh; }
 .office-sidebar[hidden] { display: none !important; }
@@ -90,13 +95,16 @@ body.office-modal-open { overflow: hidden; }
 .office-form { min-width: 0; display: grid; align-content: start; gap: 17px; padding: 27px 30px 29px; }
 .office-form-title { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
 .office-form-title svg { box-sizing: content-box; padding: 8px; border-radius: 10px; background: #e6f1e9; color: #2c7654; }
-.office-form:nth-child(2) .office-form-title svg { background: #f7ebe4; color: #ad6047; }
+.office-form--out .office-form-title svg { background: #f7ebe4; color: #ad6047; }
 .office-field { display: grid; gap: 7px; min-width: 0; }
 .office-field-label { color: #66746b; font-size: 11px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
 .office-optional { margin-left: 5px; color: #a4aea4; font-size: 10px; font-weight: 500; letter-spacing: 0; text-transform: none; }
 .office-input, .office-date-trigger {
-  width: 100%; min-height: 47px; padding: 11px 14px; border: 1px solid #e0e5dd;
-  border-radius: 11px; outline: none; background: #fbfcf9; color: var(--ink); font-size: 14px;
+  width: 100%; min-width: 0; min-height: 48px; padding: 11px 14px; border: 1px solid #e0e5dd;
+  border-radius: 11px; outline: none; background: #fbfcf9; color: var(--ink);
+  /* 16px on phones: iOS Safari and Android Chrome auto-zoom into any focused
+     field below this, which is what made the page overflow with the keyboard up. */
+  font-size: 16px;
   transition: border-color .15s, box-shadow .15s;
 }
 .office-input::placeholder { color: #acb5ac; }
@@ -162,7 +170,7 @@ body.office-modal-open { overflow: hidden; }
 .office-search { display: grid; gap: 7px; padding: 20px 0 12px; }
 .office-search label { color: #66746b; font-size: 11px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
 .office-search-row { display: flex; gap: 8px; }
-.office-search-row input { flex: 1; min-width: 0; min-height: 40px; padding: 9px 12px; border: 1px solid #dfe6db; border-radius: 9px; outline: none; background: #fbfcf9; color: var(--ink); font-size: 13px; }
+.office-search-row input { flex: 1; min-width: 0; min-height: 44px; padding: 9px 12px; border: 1px solid #dfe6db; border-radius: 9px; outline: none; background: #fbfcf9; color: var(--ink); font-size: 16px; }
 .office-search-row input:focus { border-color: #6c9d77; box-shadow: 0 0 0 3px #e0eedf; }
 .office-search-row button, .office-pagination button { min-height: 40px; padding: 8px 13px; border: 1px solid #dce6db; border-radius: 9px; background: #f4f8f1; color: #315f50; font-size: 12px; font-weight: 750; }
 .office-search-row button[type="submit"] { border-color: #315f50; background: #315f50; color: #fff; }
@@ -204,58 +212,111 @@ body.office-modal-open { overflow: hidden; }
 .office-cal-foot { margin-top: 9px; padding-top: 10px; border-top: 1px solid #e7ebe4; }
 .office-cal-today { width: 100%; padding: 8px; border: 0; border-radius: 8px; background: #f3f7f0; color: #315f50; font-size: 12px; font-weight: 750; }
 
-@media (max-width: 1100px) {
-  .office-shell { display: block; }
-  .office-sidebar { align-items: center; padding: 22px 8px; }
-  .office-sidebar-brand { padding: 0 0 28px; }
-  .office-brand-copy, .office-nav-heading, .office-nav-text, .office-sidebar-footer { display: none; }
-  .office-nav { width: 100%; margin-top: 0; }
-  .office-nav-button { justify-content: center; min-height: 47px; padding: 6px; }
-  .office-main { width: calc(100% - 48px); padding-top: 36px; }
-  .office-forms { grid-template-columns: 1fr; }
+/* ── Mobile-first layout ───────────────────────────────────
+   Everything above is the phone layout. These blocks only add
+   roomier arrangements as the viewport grows. */
+
+/* Small phones: tighter gutters, roomier tap targets. */
+.office-main { width: calc(100% - 24px); padding: 27px 0 calc(48px + env(safe-area-inset-bottom)); }
+.main-header { align-items: start; flex-wrap: wrap; gap: 14px; margin-bottom: 23px; }
+.office-header-date { align-self: flex-start; }
+.office-total-card { display: block; padding: 27px 25px; }
+.office-total-amount { font-size: 40px; }
+.office-opening-field { width: 100%; margin-top: 27px; grid-template-columns: 1fr auto; align-items: end; }
+.office-opening-field .card-label { grid-column: 1 / -1; }
+.office-opening-field .office-error { grid-column: 1 / -1; }
+.office-save { width: auto; min-width: 110px; min-height: 47px; }
+.office-breakdown { grid-template-columns: 1fr; }
+.office-breakdown-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 13px 24px; }
+.office-breakdown-item + .office-breakdown-item { border-top: 1px solid rgba(255,255,255,.15); border-left: 0; }
+.office-breakdown-value { margin: 0; font-size: 16px; }
+.office-section-heading { margin-top: 33px; }
+.office-section-heading p, .office-history-caption { display: none; }
+.office-forms { grid-template-columns: 1fr; }
+.office-form { padding: 24px; }
+.office-history { padding: 24px 18px 5px; }
+.office-history-row { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto auto; column-gap: 8px; row-gap: 7px; }
+.office-history-badge { min-width: 74px; font-size: 9px; }
+.office-history-main { grid-column: 2 / -1; grid-row: 1; }
+.office-history-amount { grid-column: 2; grid-row: 2; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+.office-delete { grid-column: 4; grid-row: 2; margin: 0; }
+.office-restore { grid-column: 3 / -1; grid-row: 2; }
+.office-search-row { flex-wrap: wrap; }
+.office-search-row input { flex-basis: 100%; }
+
+/* Bottom tab bar, clear of the home indicator. */
+.office-sidebar { position: fixed; top: auto; right: 0; bottom: 0; left: 0; z-index: 900; display: block; width: 100%; height: auto; min-height: 0; padding: 8px max(12px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); border-top: 1px solid #dfe6dc; border-right: 0; box-shadow: 0 -8px 24px rgba(31, 54, 38, .08); }
+.office-sidebar-brand { display: none; }
+.office-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+.office-nav-button { flex-direction: column; gap: 1px; min-height: 50px; padding: 4px 3px; font-size: 10px; text-align: center; }
+.office-nav-text { display: block; }
+.office-nav-icon { height: 23px; font-size: 20px; }
+.office-undo-toast { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); left: 12px; justify-content: space-between; }
+
+/* Phones in landscape, and small tablets: single column with more
+   breathing room, but still the bottom bar. */
+@media (min-width: 441px) {
+  .office-main { width: min(600px, calc(100% - 32px)); }
+  .office-total-amount { font-size: clamp(40px, 9vw, 52px); }
+  .office-section-heading p, .office-history-caption { display: block; }
+  .office-history { padding: 27px 22px 5px; }
+  .office-form { padding: 26px 27px; }
 }
-@media (max-width: 760px) {
-  .office-main { width: min(600px, calc(100% - 32px)); padding: 27px 0 48px; }
-  .main-header { align-items: start; flex-wrap: wrap; gap: 14px; margin-bottom: 23px; }
-  .office-header-date { align-self: flex-start; }
-  .office-total-card { display: block; padding: 27px 25px; }
-  .office-opening-field { width: 100%; margin-top: 27px; grid-template-columns: 1fr auto; align-items: end; }
-  .office-opening-field .card-label { grid-column: 1 / -1; }
-  .office-save { width: auto; min-width: 110px; min-height: 47px; }
-  .office-opening-field .office-error { grid-column: 1 / -1; }
-  .office-breakdown-item { padding: 17px 15px; }
-  .office-forms { grid-template-columns: 1fr; }
-  .office-section-heading { margin-top: 33px; }
-  .office-form { padding: 24px; }
+
+/* Tablet: the bottom bar becomes a top bar and the totals sit
+   side by side. History rows return to a single line. */
+@media (min-width: 681px) {
+  .office-sidebar { position: sticky; top: 0; flex-direction: column; height: 100vh; height: 100dvh; min-height: 0; align-items: center; width: auto; padding: 22px 8px; border-top: 0; border-right: 1px solid #e0e6dd; box-shadow: none; }
+  .office-sidebar-brand { display: flex; padding: 0 0 28px; }
+  .office-brand-copy, .office-nav-heading, .office-sidebar-footer { display: none; }
+  .office-nav { display: grid; width: 100%; grid-template-columns: none; margin-top: 0; }
+  .office-nav-button { flex-direction: row; gap: 11px; justify-content: center; min-height: 47px; padding: 6px; font-size: 13px; text-align: left; }
+  .office-nav-text { display: none; }
+  .office-nav-icon { height: auto; font-size: 21px; }
+  .office-main { width: calc(100% - 48px); padding: 36px 0 80px; }
+  .office-undo-toast { right: 24px; bottom: 24px; left: auto; justify-content: flex-start; }
 }
-@media (max-width: 680px) {
-  .office-shell { display: block; }
-  .office-sidebar { position: fixed; top: auto; right: 0; bottom: 0; left: 0; z-index: 900; display: block; width: 100%; height: auto; min-height: 0; padding: 8px max(12px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); border-top: 1px solid #dfe6dc; border-right: 0; box-shadow: 0 -8px 24px rgba(31, 54, 38, .08); }
-  .office-sidebar-brand { display: none; }
-  .office-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
-  .office-nav-button { flex-direction: column; gap: 1px; min-height: 50px; padding: 4px 3px; font-size: 10px; text-align: center; }
+
+/* Laptop: the shell splits into a real sidebar column, totals go
+   inline, the breakdown becomes three across, and the two entry
+   forms sit side by side. Inputs can drop back to a denser size
+   because no touch keyboard zooms them. */
+@media (min-width: 1101px) {
+  .office-shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); }
+  .office-sidebar { align-items: stretch; height: 100vh; height: 100dvh; padding: 28px 16px; }
+  .office-sidebar-brand { padding: 3px 10px 32px; }
+  .office-brand-copy { display: grid; }
+  .office-nav-heading, .office-sidebar-footer { display: block; }
+  .office-nav { grid-template-columns: none; margin-top: 12px; }
+  .office-nav-button { justify-content: flex-start; min-height: 42px; padding: 7px 11px; font-size: 13px; }
   .office-nav-text { display: block; }
-  .office-nav-icon { height: 23px; font-size: 20px; }
-  .office-main { padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
-  .office-undo-toast { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); left: 12px; justify-content: space-between; }
-}
-@media (max-width: 440px) {
-  .office-main { width: calc(100% - 24px); }
-  .office-total-amount { font-size: 40px; }
-  .office-breakdown { grid-template-columns: 1fr; }
-  .office-breakdown-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 13px 24px; }
-  .office-breakdown-item + .office-breakdown-item { border-top: 1px solid rgba(255,255,255,.15); border-left: 0; }
-  .office-breakdown-value { margin: 0; font-size: 16px; }
-  .office-section-heading p, .office-history-caption { display: none; }
-  .office-history { padding: 24px 18px 5px; }
-  .office-history-row { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto auto; column-gap: 8px; row-gap: 7px; }
-  .office-history-badge { min-width: 74px; font-size: 9px; }
-  .office-history-main { grid-column: 2 / -1; grid-row: 1; }
-  .office-history-amount { grid-column: 2; grid-row: 2; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
-  .office-delete { grid-column: 4; grid-row: 2; margin: 0; }
-  .office-restore { grid-column: 3 / -1; grid-row: 2; }
-  .office-search-row { flex-wrap: wrap; }
-  .office-search-row input { flex-basis: 100%; }
+  .office-main { width: min(1160px, calc(100% - 64px)); padding: 56px 0 80px; }
+  .main-header { align-items: flex-end; flex-wrap: nowrap; gap: 24px; margin-bottom: 30px; }
+  .office-header-date { align-self: center; }
+  .office-total-card { display: flex; padding: 32px 38px 30px; }
+  .office-total-amount { font-size: clamp(38px, 5vw, 61px); }
+  .office-opening-field { width: 210px; margin-top: 0; grid-template-columns: none; align-items: stretch; }
+  .office-opening-field .card-label, .office-opening-field .office-error { grid-column: auto; }
+  .office-save { width: 100%; min-width: 0; min-height: 39px; }
+  .office-breakdown { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .office-breakdown-item { display: block; padding: 22px 38px 24px; }
+  .office-breakdown-item + .office-breakdown-item { border-top: 0; border-left: 1px solid rgba(255,255,255,.15); }
+  .office-breakdown-value { margin-top: 8px; font-size: clamp(16px, 2vw, 22px); }
+  .office-section-heading { margin-top: 43px; }
+  .office-forms { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .office-form { padding: 27px 30px 29px; }
+  .office-history { padding: 32px 30px 8px; }
+  .office-history-row { display: flex; }
+  .office-history-badge { min-width: 0; font-size: 10px; }
+  .office-history-main { grid-column: auto; grid-row: auto; }
+  .office-history-amount { grid-column: auto; grid-row: auto; font-size: 14px; }
+  .office-delete { grid-column: auto; grid-row: auto; }
+  .office-restore { grid-column: auto; grid-row: auto; }
+  .office-search-row { flex-wrap: nowrap; }
+  .office-search-row input { flex-basis: auto; }
+  /* Dense type is safe here: no on-screen keyboard to zoom. */
+  .office-input, .office-date-trigger { min-height: 47px; font-size: 14px; }
+  .office-search-row input { min-height: 40px; font-size: 13px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }

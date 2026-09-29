@@ -54,18 +54,67 @@ class OfficeLiveUpdateTests(TestCase):
         self.assertIn('id="officeToastText"', html)
         self.assertIn('id="officeToastIcon"', html)
 
-        # The page size has to be readable by the script so the on-screen
-        # list stays the same length as the server-rendered page.
-        self.assertIn("const PAGE_SIZE =", html)
-        self.assertIn('data-total="1"', html)
-
-        # A row template to clone, and the in-place update path.
-        self.assertIn("prependHistoryRow", html)
+        # The list is re-rendered from the server fragment rather than
+        # rebuilt in the browser.
+        self.assertIn("refreshHistory", html)
+        self.assertIn("officeHistorySection", html)
         self.assertIn("resetDateField", html)
-        # No reload on save.
+        # No reload on the happy path, and no client-side row builder.
         self.assertNotIn(
             "window.location.assign", html.split("function bindEntryForm")[1][:2000]
         )
+        self.assertNotIn("buildHistoryRow", html)
+        self.assertNotIn("HISTORY_ROW_TEMPLATE", html)
+
+    def test_first_entry_appears_in_the_fragment_without_a_reload(self):
+        """The bug this guards: an empty list has no row to clone, so the
+        first entry was saved but rendered as a blank row until a refresh.
+        """
+        empty = self.client.get(reverse("office_history_fragment")).content.decode()
+        self.assertIn("No entries yet", empty)
+        self.assertNotIn("office-history-row", empty)
+
+        self._add(direction="taken", name="Anita", amount="30")
+
+        after = self.client.get(reverse("office_history_fragment")).content.decode()
+        self.assertIn("office-history-row", after)
+        self.assertIn("Anita", after)
+        self.assertIn("Paid", after)
+        self.assertIn("1 entry", after)  # caption, not "entries"
+        self.assertNotIn("No entries yet", after)
+
+    def test_fragment_respects_search_and_pagination(self):
+        for i in range(12):
+            OfficeEntry.objects.create(
+                user=self.user, direction="came", amount="10", name=f"Person{i:02d}"
+            )
+        # Page 1 holds ten rows; the new eleventh row pushes page 1 forward.
+        page_one = self.client.get(
+            reverse("office_history_fragment"), {"page": 1}
+        ).content.decode()
+        self.assertEqual(page_one.count("office-history-row"), 10)
+        self.assertIn("Page 1 of 2", page_one)
+
+        # A search filter is carried through the fragment, not ignored.
+        filtered = self.client.get(
+            reverse("office_history_fragment"), {"q": "Person03"}
+        ).content.decode()
+        self.assertIn("Search results", filtered)
+        self.assertEqual(filtered.count("office-history-row"), 1)
+
+    def test_fragment_is_scoped_to_the_signed_in_user(self):
+        OfficeEntry.objects.create(
+            user=self.user, direction="came", amount="10", name="Mine"
+        )
+        other = User.objects.create_user(
+            username="other@example.com", email="other@example.com", password="secret123"
+        )
+        OfficeEntry.objects.create(
+            user=other, direction="came", amount="999", name="Theirs"
+        )
+        html = self.client.get(reverse("office_history_fragment")).content.decode()
+        self.assertIn("Mine", html)
+        self.assertNotIn("Theirs", html)
 
     def test_recording_updates_totals_without_a_reload(self):
         self._add(direction="came", name="Ravi", amount="100")
