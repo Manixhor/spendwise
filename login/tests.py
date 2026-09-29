@@ -20,6 +20,7 @@ from .models import (
     Transaction,
     UserProfile,
 )
+from .templatetags.office_currency import office_currency, office_currency_plus
 
 
 class SignupOtpTests(TestCase):
@@ -872,6 +873,28 @@ class OfficeMoneyFlowTests(TestCase):
         self.assertEqual(entry.amount, Decimal('50'))
         self.assertEqual(entry.name, 'Ravi')
         self.assertEqual(OfficeEntry.objects.filter(user=self.user).count(), 1)
+
+    def test_office_cents_and_missing_balance_request(self):
+        balance_url = reverse('api_office_set_balance')
+        saved = self.client.post(
+            balance_url, data=json.dumps({'amount': '0.10'}),
+            content_type='application/json',
+        )
+        self.assertEqual(saved.status_code, 200)
+        self.assertEqual(self._add(direction='came', amount='0.20').json()['total'], '0.30')
+        self.assertEqual(self._add(direction='taken', amount='0.03').json()['total'], '0.27')
+        self.assertIn('₹0.27', self.client.get(reverse('office')).content.decode())
+
+        missing = self.client.post(balance_url, data='{}', content_type='application/json')
+        self.assertEqual(missing.status_code, 400)
+        self.assertEqual(OfficeBalance.objects.get(user=self.user).amount, Decimal('0.10'))
+
+    def test_office_display_keeps_large_totals_to_the_cent(self):
+        self.assertEqual(
+            office_currency(Decimal('100000000000000.01')),
+            '₹10,00,00,00,00,00,000.01',
+        )
+        self.assertEqual(office_currency_plus(Decimal('0.20')), '+₹0.20')
 
     def test_office_navigation_and_balance_controls_are_self_contained(self):
         page = self.client.get(reverse('office')).content.decode()

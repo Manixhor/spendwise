@@ -2794,7 +2794,7 @@ def api_office_set_balance(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"error": "Invalid request."}, status=400)
 
     try:
-        amount = Decimal(str(data.get("amount", "0")).strip())
+        amount = Decimal(str(data.get("amount", "")).strip())
     except (decimal.InvalidOperation, TypeError, ValueError):
         return JsonResponse({"error": "Enter a valid amount."}, status=400)
 

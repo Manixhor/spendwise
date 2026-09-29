@@ -1,5 +1,5 @@
 {% load static %}
-{% load currency_filters %}
+{% load office_currency %}
 <!DOCTYPE html>
 <html lang="en" data-currency="inr">
 <head>
@@ -37,7 +37,7 @@
           <span class="card-label">Current balance</span>
           <p class="office-total-amount {% if office_total < 0 %}is-negative{% endif %}"
              id="officeTotal"
-             data-total="{{ office_total }}">{{ office_total|currency:"inr" }}</p>
+             data-total="{{ office_total }}">{{ office_total|office_currency }}</p>
         </div>
         <div class="office-opening-field">
           <label class="card-label" for="officeOpeningInput">Starting Balance</label>
@@ -45,7 +45,7 @@
             <span class="office-rupee" aria-hidden="true">₹</span>
             <input type="text" inputmode="decimal" id="officeOpeningInput"
                    class="office-input office-amount-input" autocomplete="off"
-                   value="{{ office_opening|indian_number }}"
+                   value="{{ office_opening|office_indian_number }}"
                    aria-label="Starting balance" aria-describedby="officeBalanceMsg" />
           </div>
           <button type="button" class="office-save" id="officeBalanceSave">Save Balance</button>
@@ -55,15 +55,15 @@
       <div class="office-breakdown">
         <div class="office-breakdown-item">
           <span class="card-label">Starting</span>
-          <span class="office-breakdown-value" id="officeOpening" data-value="{{ office_opening }}">{{ office_opening|currency:"inr" }}</span>
+          <span class="office-breakdown-value" id="officeOpening" data-value="{{ office_opening }}">{{ office_opening|office_currency }}</span>
         </div>
         <div class="office-breakdown-item">
           <span class="card-label">Received</span>
-          <span class="office-breakdown-value positive" id="officeCame" data-value="{{ office_came_total }}">{{ office_came_total|currency_plus:"inr" }}</span>
+          <span class="office-breakdown-value positive" id="officeCame" data-value="{{ office_came_total }}">{{ office_came_total|office_currency_plus }}</span>
         </div>
         <div class="office-breakdown-item">
           <span class="card-label">Paid</span>
-          <span class="office-breakdown-value negative" id="officeTaken" data-value="{{ office_taken_total }}">−{{ office_taken_total|currency:"inr" }}</span>
+          <span class="office-breakdown-value negative" id="officeTaken" data-value="{{ office_taken_total }}">−{{ office_taken_total|office_currency }}</span>
         </div>
       </div>
     </section>
@@ -292,6 +292,16 @@
 
     // '1,23,456.7' -> '123456.7' (what the server expects)
     const parseAmount = (raw) => String(raw || '').replace(/,/g, '').trim();
+    const MAX_OFFICE_CENTS = 100000000000000n;
+
+    // Keep display previews in integer cents. The server stores Decimal values.
+    const moneyCents = (value) => {
+      if (typeof value === 'bigint') return value;
+      const match = /^(-?)(\d+)(?:\.(\d{1,2}))?$/.exec(parseAmount(value));
+      if (!match) return null;
+      const cents = BigInt(match[2]) * 100n + BigInt((match[3] || '').padEnd(2, '0'));
+      return match[1] ? -cents : cents;
+    };
 
     const stripGrouping = (value) => String(value || '').replace(/,/g, '');
 
@@ -301,24 +311,27 @@
       const before = input.value;
       const caret = input.selectionStart ?? before.length;
       const raw = stripGrouping(before);
+      if (!/^\d*(?:\.\d*)?$/.test(raw)) return;
       const dotAt = raw.indexOf('.');
       let intPart = dotAt === -1 ? raw : raw.slice(0, dotAt);
       let decPart = dotAt === -1 ? '' : raw.slice(dotAt + 1);
-
-      intPart = intPart.replace(/[^\d]/g, '');
-      decPart = decPart.replace(/[^\d]/g, '').slice(0, 2);
+      if (decPart.length > 2) return;
 
       const head = intPart ? indianGroup(intPart) : '';
       input.value = decPart
         ? `${head || '0'}.${decPart}`
         : (dotAt === -1 ? head : `${head || '0'}.`);
 
-      const digitsBefore = before.slice(0, caret).replace(/[^\d]/g, '').length;
+      const beforeCaret = before.slice(0, caret);
+      const digitsBefore = beforeCaret.replace(/[^\d]/g, '').length;
       let pos = 0;
       let seen = 0;
       while (pos < input.value.length && seen < digitsBefore) {
         if (/\d/.test(input.value[pos])) seen += 1;
         pos += 1;
+      }
+      if (beforeCaret.includes('.') && input.value.includes('.')) {
+        pos = Math.max(pos, input.value.indexOf('.') + 1);
       }
       // Typing at the end must keep the caret at the end, otherwise the next
       // keystroke lands before a trailing '.' and the decimals run together.
@@ -327,23 +340,24 @@
     };
 
     function formatAmount(value, { sign = false, negative = false } = {}) {
-      const num = Math.abs(Number(value) || 0);
-      const [intPart, decPart] = num.toFixed(2).split('.');
-      const body = `₹${indianGroup(intPart)}.${decPart}`;
-      if (negative) return `−${body}`;
-      if (sign && Number(value) > 0) return `+${body}`;
+      const cents = moneyCents(value) ?? 0n;
+      const absolute = cents < 0n ? -cents : cents;
+      const body = `₹${indianGroup((absolute / 100n).toString())}.${(absolute % 100n).toString().padStart(2, '0')}`;
+      if (negative || cents < 0n) return `−${body}`;
+      if (sign && cents > 0n) return `+${body}`;
       return body;
     }
 
     function renderTotals(data) {
-      totalEl.textContent = formatAmount(data.total, { negative: Number(data.total) < 0 });
-      totalEl.classList.toggle('is-negative', Number(data.total) < 0);
+      const total = moneyCents(data.total) ?? 0n;
+      totalEl.textContent = formatAmount(total);
+      totalEl.classList.toggle('is-negative', total < 0n);
       totalEl.dataset.total = data.total;
       openingEl.textContent = formatAmount(data.opening);
       openingEl.dataset.value = data.opening;
       cameEl.textContent = formatAmount(data.came_total, { sign: true });
       cameEl.dataset.value = data.came_total;
-      takenEl.textContent = Number(data.taken_total) > 0
+      takenEl.textContent = (moneyCents(data.taken_total) ?? 0n) > 0n
         ? `−${formatAmount(data.taken_total)}`
         : formatAmount(0);
       takenEl.dataset.value = data.taken_total;
@@ -640,7 +654,8 @@
         const amount = parseAmount(amountInput.value);
         const entryDate = dateInput.value;
 
-        if (!amount || Number(amount) <= 0) {
+        const amountCents = moneyCents(amount);
+        if (amountCents === null || amountCents <= 0n || amountCents >= MAX_OFFICE_CENTS) {
           errorEl.textContent = 'Enter an amount greater than 0.';
           amountInput.focus();
           return;
@@ -739,7 +754,7 @@
     // still previews the new figure so it does not look inert, but nothing
     // reaches the server until the user asks for it.
     // Holds what the server actually has; only a successful save moves it.
-    let persistedOpening = Number(openingEl.dataset.value || 0);
+    let persistedOpening = moneyCents(openingEl.dataset.value) ?? 0n;
     const balanceDialog = document.getElementById('officeBalanceConfirm');
     const balanceCurrent = document.getElementById('officeBalanceCurrent');
     const balanceNew = document.getElementById('officeBalanceNew');
@@ -761,31 +776,32 @@
     });
 
     function confirmBalanceChange(amount) {
-      const projected = Number(amount) + Number(cameEl.dataset.value || 0) - Number(takenEl.dataset.value || 0);
+      const projected = (moneyCents(amount) ?? 0n) + (moneyCents(cameEl.dataset.value) ?? 0n) - (moneyCents(takenEl.dataset.value) ?? 0n);
       balanceCurrent.textContent = formatAmount(persistedOpening);
       balanceNew.textContent = formatAmount(amount);
-      balanceProjected.textContent = formatAmount(projected, { negative: projected < 0 });
-      balanceProjected.classList.toggle('is-negative', projected < 0);
+      balanceProjected.textContent = formatAmount(projected);
+      balanceProjected.classList.toggle('is-negative', projected < 0n);
       return askOfficeConfirmation(balanceDialog, 'Save this starting balance? Your existing entries and dates will stay the same.');
     }
 
     function restoreBalanceDisplay({ resetInput = true } = {}) {
       if (resetInput) openingInput.value = formatAmount(persistedOpening).replace('\u20b9', '');
       openingEl.textContent = formatAmount(persistedOpening);
-      const total = Number(totalEl.dataset.total || 0);
-      totalEl.textContent = formatAmount(total, { negative: total < 0 });
-      totalEl.classList.toggle('is-negative', total < 0);
+      const total = moneyCents(totalEl.dataset.total) ?? 0n;
+      totalEl.textContent = formatAmount(total);
+      totalEl.classList.toggle('is-negative', total < 0n);
     }
 
     async function saveBalance() {
       if (balanceSave.disabled) return;
       balanceMsg.textContent = '';
       const amount = parseAmount(openingInput.value);
-      if (amount === '' || !Number.isFinite(Number(amount)) || Number(amount) < 0 || Number(amount) >= 1000000000000) {
+      const amountCents = moneyCents(amount);
+      if (amountCents === null || amount.startsWith('-') || amountCents >= MAX_OFFICE_CENTS) {
         balanceMsg.textContent = 'Enter a valid starting balance.';
         return;
       }
-      if (Number(amount) === persistedOpening) {
+      if (amountCents === persistedOpening) {
         restoreBalanceDisplay();
         return;
       }
@@ -803,7 +819,7 @@
         }
         renderTotals(data);
         // Only now is the new figure the persisted one.
-        persistedOpening = Number(data.opening);
+        persistedOpening = moneyCents(data.opening) ?? 0n;
         openingInput.value = formatAmount(data.opening).replace('\u20b9', '');
         showToast(`Starting balance set to ${formatAmount(data.opening)}`);
       } catch (err) {
@@ -817,16 +833,16 @@
     function previewOpening() {
       balanceMsg.textContent = '';
       const raw = parseAmount(openingInput.value);
-      if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0 || Number(raw) >= 1000000000000) {
+      const opening = moneyCents(raw);
+      if (opening === null || raw.startsWith('-') || opening >= MAX_OFFICE_CENTS) {
         restoreBalanceDisplay({ resetInput: false });
         return;
       }
-      const opening = Number(raw);
       // Show the effect straight away. openingEl.dataset.value is left on the
       // server value, because that is the baseline the next save compares to.
-      const total = opening + Number(cameEl.dataset.value || 0) - Number(takenEl.dataset.value || 0);
-      totalEl.textContent = formatAmount(total, { negative: total < 0 });
-      totalEl.classList.toggle('is-negative', total < 0);
+      const total = opening + (moneyCents(cameEl.dataset.value) ?? 0n) - (moneyCents(takenEl.dataset.value) ?? 0n);
+      totalEl.textContent = formatAmount(total);
+      totalEl.classList.toggle('is-negative', total < 0n);
       openingEl.textContent = formatAmount(opening);
     }
 

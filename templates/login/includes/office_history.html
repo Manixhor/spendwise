@@ -1,4 +1,4 @@
-{% load currency_filters %}
+{% load office_currency %}
     <section class="card office-history" id="officeHistorySection" aria-label="Recent entries">
       <div class="office-history-heading"><div><span class="office-section-kicker">02 / Review</span><h2>{% if office_search %}Search results{% else %}Recent entries{% endif %}</h2></div><span class="office-history-caption" data-total="{{ entries_page.paginator.count }}">{{ entries_page.paginator.count }} {% if entries_page.paginator.count == 1 %}entry{% else %}entries{% endif %}</span></div>
       <form class="office-search" method="get" action="{% url 'office' %}#officeHistorySection" role="search">
@@ -22,7 +22,7 @@
             </div>
             <span class="office-history-amount {{ entry.direction }}"
                   data-amount="{{ entry.signed_amount }}">
-              {% if entry.direction == "came" %}{{ entry.amount|currency_plus:"inr" }}{% else %}−{{ entry.amount|currency:"inr" }}{% endif %}
+              {% if entry.direction == "came" %}{{ entry.amount|office_currency_plus }}{% else %}−{{ entry.amount|office_currency }}{% endif %}
             </span>
             <button type="button" class="office-delete" title="Delete entry" aria-label="Delete entry">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
