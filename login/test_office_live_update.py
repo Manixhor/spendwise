@@ -116,6 +116,39 @@ class OfficeLiveUpdateTests(TestCase):
         self.assertIn("Mine", html)
         self.assertNotIn("Theirs", html)
 
+    def test_starting_balance_saves_without_a_button_or_modal(self):
+        """The bug: typing a new starting balance changed nothing on screen
+        until Save Balance was pressed and a modal confirmed it."""
+        html = self.client.get(reverse("office")).content.decode()
+        # Previews as you type, then persists on blur/debounce.
+        self.assertIn("previewOpening", html)
+        self.assertIn("scheduleOpeningSave", html)
+        # The totals it previews against.
+        self.assertIn("cameEl.dataset.value", html)
+        self.assertIn("takenEl.dataset.value", html)
+        # No modal in the way any more.
+        self.assertNotIn("officeBalanceDialog", html)
+        self.assertNotIn("balanceConfirm", html)
+
+    def test_setting_the_balance_by_api_still_moves_the_total(self):
+        response = self._add(direction="came", name="Ravi", amount="500")
+        self.assertEqual(response.status_code, 200)
+
+        balance = self.client.post(
+            reverse("api_office_set_balance"),
+            data=json.dumps({"amount": "100000"}),
+            content_type="application/json",
+        )
+        self.assertEqual(balance.status_code, 200)
+        data = balance.json()
+        self.assertEqual(data["opening"], "100000.00")
+        self.assertEqual(data["total"], "100500.00")
+
+        # The page the user is looking at agrees.
+        page = self.client.get(reverse("office"))
+        self.assertEqual(page.context["office_opening"], Decimal("100000.00"))
+        self.assertEqual(page.context["office_total"], Decimal("100500.00"))
+
     def test_recording_updates_totals_without_a_reload(self):
         self._add(direction="came", name="Ravi", amount="100")
         second = self._add(direction="taken", name="Anita", amount="30")

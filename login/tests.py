@@ -880,7 +880,12 @@ class OfficeMoneyFlowTests(TestCase):
             self.assertIn(f'id="{target}"', page)
         self.assertIn('Changing this value will recalculate the current balance', page)
         self.assertIn('Your existing entries and dates will stay the same', page)
-        self.assertIn('id="officeBalanceConfirm"', page)
+        # The starting balance previews and saves on its own now, so the
+        # confirmation modal that used to gate it is gone.
+        self.assertIn('Saved automatically', page)
+        self.assertIn('previewOpening', page)
+        self.assertIn("addEventListener('blur'", page)
+        self.assertNotIn('id="officeBalanceConfirm"', page)
         self.assertNotIn('href="/dashboard/"', page)
 
     def test_recent_entries_are_paginated_and_searchable(self):

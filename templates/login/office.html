@@ -48,7 +48,7 @@
                    value="{{ office_opening|indian_number }}"
                    aria-label="Starting balance" aria-describedby="officeBalanceNotice" />
           </div>
-          <p class="office-balance-notice" id="officeBalanceNotice" hidden>Changing this value will recalculate the current balance and summary. Existing entries will stay the same.</p>
+          <p class="office-balance-notice" id="officeBalanceNotice" hidden>Changing this value will recalculate the current balance and summary. Your existing entries and dates will stay the same. Saved automatically.</p>
           <button type="button" class="office-save" id="officeBalanceSave">Save Balance</button>
           <p class="office-error" id="officeBalanceMsg"></p>
         </div>
@@ -80,6 +80,14 @@
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
           Payment
         </p>
+        <div class="office-field">
+          <label class="office-field-label" for="officeTakenAmount">Amount</label>
+          <div class="office-amount-wrap">
+            <span class="office-rupee" aria-hidden="true">₹</span>
+            <input class="office-input office-amount-input" type="text" inputmode="decimal"
+                   autocomplete="off" id="officeTakenAmount" name="amount" placeholder="0.00" />
+          </div>
+        </div>
         <div class="office-field">
           <label class="office-field-label" for="officeTakenName">Name <span class="office-optional">Optional</span></label>
           <div class="office-name-wrap">
@@ -129,14 +137,6 @@
             <input type="hidden" id="officeTakenDate" name="entry_date" value="{{ today|date:'Y-m-d' }}" />
           </div>
         </div>
-        <div class="office-field">
-          <label class="office-field-label" for="officeTakenAmount">Amount</label>
-          <div class="office-amount-wrap">
-            <span class="office-rupee" aria-hidden="true">₹</span>
-            <input class="office-input office-amount-input" type="text" inputmode="decimal"
-                   autocomplete="off" id="officeTakenAmount" name="amount" placeholder="0.00" />
-          </div>
-        </div>
         <p class="office-error" id="officeTakenError"></p>
         <button type="submit" class="office-submit taken">Record payment</button>
       </form>
@@ -146,6 +146,14 @@
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           Receipt
         </p>
+        <div class="office-field">
+          <label class="office-field-label" for="officeCameAmount">Amount</label>
+          <div class="office-amount-wrap">
+            <span class="office-rupee" aria-hidden="true">₹</span>
+            <input class="office-input office-amount-input" type="text" inputmode="decimal"
+                   autocomplete="off" id="officeCameAmount" name="amount" placeholder="0.00" />
+          </div>
+        </div>
         <div class="office-field">
           <label class="office-field-label" for="officeCameName">Name <span class="office-optional">Optional</span></label>
           <div class="office-name-wrap">
@@ -195,14 +203,6 @@
             <input type="hidden" id="officeCameDate" name="entry_date" value="{{ today|date:'Y-m-d' }}" />
           </div>
         </div>
-        <div class="office-field">
-          <label class="office-field-label" for="officeCameAmount">Amount</label>
-          <div class="office-amount-wrap">
-            <span class="office-rupee" aria-hidden="true">₹</span>
-            <input class="office-input office-amount-input" type="text" inputmode="decimal"
-                   autocomplete="off" id="officeCameAmount" name="amount" placeholder="0.00" />
-          </div>
-        </div>
         <p class="office-error" id="officeCameError"></p>
         <button type="submit" class="office-submit came">Record receipt</button>
       </form>
@@ -215,17 +215,6 @@
 
 </div>
 
-<div class="office-balance-backdrop" id="officeBalanceDialog" hidden>
-  <div class="office-balance-dialog" role="alertdialog" aria-modal="true" aria-labelledby="officeBalanceDialogTitle" aria-describedby="officeBalanceDialogText">
-    <span class="office-dialog-kicker">Before you save</span>
-    <h2 id="officeBalanceDialogTitle">Change starting balance?</h2>
-    <p id="officeBalanceDialogText">This will recalculate the current balance and summary. Your existing entries and dates will stay the same.</p>
-    <div class="office-dialog-actions">
-      <button type="button" class="office-dialog-cancel" id="officeBalanceCancel">Cancel</button>
-      <button type="button" class="office-dialog-confirm" id="officeBalanceConfirm">Update balance</button>
-    </div>
-  </div>
-</div>
 
 <div class="office-toast" id="officeToast" role="status" aria-live="polite" hidden>
   <span class="office-toast-icon" id="officeToastIcon" aria-hidden="true"></span>
@@ -704,12 +693,12 @@
       });
     });
 
-    async function saveBalance() {
+    async function saveBalance({ quiet = false } = {}) {
       balanceMsg.textContent = '';
       balanceMsg.classList.remove('is-success');
       const amount = parseAmount(openingInput.value);
-      if (amount === '' || Number(amount) < 0) {
-        balanceMsg.textContent = 'Enter a valid starting balance.';
+      if (amount === '' || !Number.isFinite(Number(amount)) || Number(amount) < 0) {
+        if (!quiet) balanceMsg.textContent = 'Enter a valid starting balance.';
         return;
       }
       balanceSave.disabled = true;
@@ -723,6 +712,7 @@
         openingInput.value = formatAmount(data.opening).replace('\u20b9', '');
         balanceMsg.textContent = 'Balance saved.';
         balanceMsg.classList.add('is-success');
+        showToast(`Starting balance set to ${formatAmount(data.opening)}`);
       } catch (err) {
         balanceMsg.textContent = 'Network error. Try again.';
       } finally {
@@ -730,66 +720,82 @@
       }
     }
 
+    // The starting balance used to need a button press and then a modal
+    // confirmation, so typing a new number looked like it did nothing.
+    // It now previews live and saves itself once the typing pauses.
+    const savedOpening = () => Number(openingEl.dataset.value || 0);
+
+    function previewOpening() {
+      const raw = parseAmount(openingInput.value);
+      if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) return;
+      const opening = Number(raw);
+      if (opening === savedOpening()) return;
+      // Show the effect immediately; the server confirms it a moment later.
+      const total = opening + Number(cameEl.dataset.value || 0) - Number(takenEl.dataset.value || 0);
+      totalEl.textContent = formatAmount(total, { negative: total < 0 });
+      totalEl.classList.toggle('is-negative', total < 0);
+      totalEl.dataset.total = String(total);
+      openingEl.textContent = formatAmount(opening);
+      openingEl.dataset.value = raw;
+    }
+
+    let openingSaveTimer = null;
+    function scheduleOpeningSave() {
+      clearTimeout(openingSaveTimer);
+      openingSaveTimer = setTimeout(async () => {
+        const raw = parseAmount(openingInput.value);
+        if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) return;
+        if (Number(raw) === lastSavedOpening) return;
+        lastSavedOpening = Number(raw);
+        await saveBalance({ quiet: true });
+      }, 700);
+    }
+
+    let lastSavedOpening = savedOpening();
+    openingInput.addEventListener('input', () => { previewOpening(); scheduleOpeningSave(); });
+    openingInput.addEventListener('blur', async () => {
+      clearTimeout(openingSaveTimer);
+      const raw = parseAmount(openingInput.value);
+      if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) return;
+      if (Number(raw) === lastSavedOpening) return;
+      lastSavedOpening = Number(raw);
+      await saveBalance({ quiet: true });
+    });
+
     const balanceSave = document.getElementById('officeBalanceSave');
     const balanceNotice = document.getElementById('officeBalanceNotice');
-    const balanceDialog = document.getElementById('officeBalanceDialog');
-    const balanceCancel = document.getElementById('officeBalanceCancel');
-    const balanceConfirm = document.getElementById('officeBalanceConfirm');
     openingInput.addEventListener('focus', () => { balanceNotice.hidden = false; });
     openingInput.addEventListener('click', () => { balanceNotice.hidden = false; });
 
-    const closeBalanceDialog = () => {
-      balanceDialog.hidden = true;
-      document.body.classList.remove('office-modal-open');
-      balanceSave.focus();
-    };
-    const requestBalanceSave = () => {
+    // Saves straight away now, so there is no confirmation dialog to miss.
+    balanceSave.addEventListener('click', async () => {
       balanceMsg.textContent = '';
       balanceMsg.classList.remove('is-success');
       const amount = parseAmount(openingInput.value);
-      if (!amount || !Number.isFinite(Number(amount)) || Number(amount) < 0) {
+      if (amount === '' || !Number.isFinite(Number(amount)) || Number(amount) < 0) {
         balanceMsg.textContent = 'Enter a valid starting balance.';
         openingInput.focus();
         return;
       }
-      if (Number(amount) === Number(openingEl.dataset.value)) {
+      if (Number(amount) === lastSavedOpening) {
         balanceMsg.textContent = 'No changes to save.';
         balanceMsg.classList.add('is-success');
         return;
       }
-      balanceDialog.hidden = false;
-      document.body.classList.add('office-modal-open');
-      balanceCancel.focus();
-    };
-    balanceSave.addEventListener('click', requestBalanceSave);
-    balanceCancel.addEventListener('click', closeBalanceDialog);
-    balanceConfirm.addEventListener('click', async () => {
-      closeBalanceDialog();
+      clearTimeout(openingSaveTimer);
+      lastSavedOpening = Number(amount);
       await saveBalance();
-    });
-    balanceDialog.addEventListener('click', (event) => {
-      if (event.target === balanceDialog) closeBalanceDialog();
-    });
-    balanceDialog.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') { closeBalanceDialog(); return; }
-      if (event.key === 'Tab') {
-        if (event.shiftKey && document.activeElement === balanceCancel) {
-          event.preventDefault(); balanceConfirm.focus();
-        } else if (!event.shiftKey && document.activeElement === balanceConfirm) {
-          event.preventDefault(); balanceCancel.focus();
-        }
-      }
     });
 
     // Enter saves the balance or moves through entry fields.
     const FLOW = [
       openingInput,
+      document.getElementById('officeTakenAmount'),
       document.getElementById('officeTakenName'),
       document.getElementById('officeTakenDateBtn'),
-      document.getElementById('officeTakenAmount'),
+      document.getElementById('officeCameAmount'),
       document.getElementById('officeCameName'),
       document.getElementById('officeCameDateBtn'),
-      document.getElementById('officeCameAmount'),
     ].filter(Boolean);
 
     FLOW.forEach((input, index) => {
@@ -797,7 +803,19 @@
         if (event.key !== 'Enter' || event.shiftKey) return;
         if (input.classList.contains('office-date-trigger')) return;
         event.preventDefault();
-        if (input === openingInput) { requestBalanceSave(); return; }
+        if (input === openingInput) {
+          clearTimeout(openingSaveTimer);
+          const raw = parseAmount(openingInput.value);
+          if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) {
+            balanceMsg.textContent = 'Enter a valid starting balance.';
+            return;
+          }
+          if (Number(raw) !== lastSavedOpening) {
+            lastSavedOpening = Number(raw);
+            saveBalance();
+          }
+          return;
+        }
 
         const next = FLOW[index + 1];
         if (next) {
