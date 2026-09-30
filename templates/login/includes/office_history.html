@@ -1,9 +1,30 @@
 {% load office_currency %}
     <section class="card office-history" id="officeHistorySection" aria-label="Recent entries">
-      <div class="office-history-heading"><div><span class="office-section-kicker">02 / Review</span><h2>{% if office_search %}Search results{% else %}Recent entries{% endif %}</h2></div><span class="office-history-caption" data-total="{{ entries_page.paginator.count }}">{{ entries_page.paginator.count }} {% if entries_page.paginator.count == 1 %}entry{% else %}entries{% endif %}</span></div>
+      <div class="office-history-heading"><div><span class="office-section-kicker">02 / Review</span><h2>{% if office_search or office_date %}Search results{% else %}Recent entries{% endif %}</h2></div><span class="office-history-caption" data-total="{{ entries_page.paginator.count }}">{{ entries_page.paginator.count }} {% if entries_page.paginator.count == 1 %}entry{% else %}entries{% endif %}</span></div>
       <form class="office-search" method="get" action="{% url 'office' %}#officeHistorySection" role="search">
         <label for="officeSearchInput">Find an entry</label>
-        <div class="office-search-row"><input id="officeSearchInput" name="q" type="search" value="{{ office_search }}" placeholder="Search name, date, or amount" autocomplete="off" /><button type="submit">Search</button><button type="button" class="office-clear-search" id="officeClearSearch"{% if not office_search and not office_direction %} hidden{% endif %}>Clear</button></div>
+        <div class="office-search-row"><input id="officeSearchInput" name="q" type="search" value="{{ office_search }}" placeholder="Search name or amount" autocomplete="off" /><button type="submit">Search</button><button type="button" class="office-clear-search" id="officeClearSearch"{% if not office_search and not office_date and not office_direction %} hidden{% endif %}>Clear</button></div>
+        <div class="office-date-filter">
+          <label for="officeDateFilterBtn">Filter by date</label>
+          <div class="office-date" data-date-for="officeDateFilter">
+            <button type="button" class="office-date-trigger" id="officeDateFilterBtn" aria-haspopup="dialog" aria-expanded="false">
+              <svg class="office-date-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              <span class="office-date-text">{% if office_date %}{{ office_date }}{% else %}Any date{% endif %}</span>
+              <svg class="office-date-caret" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="office-cal" role="dialog" aria-label="Filter entries by date" hidden>
+              <div class="office-cal-head">
+                <button type="button" class="office-cal-nav" data-step="-1" aria-label="Previous month"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <span class="office-cal-title"></span>
+                <button type="button" class="office-cal-nav" data-step="1" aria-label="Next month" disabled><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
+              <div class="office-cal-dow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+              <div class="office-cal-grid"></div>
+              <div class="office-cal-foot"><button type="button" class="office-cal-today">Today</button><button type="button" class="office-cal-clear">Any date</button></div>
+            </div>
+            <input type="hidden" id="officeDateFilter" name="date" value="{{ office_date }}" />
+          </div>
+        </div>
       </form>
       <div class="office-filter-row" role="group" aria-label="Filter by direction">
         <button type="button" data-office-filter=""{% if not office_direction %} class="is-active" aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>All</button>
@@ -29,12 +50,13 @@
             </button>
           </li>
         {% empty %}
-          <li class="office-empty" id="officeHistoryEmpty">{% if office_search %}No matching entries.{% else %}No entries yet.{% endif %}</li>
+          <li class="office-empty" id="officeHistoryEmpty">{% if office_search or office_date or office_direction %}No matching entries.{% else %}No entries yet.{% endif %}</li>
         {% endfor %}
       </ul>
       {% if entries_page.has_other_pages %}
       <form class="office-pagination" method="get" action="{% url 'office' %}#officeHistorySection">
         <input type="hidden" name="q" value="{{ office_search }}" />
+        <input type="hidden" name="date" value="{{ office_date }}" />
         <input type="hidden" name="dir" value="{{ office_direction }}" />
         {% if entries_page.has_previous %}<button type="submit" name="page" value="{{ entries_page.previous_page_number }}" rel="prev">Previous</button>{% endif %}
         <span>Page {{ entries_page.number }} of {{ entries_page.paginator.num_pages }}</span>

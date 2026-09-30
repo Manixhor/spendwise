@@ -6,6 +6,7 @@ to redraw the page without a reload.
 """
 
 import json
+from datetime import date
 from decimal import Decimal
 
 from django.contrib.auth.models import User
@@ -207,6 +208,50 @@ class OfficeLiveUpdateTests(TestCase):
         self.assertIn("Received", html)
         # "Paid" is also a filter button label, so check the row data itself.
         self.assertNotIn('data-direction="taken"', html)
+
+    def test_date_filter_combines_with_search_and_direction(self):
+        for name, direction, entry_date in [
+            ("Ravi", "came", date(2026, 9, 29)),
+            ("Ravi", "taken", date(2026, 9, 29)),
+            ("Ravi", "came", date(2026, 9, 30)),
+            ("Anita", "came", date(2026, 9, 29)),
+        ]:
+            OfficeEntry.objects.create(
+                user=self.user, direction=direction, amount="10",
+                name=name, entry_date=entry_date,
+            )
+        url = reverse("office_history_fragment")
+        dated = self.client.get(url, {"date": "2026-09-29"}).content.decode()
+        self.assertEqual(dated.count("office-history-row"), 3)
+        self.assertIn('type="hidden" id="officeDateFilter" name="date" value="2026-09-29"', dated)
+        self.assertIn('id="officeDateFilterBtn" aria-haspopup="dialog"', dated)
+        self.assertIn('class="office-cal-clear">Any date</button>', dated)
+        self.assertIn("Search results", dated)
+
+        combined = self.client.get(url, {
+            "date": "2026-09-29", "q": "Ravi", "dir": "came",
+        }).content.decode()
+        self.assertEqual(combined.count("office-history-row"), 1)
+        self.assertIn('data-direction="came"', combined)
+        self.assertNotIn('data-direction="taken"', combined)
+
+    def test_date_filter_is_kept_for_pagination(self):
+        for i in range(10):
+            OfficeEntry.objects.create(
+                user=self.user, direction="came", amount="10",
+                name=f"Dated{i}", entry_date=date(2026, 9, 29),
+            )
+        OfficeEntry.objects.create(
+            user=self.user, direction="came", amount="10",
+            name="Other day", entry_date=date(2026, 9, 30),
+        )
+        html = self.client.get(reverse("office_history_fragment"), {
+            "date": "2026-09-29", "page": 2,
+        }).content.decode()
+        self.assertEqual(html.count("office-history-row"), 2)
+        self.assertIn('type="hidden" name="date" value="2026-09-29"', html)
+        self.assertIn("Page 2 of 2", html)
+        self.assertNotIn("Other day", html)
 
     def test_search_shows_the_eight_most_recent_matches(self):
         for i in range(12):

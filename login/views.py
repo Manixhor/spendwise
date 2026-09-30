@@ -2680,7 +2680,7 @@ OFFICE_DIRECTIONS = {"came", "taken"}
 
 
 def _office_entries_page(
-    active_entries, raw_search: str, raw_page: str | None, raw_direction: str = ""
+    active_entries, raw_search: str, raw_page: str | None, raw_direction: str = "", raw_date: str = ""
 ):
     """Filter, then paginate the live office entries.
 
@@ -2691,9 +2691,15 @@ def _office_entries_page(
     direction = (raw_direction or "").strip().lower()
     if direction not in OFFICE_DIRECTIONS:
         direction = ""
+    try:
+        selected_date = date.fromisoformat(raw_date).isoformat() if raw_date else ""
+    except (TypeError, ValueError):
+        selected_date = ""
     visible_entries = active_entries
     if direction:
         visible_entries = visible_entries.filter(direction=direction)
+    if selected_date:
+        visible_entries = visible_entries.filter(entry_date=selected_date)
     if search:
         criteria = Q(name__icontains=search) | Q(note__icontains=search)
         try:
@@ -2711,7 +2717,7 @@ def _office_entries_page(
         if search.lower() in ("paid", "payment", "out"):
             criteria |= Q(direction="taken")
         visible_entries = visible_entries.filter(criteria)
-    return Paginator(visible_entries, OFFICE_PAGE_SIZE).get_page(raw_page), search, direction
+    return Paginator(visible_entries, OFFICE_PAGE_SIZE).get_page(raw_page), search, direction, selected_date
 
 
 @login_required(login_url="/login/")
@@ -2719,11 +2725,12 @@ def office(request: HttpRequest) -> HttpResponse:
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     totals = _office_totals(request.user)
     active_entries = OfficeEntry.objects.filter(user=request.user, deleted_at__isnull=True)
-    entries_page, search, direction = _office_entries_page(
+    entries_page, search, direction, selected_date = _office_entries_page(
         active_entries,
         request.GET.get("q", ""),
         request.GET.get("page"),
         request.GET.get("dir", ""),
+        request.GET.get("date", ""),
     )
     name_counts: dict[str, int] = {}
     for entry in active_entries.only("name"):
@@ -2749,6 +2756,7 @@ def office(request: HttpRequest) -> HttpResponse:
             "entries_page": entries_page,
             "office_search": search,
             "office_direction": direction,
+            "office_date": selected_date,
             "name_suggestions": name_suggestions[:50],
             "office_opening": totals["opening"],
             "office_came_total": totals["came_total"],
@@ -2768,11 +2776,12 @@ def office_history_fragment(request: HttpRequest) -> HttpResponse:
     entry lands.
     """
     active_entries = OfficeEntry.objects.filter(user=request.user, deleted_at__isnull=True)
-    entries_page, search, direction = _office_entries_page(
+    entries_page, search, direction, selected_date = _office_entries_page(
         active_entries,
         request.GET.get("q", ""),
         request.GET.get("page"),
         request.GET.get("dir", ""),
+        request.GET.get("date", ""),
     )
     return render(
         request,
@@ -2781,6 +2790,7 @@ def office_history_fragment(request: HttpRequest) -> HttpResponse:
             "entries_page": entries_page,
             "office_search": search,
             "office_direction": direction,
+            "office_date": selected_date,
         },
     )
 

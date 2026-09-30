@@ -149,6 +149,9 @@ p, h1, h2 { margin: 0; }
 .office-search-row { display: flex; gap: 8px; }
 .office-search-row input { flex: 1; min-width: 0; min-height: 44px; padding: 9px 12px; border: 1px solid #dfe6db; border-radius: 9px; outline: none; background: #fbfcf9; color: var(--ink); font-size: 17px; }
 .office-search-row input:focus { border-color: #6c9d77; box-shadow: 0 0 0 3px #e0eedf; }
+.office-date-filter { display: grid; gap: 7px; margin-top: 5px; }
+.office-date-filter .office-date { width: min(100%, 230px); }
+.office-date-filter .office-date-trigger { min-height: 44px; font-size: 16px; }
 .office-search-row button, .office-pagination button { min-height: 44px; padding: 9px 15px; border: 1px solid #dce6db; border-radius: 9px; background: #f4f8f1; color: #315f50; font-size: 12px; font-weight: 750; }
 .office-search-row button[type="submit"] { border-color: #315f50; background: #315f50; color: #fff; }
 .office-filter-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 0 4px; }
@@ -242,6 +245,8 @@ p, h1, h2 { margin: 0; }
 .office-cal-day:disabled { opacity: .25; cursor: default; }
 .office-cal-foot { margin-top: 9px; padding-top: 10px; border-top: 1px solid #e7ebe4; }
 .office-cal-today { width: 100%; padding: 8px; border: 0; border-radius: 8px; background: #f3f7f0; color: #315f50; font-size: 12px; font-weight: 750; }
+.office-cal-clear { width: 100%; margin-top: 6px; padding: 8px; border: 0; border-radius: 8px; background: transparent; color: #66746b; font-size: 12px; font-weight: 750; }
+.office-cal-clear:hover { background: #f3f7f0; }
 
 /* ── Mobile-first layout ───────────────────────────────────
    Everything above is the phone layout. These blocks only add

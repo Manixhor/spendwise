@@ -497,8 +497,10 @@
     // because there was no existing row to clone.
     const historySection = document.getElementById('officeHistorySection');
     const searchInput = document.getElementById('officeSearchInput');
+    const dateInput = document.getElementById('officeDateFilter');
     const clearSearchButton = document.getElementById('officeClearSearch');
     const typedSearch = () => (searchInput?.value || '').trim();
+    const selectedDate = () => dateInput?.value || '';
     const shownPage = () => new URLSearchParams(window.location.search).get('page');
     const shownDirection = () => new URLSearchParams(window.location.search).get('dir') || '';
     let historyToken = 0;
@@ -516,18 +518,20 @@
     }
 
     function syncSearchChrome(query) {
-      if (clearSearchButton) clearSearchButton.hidden = !query && !shownDirection();
+      if (clearSearchButton) clearSearchButton.hidden = !query && !selectedDate() && !shownDirection();
       if (searchInput) searchInput.setAttribute('aria-busy', 'true');
     }
 
-    function rememberInUrl(query, page, direction) {
+    function rememberInUrl(query, page, direction, entryDate) {
       const url = new URL(window.location.href);
       url.searchParams.delete('q');
       url.searchParams.delete('page');
       url.searchParams.delete('dir');
+      url.searchParams.delete('date');
       if (query) url.searchParams.set('q', query);
       if (page) url.searchParams.set('page', page);
       if (direction) url.searchParams.set('dir', direction);
+      if (entryDate) url.searchParams.set('date', entryDate);
       // Replace, not push: typing should not fill the back button.
       window.history.replaceState(null, '', url);
     }
@@ -536,6 +540,7 @@
       query = typedSearch(),
       page = null,
       direction = shownDirection(),
+      entryDate = selectedDate(),
       pushUrl = true,
     } = {}) {
       const token = ++historyToken;
@@ -543,6 +548,7 @@
       if (query) url.searchParams.set('q', query);
       if (page) url.searchParams.set('page', page);
       if (direction) url.searchParams.set('dir', direction);
+      if (entryDate) url.searchParams.set('date', entryDate);
 
       const response = await fetch(url.toString(), {
         credentials: 'same-origin',
@@ -557,9 +563,9 @@
       if (token !== historyToken) return;
 
       swapHistory(fresh);
-      if (clearSearchButton) clearSearchButton.hidden = !query && !direction;
+      if (clearSearchButton) clearSearchButton.hidden = !query && !entryDate && !direction;
       if (searchInput) searchInput.removeAttribute('aria-busy');
-      if (pushUrl) rememberInUrl(query, page, direction);
+      if (pushUrl) rememberInUrl(query, page, direction, entryDate);
     }
 
     // Filtering as you type, and neither Enter nor the Search button reloads
@@ -578,6 +584,10 @@
         searchTimer = setTimeout(() => runSearch(typedSearch()), 250);
       });
     }
+    dateInput?.addEventListener('change', () => {
+      clearTimeout(searchTimer);
+      renderHistory({ page: null }).catch(() => { window.location.reload(); });
+    });
 
     // Falls back to a normal GET submit when scripting is unavailable.
     historySection.querySelector('.office-search')?.addEventListener('submit', (event) => {
@@ -922,7 +932,7 @@
       wrap.officeCalendar = cal;
       document.body.append(cal);
 
-      let view = new Date(`${hidden.value}T00:00:00`);
+      let view = new Date(`${hidden.value || iso(new Date())}T00:00:00`);
 
       // The popover is position:fixed so it escapes the form card's
       // overflow:hidden. Anchor it to the trigger, flipping above when the
@@ -1019,7 +1029,7 @@
 
       const open = () => {
         closeAllPickers(wrap);
-        view = new Date(`${hidden.value}T00:00:00`);
+        view = new Date(`${hidden.value || iso(new Date())}T00:00:00`);
         render();
         cal.hidden = false;
         wrap.classList.add('is-open');
@@ -1050,10 +1060,11 @@
 
       const pick = (value) => {
         hidden.value = value;
-        label.textContent = labelFor(value);
+        label.textContent = value ? labelFor(value) : 'Any date';
         render();
         close();
         trigger.focus();
+        hidden.dispatchEvent(new Event('change', { bubbles: true }));
       };
 
       trigger.addEventListener('click', () => {
@@ -1072,6 +1083,7 @@
       cal.querySelector('.office-cal-today').addEventListener('click', () => {
         pick(iso(new Date()));
       });
+      cal.querySelector('.office-cal-clear')?.addEventListener('click', () => pick(''));
 
       grid.addEventListener('click', (event) => {
         const cell = event.target.closest('.office-cal-day');
@@ -1090,7 +1102,7 @@
         }
       });
 
-      label.textContent = labelFor(hidden.value);
+      label.textContent = hidden.value ? labelFor(hidden.value) : 'Any date';
     });
 
     const entryUrl = (action, id) => {
@@ -1152,7 +1164,10 @@
       event.preventDefault();
       clearTimeout(searchTimer);
       if (searchInput) searchInput.value = '';
-      renderHistory({ query: '', page: null, direction: '' }).catch(() => {
+      if (dateInput) dateInput.value = '';
+      const dateWrap = dateInput?.closest('.office-date');
+      if (dateWrap) dateWrap.querySelector('.office-date-text').textContent = 'Any date';
+      renderHistory({ query: '', page: null, direction: '', entryDate: '' }).catch(() => {
         window.location.reload();
       });
       searchInput?.focus();
