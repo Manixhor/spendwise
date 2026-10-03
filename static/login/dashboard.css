@@ -2412,6 +2412,15 @@ body[data-theme="dark"] .txn-icon.lend {
 }
 
 /* ── Small mobile (≤390px) ──────────────────────────────── */
+@media (max-width: 480px) {
+  .sidebar { padding-right: 8px; padding-left: 8px; }
+  .avatar-wrap { margin-right: 4px; }
+  .nav-icons { min-width: 0; justify-content: space-around; }
+  .nav-icon { width: clamp(28px, 8.5vw, 38px); }
+  .sidebar-theme { margin-left: 4px; gap: 0; padding: 3px; }
+  .theme-btn { width: 30px; height: 30px; }
+}
+
 @media (max-width: 390px) {
   .main {
     padding: 12px 10px 16px;

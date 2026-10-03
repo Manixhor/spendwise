@@ -2732,6 +2732,12 @@ def office(request: HttpRequest) -> HttpResponse:
         request.GET.get("dir", ""),
         request.GET.get("date", ""),
     )
+    deleted_entries = OfficeEntry.objects.filter(
+        user=request.user, deleted_at__isnull=False
+    ).order_by("-deleted_at", "-id")
+    deleted_page = Paginator(deleted_entries, OFFICE_PAGE_SIZE).get_page(
+        request.GET.get("deleted_page")
+    )
     name_counts: dict[str, int] = {}
     for entry in active_entries.only("name"):
         key = entry.name.strip()
@@ -2754,6 +2760,7 @@ def office(request: HttpRequest) -> HttpResponse:
             "app_description": "Office money tracker.",
             "today": date.today(),
             "entries_page": entries_page,
+            "deleted_page": deleted_page,
             "office_search": search,
             "office_direction": direction,
             "office_date": selected_date,

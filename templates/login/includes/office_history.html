@@ -45,6 +45,7 @@
                   data-amount="{{ entry.signed_amount }}">
               {% if entry.direction == "came" %}{{ entry.amount|office_currency_plus }}{% else %}−{{ entry.amount|office_currency }}{% endif %}
             </span>
+            <button type="button" class="office-edit" aria-label="Edit entry" title="Edit entry">Edit</button>
             <button type="button" class="office-delete" title="Delete entry" aria-label="Delete entry">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>

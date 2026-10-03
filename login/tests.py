@@ -896,11 +896,12 @@ class OfficeMoneyFlowTests(TestCase):
         )
         self.assertEqual(office_currency_plus(Decimal('0.20')), '+₹0.20')
 
-    def test_office_navigation_and_balance_controls_are_self_contained(self):
+    def test_office_back_link_and_balance_controls_are_self_contained(self):
         page = self.client.get(reverse('office')).content.decode()
         for target in ('officeOverview', 'officeEntry', 'officeHistorySection'):
-            self.assertIn(f'data-office-target="{target}"', page)
             self.assertIn(f'id="{target}"', page)
+        self.assertIn('aria-label="Back to SpendWise"', page)
+        self.assertNotIn('class="office-sidebar"', page)
         self.assertNotIn('officeBalanceNotice', page)
         self.assertIn('id="officeBalanceSave"', page)
         # The starting balance previews as you type, but only Save Balance
@@ -917,7 +918,7 @@ class OfficeMoneyFlowTests(TestCase):
         self.assertIn('id="officeDeleteName"', page)
         self.assertIn('You can undo the deletion for 10 seconds.', page)
         self.assertNotIn('scheduleOpeningSave', page)
-        self.assertNotIn('href="/dashboard/"', page)
+        self.assertIn('href="/dashboard/"', page)
 
     def test_recent_entries_are_paginated_and_searchable(self):
         for i in range(28):
@@ -940,7 +941,7 @@ class OfficeMoneyFlowTests(TestCase):
         self.assertEqual(found.context['entries_page'].paginator.count, 1)
         self.assertEqual(found.context['entries_page'][0].name, 'Needle')
 
-    def test_deleted_and_older_entries_are_hidden_from_the_page(self):
+    def test_deleted_entries_leave_history_but_can_be_restored(self):
         keep = self._add(direction='came', name='Visible', amount='100')
         self.assertEqual(keep.status_code, 200)
         entry = OfficeEntry.objects.get(user=self.user)
@@ -954,10 +955,11 @@ class OfficeMoneyFlowTests(TestCase):
         page = self.client.get(reverse('office'))
         self.assertEqual(page.context['entries_page'].paginator.count, 0)
         markup = page.content.decode()
-        # No archive/trash sections, and the soft-deleted row is not rendered.
-        self.assertNotIn('officeArchiveSection', markup)
-        self.assertNotIn('officeTrash', markup)
-        self.assertNotIn('Visible', markup)
+        # The deleted entry leaves active history but remains available to restore.
+        self.assertIn('id="officeDeleted"', markup)
+        self.assertIn('Visible', markup)
+        self.assertIn('class="office-restore">Restore</button>', markup)
+        self.assertNotIn('class="office-history-row"', markup)
         # Totals still exclude it.
         self.assertEqual(page.context['office_total'], Decimal('0.00'))
 
@@ -1008,7 +1010,7 @@ class OfficeMoneyFlowTests(TestCase):
         ).group(1)
         self.assertNotIn('Ravi', payload)
         self.assertIn('Ravi', after.content.decode())
-        self.assertNotIn('office-edit', after.content.decode())
+        self.assertIn('class="office-edit"', after.content.decode())
 
     def test_dismissed_suggestion_is_saved_per_account(self):
         self._add(direction='came', name='Ravi', amount='25')
@@ -1184,7 +1186,7 @@ class OfficeMoneyFlowTests(TestCase):
         page = self.client.get(reverse('office')).content.decode()
         self.assertIn('No name', page)
 
-    def test_office_stays_separate_from_spendwise_and_hides_its_nav(self):
+    def test_office_stays_separate_from_spendwise_with_back_navigation(self):
         self.client.post(
             reverse('api_office_set_balance'),
             data=json.dumps({'amount': '500'}),
@@ -1197,13 +1199,15 @@ class OfficeMoneyFlowTests(TestCase):
         dashboard = self.client.get(reverse('dashboard')).content.decode()
         self.assertNotIn('Ravi', dashboard)
 
-        # And the office page keeps the other app sections out of its nav.
+        # Office has a back link, while its ledger stays separate.
         office_page = self.client.get(reverse('office')).content.decode()
-        for url in ('dashboard', 'monthly', 'lend', 'savings'):
+        self.assertIn('href="/dashboard/"', office_page)
+        for url in ('monthly', 'lend', 'savings'):
             self.assertNotIn(f'href="/{url}/"', office_page)
         # ...while a normal page still shows all of them.
         for url in ('dashboard', 'monthly', 'lend', 'savings'):
             self.assertIn(f'href="/{url}/"', dashboard)
+        self.assertIn('href="/office/"', dashboard)
 
     def test_entry_deletion_is_scoped_to_the_owner(self):
         self._add(direction='came', name='Ravi', amount='200')

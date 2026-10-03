@@ -11,19 +11,13 @@
 </head>
 <body class="office-page">
 <div class="office-shell">
-  <aside class="office-sidebar" aria-label="Office sections" hidden>
-    <div class="office-sidebar-brand"><span class="office-brand-mark" aria-hidden="true">O</span><span class="office-brand-copy"><strong>Office</strong><small>Private ledger</small></span></div>
-    <p class="office-nav-heading">Workspace</p>
-    <nav class="office-nav" aria-label="Office navigation">
-      <button type="button" class="office-nav-button is-active" data-office-target="officeOverview" aria-current="page"><span class="office-nav-icon" aria-hidden="true">◫</span><span class="office-nav-text">Overview</span></button>
-      <button type="button" class="office-nav-button" data-office-target="officeEntry"><span class="office-nav-icon" aria-hidden="true">＋</span><span class="office-nav-text">New entry</span></button>
-      <button type="button" class="office-nav-button" data-office-target="officeHistorySection"><span class="office-nav-icon" aria-hidden="true">≡</span><span class="office-nav-text">History</span></button>
-    </nav>
-    <p class="office-sidebar-footer">Office workspace</p>
-  </aside>
   <main class="office-main">
     <header class="main-header">
       <div>
+        <a class="office-back" href="{% url 'dashboard' %}" aria-label="Back to SpendWise">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg>
+          <span>SpendWise</span>
+        </a>
         <p class="office-eyebrow">Private workspace <span aria-hidden="true">/</span> Ledger</p>
         <h1 class="welcome">Office</h1>
       </div>
@@ -202,6 +196,32 @@
     {{ name_suggestions|json_script:"officeNameSuggestions" }}
 
     {% include "login/includes/office_history.html" %}
+    <details class="card office-deleted" id="officeDeleted"{% if request.GET.deleted_page %} open{% endif %}>
+      <summary>Deleted entries <span>{{ deleted_page.paginator.count }}</span></summary>
+      <p class="office-deleted-hint">Restore an entry to return it to history and include it in the balance again.</p>
+      <ul class="office-deleted-list">
+        {% for entry in deleted_page %}
+          <li class="office-deleted-row" data-id="{{ entry.id }}">
+            <div><strong>{{ entry.name|default:"No name" }}</strong><small>{% if entry.direction == "came" %}Received{% else %}Paid{% endif %} · {{ entry.entry_date|date:"d M Y" }}</small></div>
+            <span>{% if entry.direction == "came" %}{{ entry.amount|office_currency_plus }}{% else %}−{{ entry.amount|office_currency }}{% endif %}</span>
+            <button type="button" class="office-restore">Restore</button>
+          </li>
+        {% empty %}
+          <li class="office-empty">No deleted entries.</li>
+        {% endfor %}
+      </ul>
+      {% if deleted_page.has_other_pages %}
+        <form class="office-pagination" method="get" action="{% url 'office' %}#officeDeleted">
+          <input type="hidden" name="q" value="{{ office_search }}" />
+          <input type="hidden" name="date" value="{{ office_date }}" />
+          <input type="hidden" name="dir" value="{{ office_direction }}" />
+          <input type="hidden" name="page" value="{{ entries_page.number }}" />
+          {% if deleted_page.has_previous %}<button type="submit" name="deleted_page" value="{{ deleted_page.previous_page_number }}">Previous</button>{% endif %}
+          <span>Page {{ deleted_page.number }} of {{ deleted_page.paginator.num_pages }}</span>
+          {% if deleted_page.has_next %}<button type="submit" name="deleted_page" value="{{ deleted_page.next_page_number }}">Next</button>{% endif %}
+        </form>
+      {% endif %}
+    </details>
   </main>
 
 </div>
@@ -223,6 +243,24 @@
       <button type="submit" value="confirm" class="office-dialog-confirm">Confirm change</button>
     </form>
   </div>
+</dialog>
+
+<dialog class="office-confirm-dialog office-edit-dialog" id="officeEditDialog" aria-labelledby="officeEditTitle">
+  <form class="office-dialog-inner office-edit-form" id="officeEditForm">
+    <span class="office-dialog-kicker">Entry details</span>
+    <h2 id="officeEditTitle">Edit entry</h2>
+    <div class="office-edit-fields">
+      <label>Type<select name="direction" required><option value="came">Received</option><option value="taken">Paid</option></select></label>
+      <label>Name <span class="office-optional">Optional</span><input name="name" type="text" maxlength="80" autocomplete="off" /></label>
+      <label>Amount<input name="amount" type="text" inputmode="decimal" required /></label>
+      <label>Date<input name="entry_date" type="date" required /></label>
+    </div>
+    <p class="office-error" id="officeEditError" role="alert"></p>
+    <div class="office-dialog-actions">
+      <button type="button" class="office-dialog-cancel" id="officeEditCancel">Cancel</button>
+      <button type="submit" class="office-dialog-confirm">Save changes</button>
+    </div>
+  </form>
 </dialog>
 
 <dialog class="office-confirm-dialog office-delete-dialog" id="officeDeleteConfirm" aria-labelledby="officeDeleteTitle" aria-describedby="officeDeleteDescription">
@@ -258,26 +296,6 @@
     const takenEl = document.getElementById('officeTaken');
     const openingInput = document.getElementById('officeOpeningInput');
     const balanceMsg = document.getElementById('officeBalanceMsg');
-
-    const navButtons = [...document.querySelectorAll('.office-nav-button')];
-    const setActiveNav = (active) => navButtons.forEach((button) => {
-      const selected = button === active;
-      button.classList.toggle('is-active', selected);
-      if (selected) button.setAttribute('aria-current', 'page');
-      else button.removeAttribute('aria-current');
-    });
-    navButtons.forEach((button) => button.addEventListener('click', () => {
-      const target = document.getElementById(button.dataset.officeTarget);
-      if (!target) return;
-      setActiveNav(button);
-      target.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-    }));
-    window.addEventListener('scroll', () => {
-      const current = [...navButtons].reverse().find((button) =>
-        document.getElementById(button.dataset.officeTarget)?.getBoundingClientRect().top <= window.innerHeight * 0.38
-      );
-      if (current) setActiveNav(current);
-    }, { passive: true });
 
     // Indian numbering: 12,34,567.89
     const indianGroup = (intPart) => {
@@ -1108,12 +1126,44 @@
     const entryUrl = (action, id) => {
       const routes = {
         delete: "{% url 'api_office_delete_entry' entry_id=0 %}",
+        edit: "{% url 'api_office_edit_entry' entry_id=0 %}",
         restore: "{% url 'api_office_restore_entry' entry_id=0 %}",
       };
       return routes[action].replace('/0/', `/${id}/`);
     };
 
     const undoKey = 'office-undo-{{ user.pk }}';
+    const editDialog = document.getElementById('officeEditDialog');
+    const editForm = document.getElementById('officeEditForm');
+    const editError = document.getElementById('officeEditError');
+    document.getElementById('officeEditCancel').addEventListener('click', () => editDialog.close());
+    editDialog.addEventListener('close', () => { editError.textContent = ''; });
+    editForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      editError.textContent = '';
+      const formData = new FormData(editForm);
+      const amount = parseAmount(formData.get('amount'));
+      const cents = moneyCents(amount);
+      if (cents === null || cents <= 0n || cents >= MAX_OFFICE_CENTS) {
+        editError.textContent = 'Enter a valid amount greater than 0.';
+        return;
+      }
+      const saveButton = editForm.querySelector('button[type="submit"]');
+      saveButton.disabled = true;
+      try {
+        const { ok, data } = await post(entryUrl('edit', editForm.dataset.entryId), {
+          direction: formData.get('direction'),
+          name: String(formData.get('name') || '').trim(),
+          amount,
+          entry_date: formData.get('entry_date'),
+        });
+        if (!ok) throw new Error(data.error || 'Could not save this entry.');
+        window.location.reload();
+      } catch (error) {
+        editError.textContent = error.message || 'Could not save this entry.';
+        saveButton.disabled = false;
+      }
+    });
     const deleteDialog = document.getElementById('officeDeleteConfirm');
     const deleteType = document.getElementById('officeDeleteType');
     const deleteName = document.getElementById('officeDeleteName');
@@ -1173,8 +1223,36 @@
       searchInput?.focus();
     });
     document.addEventListener('click', async (event) => {
+      const deletedRow = event.target.closest('.office-deleted-row[data-id]');
+      const deletedRestore = event.target.closest('.office-deleted-row .office-restore');
+      if (deletedRow && deletedRestore) {
+        deletedRestore.disabled = true;
+        try {
+          const { ok, data } = await post(entryUrl('restore', deletedRow.dataset.id), {});
+          if (!ok) throw new Error(data.error || 'Could not restore this entry.');
+          const url = new URL(window.location.href);
+          url.searchParams.set('deleted_page', '1');
+          url.hash = 'officeDeleted';
+          window.location.assign(url);
+        } catch (error) {
+          deletedRestore.disabled = false;
+          alert(error.message || 'Could not restore this entry.');
+        }
+        return;
+      }
       const row = event.target.closest('.office-history-row[data-id]');
       if (!row) return;
+      const editButton = event.target.closest('.office-edit');
+      if (editButton) {
+        editForm.dataset.entryId = row.dataset.id;
+        editForm.elements.namedItem('direction').value = row.dataset.direction;
+        editForm.elements.namedItem('name').value = row.dataset.name || '';
+        editForm.elements.namedItem('amount').value = row.dataset.amount || '';
+        editForm.elements.namedItem('entry_date').value = row.dataset.entryDate || '';
+        editError.textContent = '';
+        editDialog.showModal();
+        return;
+      }
       const restoreButton = event.target.closest('.office-restore');
       if (restoreButton) {
         restoreButton.disabled = true;

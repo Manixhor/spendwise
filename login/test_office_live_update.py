@@ -12,6 +12,7 @@ from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from .models import OfficeEntry
 
@@ -66,6 +67,13 @@ class OfficeLiveUpdateTests(TestCase):
         )
         self.assertNotIn("buildHistoryRow", html)
         self.assertNotIn("HISTORY_ROW_TEMPLATE", html)
+
+    def test_spendwise_menu_opens_office_and_office_has_back_link(self):
+        dashboard = self.client.get(reverse("dashboard")).content.decode()
+        office = self.client.get(reverse("office")).content.decode()
+        self.assertIn('href="/office/" class="nav-icon" aria-label="Office"', dashboard)
+        self.assertIn('href="/dashboard/" aria-label="Back to SpendWise"', office)
+        self.assertNotIn('class="office-sidebar"', office)
 
     def test_first_entry_appears_in_the_fragment_without_a_reload(self):
         """The bug this guards: an empty list has no row to clone, so the
@@ -252,6 +260,40 @@ class OfficeLiveUpdateTests(TestCase):
         self.assertIn('type="hidden" name="date" value="2026-09-29"', html)
         self.assertIn("Page 2 of 2", html)
         self.assertNotIn("Other day", html)
+
+    def test_edit_control_and_deleted_entries_are_visible_only_to_owner(self):
+        active = OfficeEntry.objects.create(
+            user=self.user, direction="came", amount="25", name="Editable"
+        )
+        OfficeEntry.objects.create(
+            user=self.user, direction="taken", amount="10", name="Restorable",
+            deleted_at=timezone.now(),
+        )
+        other = User.objects.create_user(username="other-office@example.com", password="secret123")
+        OfficeEntry.objects.create(
+            user=other, direction="taken", amount="99", name="Someone else",
+            deleted_at=timezone.now(),
+        )
+        page = self.client.get(reverse("office")).content.decode()
+        self.assertIn(f'data-id="{active.id}"', page)
+        self.assertIn('class="office-edit" aria-label="Edit entry"', page)
+        self.assertIn('id="officeEditDialog"', page)
+        self.assertIn('class="card office-deleted" id="officeDeleted"', page)
+        self.assertIn("Restorable", page)
+        self.assertIn('class="office-restore">Restore</button>', page)
+        self.assertNotIn("Someone else", page)
+
+    def test_deleted_entries_have_their_own_pagination(self):
+        for i in range(10):
+            OfficeEntry.objects.create(
+                user=self.user, direction="taken", amount="10", name=f"Deleted{i}",
+                deleted_at=timezone.now(),
+            )
+        page = self.client.get(reverse("office"), {"deleted_page": 2}).content.decode()
+        self.assertIn('id="officeDeleted" open', page)
+        self.assertIn('name="deleted_page" value="1"', page)
+        self.assertIn('Page 2 of 2', page)
+        self.assertEqual(page.count('class="office-deleted-row"'), 2)
 
     def test_search_shows_the_eight_most_recent_matches(self):
         for i in range(12):

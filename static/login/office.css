@@ -32,23 +32,11 @@ button { cursor: pointer; }
 button, .office-input, .office-date-trigger, .office-search-row input { touch-action: manipulation; }
 p, h1, h2 { margin: 0; }
 .office-shell { display: block; min-height: 100vh; }
-.office-sidebar[hidden] { display: none !important; }
-.office-sidebar { position: sticky; top: 0; display: flex; flex-direction: column; height: 100vh; height: 100dvh; min-height: 0; padding: 28px 16px; border-right: 1px solid #e0e6dd; background: #fffdfa; }
-.office-sidebar-brand { display: flex; align-items: center; gap: 11px; padding: 3px 10px 32px; }
-.office-brand-mark { display: grid; place-items: center; width: 38px; height: 38px; flex: none; border-radius: 12px; background: #203c32; color: #fff; font-family: Georgia, serif; font-size: 26px; }
-.office-brand-copy { display: grid; gap: 2px; }
-.office-brand-copy strong { color: #203c32; font-family: Georgia, serif; font-size: 20px; font-weight: 500; line-height: 1; }
-.office-brand-copy small { color: #92a096; font-size: 10px; letter-spacing: .04em; }
-.office-nav-heading { padding: 0 14px; color: #a1ada2; font-size: 10px; font-weight: 750; letter-spacing: .13em; text-transform: uppercase; }
-.office-nav { display: grid; gap: 5px; margin-top: 12px; }
-.office-nav-button { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 42px; padding: 7px 11px; border: 0; border-radius: 10px; background: transparent; color: #6e7d72; font-size: 13px; font-weight: 650; text-align: left; }
-.office-nav-button:hover, .office-nav-button:focus-visible { background: #eff4ed; color: #315f50; }
-.office-nav-button.is-active { background: #e7f0e9; color: #285b45; }
-.office-nav-icon { display: grid; place-items: center; width: 25px; height: 25px; flex: none; font-size: 21px; font-weight: 400; line-height: 1; }
-.office-sidebar-footer { margin-top: auto; padding: 0 11px; color: #a2ada2; font-size: 11px; }
 .office-main { width: min(1160px, calc(100% - 64px)); min-width: 0; margin: 0 auto; padding: 56px 0 80px; }
 #officeOverview, #officeEntry, #officeHistorySection { scroll-margin-top: 20px; }
 .main-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+.office-back { display: inline-flex; align-items: center; gap: 4px; min-height: 38px; margin: -10px 0 18px; padding: 6px 10px 6px 5px; border-radius: 9px; color: #315f50; font-size: 13px; font-weight: 750; text-decoration: none; }
+.office-back:hover, .office-back:focus-visible { background: #e7f0e9; outline: none; }
 .office-eyebrow, .office-section-kicker {
   display: block; color: #63786d; font-size: 11px; font-weight: 750;
   letter-spacing: .16em; text-transform: uppercase;
@@ -138,12 +126,28 @@ p, h1, h2 { margin: 0; }
 .office-history-amount { flex: none; font-size: 14px; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .office-history-amount.came { color: #257454; }
 .office-history-amount.taken { color: #a46149; }
+.office-edit { flex: none; min-height: 34px; padding: 6px 11px; border: 1px solid #dce6db; border-radius: 8px; background: #f4f8f1; color: #315f50; font-size: 12px; font-weight: 750; }
+.office-edit:hover { background: #e4f0e5; }
 .office-delete { flex: none; display: grid; place-items: center; width: 29px; height: 29px; border: 1px solid #e3e8df; border-radius: 8px; background: #fff; color: #9aa79b; }
 .office-delete:hover:not(:disabled) { color: #a65545; border-color: #e5c6ba; background: #fdf3ee; }
 .office-restore { flex: none; min-height: 34px; padding: 7px 11px; border: 1px solid #dce6db; border-radius: 8px; background: #f4f8f1; color: #315f50; font-size: 13px; font-weight: 750; }
 .office-restore:hover { background: #e4f0e5; }
 .office-empty { padding: 30px 0; color: #9aa69a; text-align: center; font-size: 13px; }
 .office-archive, .office-trash { margin-top: 18px; }
+.office-deleted { margin-top: 18px; padding: 18px 24px; }
+.office-deleted summary { cursor: pointer; color: #315f50; font-size: 17px; font-weight: 750; }
+.office-deleted summary span { margin-left: 5px; color: #87958a; font-size: 13px; }
+.office-deleted-hint { margin: 14px 0 4px; color: #7b897e; font-size: 13px; line-height: 1.5; }
+.office-deleted-list { margin: 0; padding: 0; list-style: none; }
+.office-deleted-row { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid #edf0e9; }
+.office-deleted-row > div { display: grid; gap: 4px; min-width: 0; flex: 1; }
+.office-deleted-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.office-deleted-row small { color: #87958a; }
+.office-deleted-row > span { flex: none; font-weight: 700; font-variant-numeric: tabular-nums; }
+.office-edit-fields { display: grid; gap: 12px; margin-top: 22px; }
+.office-edit-fields label { display: grid; gap: 6px; color: #66746b; font-size: 12px; font-weight: 750; }
+.office-edit-fields input, .office-edit-fields select { width: 100%; min-height: 44px; padding: 9px 11px; border: 1px solid #dfe6db; border-radius: 9px; background: #fbfcf9; color: var(--ink); font-size: 16px; }
+.office-edit-form .office-error { margin-top: 10px; }
 .office-search { display: grid; gap: 7px; padding: 20px 0 12px; }
 .office-search label { color: #66746b; font-size: 12px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
 .office-search-row { display: flex; gap: 8px; }
@@ -276,20 +280,17 @@ p, h1, h2 { margin: 0; }
 .office-history-badge { width: 88px; min-width: 88px; font-size: 11px; }
 .office-history-main { grid-column: 2 / -1; grid-row: 1; }
 .office-history-amount { grid-column: 2; grid-row: 2; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 15px; }
+.office-edit { grid-column: 3; grid-row: 2; }
 .office-delete { grid-column: 4; grid-row: 2; margin: 0; }
 .office-restore { grid-column: 3 / -1; grid-row: 2; }
+.office-deleted-row { flex-wrap: wrap; }
+.office-deleted-row > div { flex-basis: 100%; }
 .office-search-row { flex-wrap: wrap; }
 .office-search-row input { flex-basis: 100%; }
 
 /* ── Text size control ──────────────────────────────────── */
    rule, so Reset has to be hidden explicitly or it never disappears. */
 
-.office-sidebar { position: fixed; top: auto; right: 0; bottom: 0; left: 0; z-index: 900; display: block; width: 100%; height: auto; min-height: 0; padding: 8px max(12px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); border-top: 1px solid #dfe6dc; border-right: 0; box-shadow: 0 -8px 24px rgba(31, 54, 38, .08); }
-.office-sidebar-brand { display: none; }
-.office-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
-.office-nav-button { flex-direction: column; gap: 2px; min-height: 54px; padding: 5px 3px; font-size: 11px; text-align: center; }
-.office-nav-text { display: block; }
-.office-nav-icon { height: 23px; font-size: 20px; }
 .office-undo-toast { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); left: 12px; justify-content: space-between; }
 
 /* Phones in landscape, and small tablets: single column with more
@@ -302,30 +303,14 @@ p, h1, h2 { margin: 0; }
   .office-form { padding: 26px 27px; }
 }
 
-/* Tablet: the bottom bar becomes a top bar and the totals sit
-   side by side. History rows return to a single line. */
+/* Tablet: totals sit side by side and history rows return to one line. */
 @media (min-width: 681px) {
-  .office-sidebar { position: sticky; top: 0; flex-direction: column; height: 100vh; height: 100dvh; min-height: 0; align-items: center; width: auto; padding: 22px 8px; border-top: 0; border-right: 1px solid #e0e6dd; box-shadow: none; }
-  .office-sidebar-brand { display: flex; padding: 0 0 28px; }
-  .office-brand-copy, .office-nav-heading, .office-sidebar-footer { display: none; }
-  .office-nav { display: grid; width: 100%; grid-template-columns: none; margin-top: 0; }
-  .office-nav-button { flex-direction: row; gap: 11px; justify-content: center; min-height: 47px; padding: 6px; font-size: 14px; text-align: left; }
-  .office-nav-text { display: none; }
-  .office-nav-icon { height: auto; font-size: 21px; }
   .office-main { width: calc(100% - 48px); padding: 36px 0 80px; }
   .office-undo-toast { right: 24px; bottom: 24px; left: auto; justify-content: flex-start; }
 }
 
-/* Laptop: keep the content centered while the sidebar is hidden.
-   Totals and entry forms use the available width. */
+/* Laptop: totals and entry forms use the available width. */
 @media (min-width: 1101px) {
-  .office-sidebar { align-items: stretch; height: 100vh; height: 100dvh; padding: 28px 16px; }
-  .office-sidebar-brand { padding: 3px 10px 32px; }
-  .office-brand-copy { display: grid; }
-  .office-nav-heading, .office-sidebar-footer { display: block; }
-  .office-nav { grid-template-columns: none; margin-top: 12px; }
-  .office-nav-button { justify-content: flex-start; min-height: 42px; padding: 7px 11px; font-size: 14px; }
-  .office-nav-text { display: block; }
   .office-main { width: min(1160px, calc(100% - 64px)); padding: 56px 0 80px; }
   .main-header { align-items: flex-end; flex-wrap: nowrap; gap: 24px; margin-bottom: 30px; }
   .office-header-date { align-self: center; }
@@ -346,6 +331,7 @@ p, h1, h2 { margin: 0; }
   .office-history-badge { width: 96px; min-width: 96px; font-size: 11px; }
   .office-history-main { grid-column: auto; grid-row: auto; }
   .office-history-amount { grid-column: auto; grid-row: auto; font-size: 15px; }
+  .office-edit { grid-column: auto; grid-row: auto; }
   .office-delete { grid-column: auto; grid-row: auto; }
   .office-restore { grid-column: auto; grid-row: auto; }
   .office-search-row { flex-wrap: nowrap; }
