@@ -26,7 +26,7 @@
     const text = backdrop?.querySelector('.install-prompt__description');
     const button = backdrop?.querySelector('.install-prompt__install');
     if (!text || !button) return;
-    text.textContent = isIOS()
+    text.textContent = isIOS
       ? 'In Safari, tap Share, then Add to Home Screen, then Add.'
       : 'Open your browser menu and choose Install app or Add to Home screen.';
     button.textContent = 'Got it';
@@ -48,7 +48,7 @@
     try {
       await event.prompt();
       const choice = await event.userChoice;
-      if (choice?.outcome === 'dismissed') close(true);
+      if (choice?.outcome === 'accepted' || choice?.outcome === 'dismissed') close(true);
     } catch (_) {
       show();
       instructions();
@@ -65,18 +65,28 @@
     panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-modal', 'true');
     panel.setAttribute('aria-labelledby', 'install-prompt-title');
+    const iconUrl = document.querySelector('link[rel="apple-touch-icon"]')?.href;
+    if (iconUrl) {
+      const icon = document.createElement('img');
+      icon.className = 'install-prompt__icon';
+      icon.src = iconUrl;
+      icon.alt = '';
+      panel.append(icon);
+    }
     const title = document.createElement('h2');
     title.id = 'install-prompt-title';
     title.textContent = 'Add SpendWise to your home screen?';
     const detail = document.createElement('p');
     detail.className = 'install-prompt__description';
-    detail.textContent = 'Open SpendWise like an app whenever you need it.';
+    detail.textContent = installEvent
+      ? 'Open SpendWise like an app whenever you need it.'
+      : 'See how to add SpendWise to your home screen.';
     const actions = document.createElement('div');
     actions.className = 'install-prompt__actions';
     const install = document.createElement('button');
     install.type = 'button';
     install.className = 'install-prompt__install';
-    install.textContent = 'OK, add web app';
+    install.textContent = installEvent ? 'OK, add web app' : 'Show install steps';
     install.addEventListener('click', proceed);
     const later = document.createElement('button');
     later.type = 'button';
@@ -87,7 +97,7 @@
     closeButton.type = 'button';
     closeButton.className = 'install-prompt__close';
     closeButton.setAttribute('aria-label', 'Dismiss install suggestion');
-    closeButton.textContent = '×';
+    closeButton.textContent = '\u00d7';
     closeButton.addEventListener('click', () => close(true));
     actions.append(install, later);
     panel.append(title, detail, actions, closeButton);
@@ -99,11 +109,20 @@
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     installEvent = event;
+    const button = backdrop?.querySelector('.install-prompt__install');
+    if (button) {
+      delete button.dataset.showingInstructions;
+      button.textContent = 'OK, add web app';
+    }
+    const detail = backdrop?.querySelector('.install-prompt__description');
+    if (detail) {
+      detail.textContent = 'Open SpendWise like an app whenever you need it.';
+    }
     show();
   });
   window.addEventListener('appinstalled', () => {
     installEvent = null;
-    close();
+    close(true);
   });
   document.addEventListener('DOMContentLoaded', show);
   if (document.readyState !== 'loading') show();
