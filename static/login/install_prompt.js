@@ -1,11 +1,10 @@
 (() => {
-  const DISMISS_KEY = 'spendwise-dashboard-install-dismissed-until';
+  const DISMISS_KEY = 'spendwise-dashboard-install-v2-dismissed-until';
   const DISMISS_MS = 30 * 24 * 60 * 60 * 1000;
   const isInstalled = () => window.matchMedia('(display-mode: standalone)').matches ||
     window.navigator.standalone === true;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const isPhone = () => window.matchMedia('(pointer: coarse)').matches || isIOS;
   let installEvent = null;
   let backdrop = null;
 
@@ -58,7 +57,6 @@
 
   function show() {
     if (backdrop || dismissed() || isInstalled() || !document.body) return;
-    if (!isPhone() && !installEvent) return;
 
     backdrop = document.createElement('div');
     backdrop.className = 'install-prompt-backdrop';
@@ -107,10 +105,6 @@
     installEvent = null;
     close();
   });
-  const showAfterLoad = () => {
-    if (isIOS()) show();
-    else window.setTimeout(show, 1200);
-  };
-  document.addEventListener('DOMContentLoaded', showAfterLoad);
-  if (document.readyState !== 'loading') showAfterLoad();
+  document.addEventListener('DOMContentLoaded', show);
+  if (document.readyState !== 'loading') show();
 })();
