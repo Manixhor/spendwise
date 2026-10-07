@@ -48,6 +48,7 @@ from .views import (
     api_goal_allocations,
     api_check_email,
 )
+from .views_import import api_import_transactions
 
 urlpatterns = [
     path("", onboarding, name="onboarding"),
@@ -106,6 +107,7 @@ urlpatterns = [
         api_mark_lend_paid,
         name="api_mark_lend_paid",
     ),
+    path("api/transactions/import/", api_import_transactions, name="api_import_transactions"),
     # Email check (public)
     path("api/check-email/", api_check_email, name="api_check_email"),
     # Salary / target / currency

@@ -14,6 +14,13 @@ def previous_month(today: date) -> str:
 
 
 def send_monthly_analysis_batch(month: str, update_setting: bool = True) -> dict:
+    """Send `month` analysis to every eligible user.
+
+    `update_setting` records `month` as delivered in the schedule bookkeeping.
+    Only the unattended cron run should set it: manual runs report the current
+    month, and recording that would make the scheduled run for the same month
+    believe it had already been delivered.
+    """
     users = User.objects.filter(is_active=True, is_staff=False, email__gt="").order_by("id")
     sent = 0
     failed = 0

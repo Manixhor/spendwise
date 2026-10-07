@@ -313,7 +313,9 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
         month = timezone.localtime().strftime('%Y-%m')
         # Send now is intentionally manual: it may be used to resend a report
         # even while automation is paused or after this month's scheduled run.
-        result = send_monthly_analysis_batch(month)
+        # It reports the current month, so it must not advance last_sent_month
+        # or the automated run for that month would be skipped as already sent.
+        result = send_monthly_analysis_batch(month, update_setting=False)
         if result['failed']:
             first_error = result['failures'][0] if result['failures'] else 'Unknown error'
             self.message_user(

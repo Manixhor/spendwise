@@ -190,7 +190,7 @@ class MonthlyAnalysisMailAdminTests(TestCase):
             response = self.client.post(url, follow=True)
 
         self.assertEqual(response.status_code, 200)
-        sender.assert_called_once_with(current_month)
+        sender.assert_called_once_with(current_month, update_setting=False)
         self.assertContains(response, 'Sent 2 monthly analysis email')
 
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend')
@@ -263,22 +263,96 @@ class MonthlyAnalysisMailAdminTests(TestCase):
 
 
 class MonthlyAnalysisMailCommandTests(TestCase):
-    @patch('login.management.commands.send_monthly_analysis_emails.send_monthly_analysis_batch')
-    @patch('login.management.commands.send_monthly_analysis_emails.timezone.localtime')
-    def test_scheduled_delivery_sends_previous_completed_month(self, localtime, sender):
-        MonthlyAnalysisMailSetting.objects.create(
+    def _make_setting(self):
+        return MonthlyAnalysisMailSetting.objects.create(
             pk=1,
             enabled=True,
             send_day=1,
             send_time=datetime.strptime('09:00', '%H:%M').time(),
         )
+
+    @patch('login.management.commands.send_monthly_analysis_emails.send_monthly_analysis_batch')
+    @patch('login.management.commands.send_monthly_analysis_emails.timezone.localtime')
+    def test_scheduled_delivery_sends_previous_completed_month(self, localtime, sender):
+        self._make_setting()
         localtime.return_value = timezone.make_aware(datetime(2026, 9, 1, 10, 0))
         sender.return_value = {'month': '2026-08', 'sent': 1, 'failed': 0, 'failures': []}
 
         from django.core.management import call_command
         call_command('send_monthly_analysis_emails')
 
-        sender.assert_called_once_with('2026-08')
+        sender.assert_called_once_with('2026-08', update_setting=True)
+
+    @patch('login.management.commands.send_monthly_analysis_emails.send_monthly_analysis_batch')
+    @patch('login.management.commands.send_monthly_analysis_emails.timezone.localtime')
+    def test_send_now_does_not_mark_the_month_as_delivered(self, localtime, sender):
+        """A manual run reports the current month and must not block the real one."""
+        self._make_setting()
+        localtime.return_value = timezone.make_aware(datetime(2026, 10, 4, 11, 0))
+        sender.return_value = {'month': '2026-10', 'sent': 1, 'failed': 0, 'failures': []}
+
+        from django.core.management import call_command
+        call_command('send_monthly_analysis_emails', now=True)
+
+        sender.assert_called_once_with('2026-10', update_setting=False)
+
+    @patch('login.management.commands.send_monthly_analysis_emails.send_monthly_analysis_batch')
+    @patch('login.management.commands.send_monthly_analysis_emails.timezone.localtime')
+    def test_force_does_not_mark_the_month_as_delivered(self, localtime, sender):
+        self._make_setting()
+        localtime.return_value = timezone.make_aware(datetime(2026, 10, 4, 11, 0))
+        sender.return_value = {'month': '2026-10', 'sent': 1, 'failed': 0, 'failures': []}
+
+        from django.core.management import call_command
+        call_command('send_monthly_analysis_emails', force=True)
+
+        sender.assert_called_once_with('2026-10', update_setting=False)
+
+    @patch('login.admin.send_monthly_analysis_batch')
+    def test_admin_send_now_does_not_mark_the_month_as_delivered(self, batch):
+        setting = self._make_setting()
+        staff_user = User.objects.create_superuser(
+            username='owner@example.com',
+            email='owner@example.com',
+            password='StrongPass123!',
+        )
+        batch.return_value = {'month': '2026-10', 'sent': 0, 'failed': 0, 'failures': []}
+        self.client.force_login(staff_user)
+
+        self.client.post(
+            reverse('admin:login_monthlyanalysismailsetting_send_now'),
+            follow=True,
+        )
+
+        batch.assert_called_once_with('2026-10', update_setting=False)
+        setting.refresh_from_db()
+        self.assertEqual(setting.last_sent_month, '')
+
+    @patch('login.management.commands.send_monthly_analysis_emails.timezone.localtime')
+    def test_manual_run_leaves_scheduled_run_able_to_send_same_month(self, localtime):
+        """Regression: --now must not suppress the next automated delivery."""
+        self._make_setting()
+        User.objects.create_user(
+            username='reader@example.com',
+            email='reader@example.com',
+            password='StrongPass123!',
+        )
+
+        from django.core.management import call_command
+        localtime.return_value = timezone.make_aware(datetime(2026, 10, 4, 11, 0))
+        with self.settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend'):
+            call_command('send_monthly_analysis_emails', now=True)
+
+        setting = MonthlyAnalysisMailSetting.objects.get(pk=1)
+        self.assertEqual(setting.last_sent_month, '')
+
+        # The automated run on 1 Nov delivers October, and it is not skipped.
+        localtime.return_value = timezone.make_aware(datetime(2026, 11, 1, 10, 0))
+        with self.settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend'):
+            call_command('send_monthly_analysis_emails')
+
+        setting.refresh_from_db()
+        self.assertEqual(setting.last_sent_month, '2026-10')
 
 
 class AdminToolAccessTests(TestCase):

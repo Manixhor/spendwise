@@ -89,6 +89,17 @@ class MonthlyAnalysisMailSetting(models.Model):
     last_sent_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    send_day_8_enabled = models.BooleanField(
+        default=False,
+        help_text="Also send on 8th of the month at 00:00 IST.",
+    )
+    last_sent_month_day8 = models.CharField(
+        max_length=7,
+        blank=True,
+        default="",
+        help_text="YYYY-MM last sent by the 8th schedule.",
+    )
+
     class Meta:
         verbose_name = "Monthly Email Schedule"
         verbose_name_plural = "Monthly Email Schedule"
