@@ -20,7 +20,7 @@ jobs:
     docker:
       # Specify the version you desire here
       # See:https://circleci.com/developer/images/image/cimg/python
-      - image: cimg/python:3.12
+      - image: cimg/python:3.12-node
 
     # Add steps to the job
     # See: https://circleci.com/docs/guides/orchestrate/jobs-steps/#steps-overview & https://circleci.com/docs/reference/configuration-reference/#steps
@@ -33,8 +33,8 @@ jobs:
           # pip-dependency-file: test-requirements.txt  # if you have a different name for your requirements file, maybe one that combines your runtime and test requirements.
       - run:
           name: Run tests
-          # This assumes pytest is installed via the install-package step above
-          command: pytest
+          # Django's runner configures settings and creates the test database.
+          command: python manage.py test --noinput
 
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/guides/orchestrate/workflows/ & https://circleci.com/docs/reference/configuration-reference/#workflows
