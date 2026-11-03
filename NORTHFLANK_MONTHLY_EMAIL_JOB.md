@@ -9,4 +9,4 @@ Create a Northflank **Cron Job** that uses the same SpendWise repository and pro
 
 The job runs hourly so the admin schedule can control the exact day and time without editing Northflank again. The command only sends once per report month, checks the Auto send setting, and sends the previous completed calendar month's report.
 
-Copy the web service's runtime variables to the job, especially `SECRET_KEY`, `DATABASE_URL` or the database variables, and all `SMTP_*` variables. Enable CD so new deployments use the latest commit.
+Copy the web service's runtime variables to the job, especially `SECRET_KEY`, `DATABASE_URL` or the database variables, and all `SMTP_*` variables. For the CI-gated release flow, keep CD off and deploy the tested build to this job from the Northflank workflow after GitHub Actions passes.
