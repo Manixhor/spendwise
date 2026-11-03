@@ -2,7 +2,7 @@
   <rect width="1024" height="1024" fill="#ffffff"/>
   <rect x="224" y="224" width="576" height="576" rx="130" fill="#101010"/>
   <rect x="252" y="252" width="520" height="520" rx="105" fill="#ffffff"/>
-  <text x="512" y="534" text-anchor="middle" dominant-baseline="middle"
+  <text x="509" y="504" text-anchor="middle" dominant-baseline="middle"
         font-family="Arial Black, Arial, Helvetica, sans-serif" font-size="244"
         font-weight="900" letter-spacing="-16" fill="#050505">SW</text>
 </svg>
