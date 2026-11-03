@@ -1420,6 +1420,30 @@ def _send_signup_otp_email(user: User, code: str) -> None:
     email.send(fail_silently=False)
 
 
+def _send_new_signup_otp(user: User, profile: UserProfile) -> None:
+    """Keep the previous code usable when email delivery fails."""
+    previous = (
+        profile.email_verification_code,
+        profile.email_verification_sent_at,
+        profile.email_is_verified,
+    )
+    code = _issue_signup_otp(profile)
+    try:
+        _send_signup_otp_email(user, code)
+    except Exception:
+        (
+            profile.email_verification_code,
+            profile.email_verification_sent_at,
+            profile.email_is_verified,
+        ) = previous
+        profile.save(update_fields=[
+            "email_verification_code",
+            "email_verification_sent_at",
+            "email_is_verified",
+        ])
+        raise
+
+
 # ── Sign Up ───────────────────────────────────────────────
 @never_cache
 @ensure_csrf_cookie
@@ -1468,9 +1492,7 @@ def signup(request: HttpRequest) -> HttpResponse:
 
         if errors:
             # Determine which step the user was on based on errors
-            step = 1
-            if errors.get("password") or errors.get("confirm_password"):
-                step = 2
+            step = 1 if errors.get("name") or errors.get("email") else 2
             return render(
                 request,
                 "login/signup.html",
@@ -1512,10 +1534,9 @@ def signup(request: HttpRequest) -> HttpResponse:
             profile.currency = currency
             profile.save(update_fields=["currency"])
 
-        code = _issue_signup_otp(profile)
         request.session["pending_signup_user_id"] = user.id
         try:
-            _send_signup_otp_email(user, code)
+            _send_new_signup_otp(user, profile)
         except Exception:
             errors["general"] = "We could not send the OTP. Please check SMTP settings."
             return render(
@@ -1547,9 +1568,8 @@ def signup_verify(request: HttpRequest) -> HttpResponse:
         action = request.POST.get("action", "verify")
 
         if action == "resend":
-            code = _issue_signup_otp(profile)
             try:
-                _send_signup_otp_email(user, code)
+                _send_new_signup_otp(user, profile)
                 messages.success(request, f"A fresh OTP was sent to {user.email}.")
             except Exception:
                 errors["general"] = "We could not resend the OTP. Please check SMTP settings."
@@ -1565,10 +1585,10 @@ def signup_verify(request: HttpRequest) -> HttpResponse:
 
         if not code or not code.isdigit() or len(code) != 4:
             errors["otp"] = "Enter the 4-digit OTP."
-        elif code != profile.email_verification_code:
-            errors["otp"] = "That OTP is incorrect."
         elif not sent_at or timezone.now() > sent_at + timedelta(minutes=expiry_minutes):
             errors["otp"] = "That OTP expired. Please resend a new one."
+        elif code != profile.email_verification_code:
+            errors["otp"] = "That OTP is incorrect."
 
         if not errors:
             profile.email_is_verified = True
@@ -1917,10 +1937,9 @@ def login_view(request: HttpRequest) -> HttpResponse:
             if user is not None:
                 profile, _ = UserProfile.objects.get_or_create(user=user)
                 if not profile.email_is_verified:
-                    code = _issue_signup_otp(profile)
                     request.session['pending_invitation_user_id'] = user.id
                     try:
-                        _send_signup_otp_email(user, code)
+                        _send_new_signup_otp(user, profile)
                     except Exception:
                         errors['general'] = 'We could not send the OTP. Please check SMTP settings.'
                     else:

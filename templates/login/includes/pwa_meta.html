@@ -1,5 +1,5 @@
 {% load static %}
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="application-name" content="{{ app_name|default:'SpendWise' }}" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -11,6 +11,16 @@
 <meta name="theme-color" content="#e8e8ed" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)" />
 <meta name="description" content="{{ app_description|default:'SpendWise helps you track expenses, savings, and monthly analysis in a clean app-like experience.' }}" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="SpendWise" />
+<meta property="og:title" content="SpendWise — Make sense of your money" />
+<meta property="og:description" content="Track spending, savings, and monthly insights with SpendWise." />
+<meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{% url 'onboarding' %}" />
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'icons/spendwise-share.png' %}" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="627" />
+<meta property="og:image:alt" content="SpendWise — Make sense of your money" />
+<meta name="twitter:card" content="summary_large_image" />
 <link rel="icon" type="image/png" sizes="192x192" href="{% static 'icons/spendwise-sw-icon-192.png' %}?v=20260804a" />
 <link rel="apple-touch-icon" sizes="180x180" href="{% static 'icons/spendwise-sw-icon-180.png' %}?v=20260804a" />
 <link rel="manifest" href="{% static 'manifest.json' %}?v=20260804a" />

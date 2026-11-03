@@ -6,6 +6,8 @@
   ].join(',');
 
   const getViewport = () => window.visualViewport || null;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   const syncKeyboardState = () => {
     const viewport = getViewport();
@@ -28,11 +30,11 @@
     document.documentElement.style.setProperty('--sw-visible-height', `${visualHeight}px`);
     document.documentElement.style.setProperty('--sw-keyboard-height', `${keyboardHeight}px`);
     document.documentElement.style.setProperty('--app-keyboard-shift', '0px');
-    document.body.classList.toggle('ios-keyboard-open', keyboardOpen);
-    document.documentElement.classList.toggle('ios-keyboard-open', keyboardOpen);
-    document.body.classList.toggle('ios-modal-keyboard-open', keyboardOpen && Boolean(activeModal));
+    document.body.classList.toggle('ios-keyboard-open', isIOS && keyboardOpen);
+    document.documentElement.classList.toggle('ios-keyboard-open', isIOS && keyboardOpen);
+    document.body.classList.toggle('ios-modal-keyboard-open', isIOS && keyboardOpen && Boolean(activeModal));
 
-    return keyboardOpen;
+    return isIOS && keyboardOpen;
   };
 
   const keepFocusedFieldVisible = (target) => {
@@ -41,7 +43,7 @@
     window.setTimeout(() => {
       const keyboardOpen = syncKeyboardState();
       const scrollParent = target.closest('.modal-card, .export-modal__card, .expense-chatbot-messages, .expense-chatbot-panel, .card');
-      if (scrollParent) {
+      if (scrollParent && (keyboardOpen || scrollParent.scrollHeight > scrollParent.clientHeight + 4)) {
         window.requestAnimationFrame(() => {
           if (
             keyboardOpen

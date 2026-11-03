@@ -68,10 +68,10 @@ class OfficeLiveUpdateTests(TestCase):
         self.assertNotIn("buildHistoryRow", html)
         self.assertNotIn("HISTORY_ROW_TEMPLATE", html)
 
-    def test_spendwise_menu_opens_office_and_office_has_back_link(self):
+    def test_office_icon_is_hidden_and_office_has_back_link(self):
         dashboard = self.client.get(reverse("dashboard")).content.decode()
         office = self.client.get(reverse("office")).content.decode()
-        self.assertIn('href="/office/" class="nav-icon" aria-label="Office"', dashboard)
+        self.assertNotIn('aria-label="Office"', dashboard)
         self.assertIn('href="/dashboard/" aria-label="Back to SpendWise"', office)
         self.assertNotIn('class="office-sidebar"', office)
 

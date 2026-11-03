@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from django.core import mail
+from django.contrib.staticfiles import finders
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 from django.utils import timezone
@@ -21,6 +22,25 @@ from .models import (
     UserProfile,
 )
 from .templatetags.office_currency import office_currency, office_currency_plus
+
+
+@override_settings(ALLOWED_HOSTS=['spendwise.example'])
+class SocialPreviewTests(TestCase):
+    def test_public_landing_page_has_absolute_https_preview_metadata(self):
+        response = self.client.get(
+            reverse('onboarding'),
+            HTTP_HOST='spendwise.example',
+            HTTP_X_FORWARDED_PROTO='https',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'property="og:title"')
+        self.assertContains(response, 'content="https://spendwise.example/"')
+        self.assertContains(
+            response,
+            'content="https://spendwise.example/static/icons/spendwise-share.png"',
+        )
+        self.assertIsNotNone(finders.find('icons/spendwise-share.png'))
 
 
 class SignupOtpTests(TestCase):
@@ -308,8 +328,10 @@ class MonthlyAnalysisMailCommandTests(TestCase):
 
         sender.assert_called_once_with('2026-10', update_setting=False)
 
+    @patch('login.admin.timezone.localtime')
     @patch('login.admin.send_monthly_analysis_batch')
-    def test_admin_send_now_does_not_mark_the_month_as_delivered(self, batch):
+    def test_admin_send_now_does_not_mark_the_month_as_delivered(self, batch, localtime):
+        localtime.return_value = timezone.make_aware(datetime(2026, 10, 4, 11, 0))
         setting = self._make_setting()
         staff_user = User.objects.create_superuser(
             username='owner@example.com',
@@ -1281,7 +1303,7 @@ class OfficeMoneyFlowTests(TestCase):
         # ...while a normal page still shows all of them.
         for url in ('dashboard', 'monthly', 'lend', 'savings'):
             self.assertIn(f'href="/{url}/"', dashboard)
-        self.assertIn('href="/office/"', dashboard)
+        self.assertNotIn('aria-label="Office"', dashboard)
 
     def test_entry_deletion_is_scoped_to_the_owner(self):
         self._add(direction='came', name='Ravi', amount='200')

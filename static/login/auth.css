@@ -568,6 +568,7 @@ body.ios-keyboard-open .brand {
 
 .field-input {
   flex: 1;
+  min-width: 0;
   border: none;
   background: transparent;
   font: inherit;

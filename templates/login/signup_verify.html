@@ -2,15 +2,12 @@
 {% load static %}
 
 {% block title %}SpendWise - Verify Email{% endblock %}
-{% block left_tagline %}One tiny code.<br/>Then your budget brain wakes up.{% endblock %}
+{% block left_tagline %}Verify your email.<br/>Then get started.{% endblock %}
 {% block card_class %}card-form{% endblock %}
 
 {% block card_content %}
-  <h2 class="form-title">Verify Email</h2>
-  <p class="form-sub">
-    We sent a 4-digit OTP to<br/>
-    <strong>{{ email }}</strong>
-  </p>
+  <h2 class="form-title">Enter your code</h2>
+  <p class="form-sub">4-digit code sent to <strong>{{ email }}</strong></p>
 
   {% if errors.general %}
     <div class="alert alert-error">{{ errors.general }}</div>
@@ -20,18 +17,14 @@
     {% csrf_token %}
 
     <div class="field-group {% if errors.otp %}field-error{% endif %}">
-      <span class="field-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-          <rect x="3" y="11" width="18" height="10" rx="2"/>
-          <path d="M7 11V8a5 5 0 0 1 10 0v3"/>
-        </svg>
-      </span>
       <input
         type="text"
         name="otp"
-        placeholder="Enter 4-digit OTP"
+        aria-label="4-digit verification code"
+        placeholder="4-digit code"
         class="field-input"
         inputmode="numeric"
+        pattern="[0-9]{4}"
         autocomplete="one-time-code"
         maxlength="4"
         autofocus
@@ -39,15 +32,15 @@
     </div>
     {% if errors.otp %}<p class="field-msg">{{ errors.otp }}</p>{% endif %}
 
-    <button type="submit" name="action" value="verify" class="cta-btn">Verify account &rarr;</button>
+    <button type="submit" name="action" value="verify" class="cta-btn">Verify</button>
   </form>
 
   <form method="post" action="{% url 'signup_verify' %}" class="auth-form" novalidate>
     {% csrf_token %}
-    <button type="submit" name="action" value="resend" class="link-button">Resend OTP</button>
+    <button type="submit" name="action" value="resend" class="link-button">Resend code</button>
   </form>
 
   <p class="footer-copy">
-    Wrong email? <a href="{% url 'signup' %}" class="link-accent">Create account again</a>
+    Wrong email? <a href="{% url 'signup' %}" class="link-accent">Start over</a>
   </p>
 {% endblock %}
