@@ -41,22 +41,3 @@ jobs:
         env:
           DEBUG: "false"
         run: python manage.py collectstatic --noinput
-
-  deploy:
-    name: Trigger Northflank release
-    needs: django
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Start release for the tested commit
-        env:
-          NORTHFLANK_RELEASE_WEBHOOK_URL: ${{ secrets.NORTHFLANK_RELEASE_WEBHOOK_URL }}
-        run: |
-          if [ -z "$NORTHFLANK_RELEASE_WEBHOOK_URL" ]; then
-            echo "Missing NORTHFLANK_RELEASE_WEBHOOK_URL repository secret" >&2
-            exit 1
-          fi
-          curl --fail --silent --show-error --max-time 30 \
-            --get --data-urlencode "sha=$GITHUB_SHA" \
-            --data-urlencode "branch=main" \
-            "$NORTHFLANK_RELEASE_WEBHOOK_URL"

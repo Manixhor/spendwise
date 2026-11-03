@@ -297,34 +297,12 @@ OPENAI_API_KEY=sk-...
 
 ### Deployment to Northflank
 
-The gate lives in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
-Every push to `main` runs Django checks, a migration check, all tests, and a
-production static build. Only a successful CI job starts the Northflank deploy
-job. Pull requests run the same checks without deploying. CI uses the Python
-version in `.python-version`; configure the Northflank build to use a compatible
-Python version too.
-
-**Activate the gate before pushing this workflow to `main`:**
-
-1. Turn off **CD** on the production web service and any production job that
-   currently deploys each new build. Otherwise Northflank can deploy a commit
-   before GitHub Actions finishes.
-2. In the production environment, create a Northflank workflow with a
-   **Webhook** trigger. Add a **Start build** node for the web service using
-   branch `main` and commit `${args.sha}`; enable **Wait for completion**. Add
-   a **Deploy build** node for the production web service using that build and
-   wait for the service to run. If the hourly job uses a separate build, add a
-   build and deploy path for that job too. Use the workflow's **Queue**
-   concurrency policy so releases finish in push order.
-3. Copy the workflow's webhook URL into the GitHub Actions repository secret
-   `NORTHFLANK_RELEASE_WEBHOOK_URL`. Keep this URL secret. The deploy job sends
-   the tested commit SHA as `sha`; the Northflank workflow must build that SHA,
-   not the branch's latest commit.
-
-After these steps, a push to `main` follows **CI → Northflank build → deploy**.
-If CI fails, the deploy job does not run. For checks before code reaches
-`main`, use a pull request and require **Django checks and tests** in GitHub
-branch protection.
+The [GitHub Actions workflow](.github/workflows/ci.yml) runs Django checks,
+migration checks, tests, and a production static build on pushes to `main` and
+pull requests. It does not deploy or call a Northflank webhook. CI uses the
+Python version in `.python-version`; configure Northflank with a compatible
+Python version. Manage production deployment in Northflank separately. If its
+CD setting is enabled, Northflank may deploy a push before CI finishes.
 
 ### Deployment to Render
 
