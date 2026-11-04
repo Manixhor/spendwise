@@ -521,19 +521,6 @@ try {
     }
   }
 
-  // Fresh dad joke, fetched asynchronously so it never blocks page render.
-  (function loadDadJoke() {
-    fetch('/api/dad-joke/')
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.dad_joke) {
-          const jokeText = document.getElementById('jokeBannerText');
-          if (jokeText) jokeText.textContent = data.dad_joke;
-        }
-      })
-      .catch(() => { /* keep the server-rendered joke */ });
-  })();
-
   hydrateDashboardFromApi();
 
   // ── Salary Setup Modal (First-time users) ─────────────

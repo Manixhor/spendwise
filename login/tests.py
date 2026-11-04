@@ -8,6 +8,7 @@ from django.core import mail
 from django.contrib.staticfiles import finders
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
+from django.utils.html import escape
 from django.utils import timezone
 from django.urls import reverse
 
@@ -544,6 +545,15 @@ class DashboardInsightsTests(TestCase):
         self.profile.target_savings = Decimal('6000.00')
         self.profile.save(update_fields=['salary', 'target_savings'])
         self.client.force_login(self.user)
+
+    def test_spend_joke_changes_on_each_refresh(self):
+        previous = None
+        for _ in range(8):
+            response = self.client.get(reverse('dashboard'))
+            joke = response.context['dad_joke']
+            self.assertNotEqual(joke, previous)
+            self.assertContains(response, escape(joke))
+            previous = joke
 
     def test_dashboard_context_uses_live_category_breakdown_for_insights(self):
         Transaction.objects.bulk_create([

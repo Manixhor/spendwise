@@ -90,12 +90,20 @@ _DAD_JOKE_FALLBACKS = [
     "I told my wallet a joke. It didn't laugh — it was too broke.",
     "Why is money called dough? Because we all knead it.",
     "I asked my bank for a loan. They said 'Sure, what's your collateral?' I said 'My sense of humour.' They didn't laugh.",
+    "Why did the budget go to school? It wanted to improve its balance.",
+    "My wallet and I have a lot in common: we're both feeling a little empty.",
+    "Why did the coin get promoted? It made a lot of cents.",
+    "I tried to save money by making coffee at home. Now my coffee has a savings account.",
+    "Why was the accountant so calm? They knew how to balance everything.",
+    "My bank account is like a mystery novel: I never know what happened to the money.",
+    "Why did the bill bring a calendar? It wanted to make sure it was due on time.",
+    "I asked my savings for advice. They told me to keep it together.",
 ]
 
 
-def dad_joke_fallback() -> str:
-    """Returns a random local dad joke without making any network call."""
-    return random.choice(_DAD_JOKE_FALLBACKS)
+def dad_joke_fallback(previous: str | None = None) -> str:
+    """Return a local joke, excluding the one shown on the previous page load."""
+    return random.choice([joke for joke in _DAD_JOKE_FALLBACKS if joke != previous])
 
 
 def fetch_dad_joke() -> str:

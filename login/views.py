@@ -1975,7 +1975,8 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     stats = _dashboard_stats(request.user, profile)
     coach = get_spending_message(stats["spend_pct"])
-    dad_joke = dad_joke_fallback()
+    dad_joke = dad_joke_fallback(request.session.get("last_dash_dad_joke"))
+    request.session["last_dash_dad_joke"] = dad_joke
 
     # Smart motivation quote — context-aware, no repeats
     goals = SavingsGoal.objects.filter(user=request.user)
