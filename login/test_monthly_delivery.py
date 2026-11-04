@@ -15,6 +15,20 @@ class MonthlyDeliveryTests(TestCase):
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
     @patch('login.management.commands.send_monthly_analysis_emails.timezone.localtime')
     @patch('login.management.commands.send_monthly_analysis_emails.send_monthly_analysis_batch')
+    def test_default_schedule_sends_on_eighth(self, batch, localtime):
+        setting = MonthlyAnalysisMailSetting.objects.create(pk=1)
+        self.assertEqual(setting.send_day, 8)
+        batch.return_value = {'month': '2026-10', 'sent': 1, 'failed': 0, 'failures': []}
+        localtime.return_value = timezone.make_aware(datetime(2026, 11, 7, 10))
+        call_command('send_monthly_analysis_emails')
+        batch.assert_not_called()
+        localtime.return_value = timezone.make_aware(datetime(2026, 11, 8, 10))
+        call_command('send_monthly_analysis_emails')
+        batch.assert_called_once_with('2026-10', update_setting=True)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    @patch('login.management.commands.send_monthly_analysis_emails.timezone.localtime')
+    @patch('login.management.commands.send_monthly_analysis_emails.send_monthly_analysis_batch')
     def test_missed_schedule_catches_up_later_in_month(self, batch, localtime):
         MonthlyAnalysisMailSetting.objects.create(pk=1, send_day=1, send_time=time(9))
         localtime.return_value = timezone.make_aware(datetime(2026, 11, 4, 10))

@@ -74,7 +74,7 @@ class MonthlyAnalysisMailSetting(models.Model):
         help_text="Turn automatic monthly report emails on or off.",
     )
     send_day = models.PositiveSmallIntegerField(
-        default=1,
+        default=8,
         validators=[MinValueValidator(1), MaxValueValidator(28)],
         help_text="Choose a day from 1 to 28. Automatic emails contain the previous completed month's report.",
     )

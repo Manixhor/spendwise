@@ -53,15 +53,11 @@ class Command(BaseCommand):
         reason = None
 
         if not should_send:
-            day8 = setting.send_day_8_enabled
             primary_due = local_now.day > setting.send_day or (
                 local_now.day == setting.send_day and local_now.time().replace(microsecond=0) >= setting.send_time
             )
             if primary_due and setting.last_sent_month != month:
                 reason = 'primary'
-                should_send = True
-            elif day8 and local_now.day >= 8 and setting.last_sent_month_day8 != month:
-                reason = 'day8'
                 should_send = True
             else:
                 self.stdout.write(self.style.WARNING('No unsent monthly schedule is due yet.'))
@@ -79,11 +75,7 @@ class Command(BaseCommand):
             raise CommandError(f"Monthly analysis delivery failed for {result['failed']} recipient(s); retry on the next cron run.")
 
         if scheduled_run and not (send_now or force) and (result['sent'] or result.get('skipped', 0)):
-            if reason == 'day8':
-                setting.last_sent_month_day8 = month
-                setting.last_sent_at = timezone.now()
-                setting.save(update_fields=["last_sent_month_day8", "last_sent_at", "updated_at"])
-            elif reason == 'primary':
+            if reason == 'primary':
                 setting.last_sent_month = month
                 setting.last_sent_at = timezone.now()
                 setting.save(update_fields=["last_sent_month", "last_sent_at", "updated_at"])
