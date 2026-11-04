@@ -79,7 +79,7 @@ class MonthlyAnalysisMailSetting(models.Model):
         help_text="Choose a day from 1 to 28. Automatic emails contain the previous completed month's report.",
     )
     send_time = models.TimeField(
-        default=datetime.time(9, 0),
+        default=datetime.time(0, 0),
         help_text="Send time in Asia/Kolkata.",
     )
     last_sent_month = models.CharField(

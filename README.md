@@ -303,7 +303,7 @@ automatic recurring expenses, and opted-in payment and budget reminders hourly.
 No separate cron job is required. Multiple web workers share a database check
 time and recipients are recorded to avoid duplicate sends. The service must
 remain running and have working SMTP credentials.
-Monthly analysis is scheduled for the 8th of each month at 09:00 Asia/Kolkata
+Monthly analysis is scheduled for the 8th of each month at 00:00 Asia/Kolkata
 by default and catches up later in the month if the service misses that time.
 
 The [GitHub Actions workflow](.github/workflows/ci.yml) runs Django checks,

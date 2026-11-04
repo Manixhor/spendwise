@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 from django.test import TestCase
@@ -23,3 +23,11 @@ class AutomationTests(TestCase):
         command.side_effect = [RuntimeError('mail unavailable'), None]
         self.assertTrue(run_due_jobs(timezone.now()))
         self.assertEqual(command.call_count, 2)
+
+    @patch('login.automation.call_command')
+    def test_scheduler_checks_at_local_midnight(self, command):
+        now = timezone.make_aware(datetime(2026, 11, 7, 23, 30))
+        self.assertTrue(run_due_jobs(now))
+        state = AutomationState.objects.get(pk=1)
+        self.assertEqual(timezone.localtime(state.next_check_at).hour, 0)
+        self.assertEqual(timezone.localtime(state.next_check_at).minute, 0)

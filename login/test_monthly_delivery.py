@@ -18,6 +18,7 @@ class MonthlyDeliveryTests(TestCase):
     def test_default_schedule_sends_on_eighth(self, batch, localtime):
         setting = MonthlyAnalysisMailSetting.objects.create(pk=1)
         self.assertEqual(setting.send_day, 8)
+        self.assertEqual(setting.send_time, time(0))
         batch.return_value = {'month': '2026-10', 'sent': 1, 'failed': 0, 'failures': []}
         localtime.return_value = timezone.make_aware(datetime(2026, 11, 7, 10))
         call_command('send_monthly_analysis_emails')

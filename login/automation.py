@@ -7,7 +7,7 @@ import logging
 import os
 import sys
 import threading
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 from django.conf import settings
 from django.core.management import call_command
@@ -25,9 +25,15 @@ _thread_pid = None
 
 def run_due_jobs(now=None):
     now = now or timezone.now()
+    local_now = timezone.localtime(now)
+    next_midnight = timezone.make_aware(
+        datetime.combine(local_now.date() + timedelta(days=1), time.min),
+        timezone.get_current_timezone(),
+    )
+    next_check = min(now + _check_interval, next_midnight)
     AutomationState.objects.get_or_create(pk=1, defaults={'next_check_at': now})
     claimed = AutomationState.objects.filter(pk=1, next_check_at__lte=now).update(
-        next_check_at=now + _check_interval
+        next_check_at=next_check
     )
     if not claimed:
         return False
