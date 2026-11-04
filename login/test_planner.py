@@ -1,6 +1,8 @@
 from datetime import date, timedelta
 from decimal import Decimal
 from io import BytesIO
+import json
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -11,8 +13,9 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import MoneyAccount, RecurringPayment, Transaction, UserProfile
+from .models import MoneyAccount, PhoneNotificationDelivery, PhoneSubscription, RecurringPayment, Transaction, UserProfile
 from .planner import next_month
+from .phone_push import send_phone_reminders
 
 
 class PlannerTests(TestCase):
@@ -56,6 +59,40 @@ class PlannerTests(TestCase):
         }, content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Transaction.objects.get(user=self.user).account, account)
+
+    def test_dashboard_shows_payment_calendar(self):
+        RecurringPayment.objects.create(
+            user=self.user, name='Rent', kind='bill', amount=Decimal('100.00'),
+            next_due=timezone.localdate(), day_of_month=timezone.localdate().day,
+        )
+        response = self.client.get(reverse('dashboard'))
+        self.assertContains(response, 'Bills this month')
+        self.assertContains(response, 'Rent')
+
+    def test_phone_subscription_and_reminder_send_once(self):
+        endpoint = 'https://fcm.googleapis.com/fcm/send/test-subscription'
+        response = self.client.post(reverse('subscribe_phone'), data=json.dumps({
+            'endpoint': endpoint, 'keys': {'p256dh': 'test-key', 'auth': 'test-auth'},
+        }), content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        payment = RecurringPayment.objects.create(
+            user=self.user, name='Rent', kind='bill', amount=Decimal('100.00'),
+            next_due=timezone.localdate(), day_of_month=timezone.localdate().day,
+        )
+        with patch('login.phone_push.webpush') as send:
+            self.assertEqual(send_phone_reminders(), 1)
+            self.assertEqual(send_phone_reminders(), 0)
+        self.assertEqual(send.call_count, 1)
+        self.assertTrue(PhoneNotificationDelivery.objects.filter(payment=payment).exists())
+        self.client.post(reverse('unsubscribe_phone'), data=json.dumps({'endpoint': endpoint}), content_type='application/json')
+        self.assertFalse(PhoneSubscription.objects.filter(endpoint=endpoint).exists())
+
+    def test_phone_subscription_rejects_untrusted_endpoint(self):
+        response = self.client.post(reverse('subscribe_phone'), data=json.dumps({
+            'endpoint': 'https://example.com/collect', 'keys': {'p256dh': 'key', 'auth': 'auth'},
+        }), content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(PhoneSubscription.objects.exists())
 
     def test_scheduled_command_records_automatic_payment(self):
         RecurringPayment.objects.create(

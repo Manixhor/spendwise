@@ -23,7 +23,7 @@
     <!-- Header -->
     <header class="main-header">
       <h1 class="welcome">Welcome back, {{ user.first_name|default:user.username }}!</h1>
-      <a href="{% url 'planner' %}" class="add-expense-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">Planner &amp; accounts</a>
+      <a href="{% url 'planner' %}" class="add-expense-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">Bills &amp; accounts</a>
     </header>
 
     <!-- ── Dad Joke Banner ───────────────────────────────── -->
@@ -31,6 +31,11 @@
       <span class="joke-banner-label">😄 SPND Joke</span>
       <p class="joke-banner-text" id="jokeBannerText">{{ dad_joke }}</p>
     </div>
+
+    <section class="card home-calendar" aria-label="Bills this month">
+      <div class="home-calendar-heading"><div><span class="card-label">Upcoming payments</span><h2>Bills this month · {{ payment_calendar_month }}</h2></div><a href="{% url 'planner' %}">See all</a></div>
+      <div class="home-calendar-grid"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>{% for week in payment_calendar_weeks %}{% for cell in week %}<div class="home-calendar-day {% if not cell.in_month %}outside{% endif %}{% if cell.date == payment_calendar_today %} today{% endif %}"><strong>{{ cell.date.day }}</strong>{% for item in cell.items %}<small title="{{ item.name }} · {{ profile.currency_symbol }}{{ item.amount }}">{{ item.name }}</small>{% endfor %}</div>{% endfor %}{% endfor %}</div>
+    </section>
 
     <!-- ── Savings widget ────────────────────────────────── -->
     <div class="card savings-card">

@@ -132,6 +132,28 @@ class ScheduledTestMail(models.Model):
     last_error = models.CharField(max_length=250, blank=True, default='')
 
 
+class PushKey(models.Model):
+    private_key = models.TextField()
+    public_key = models.TextField()
+
+
+class PhoneSubscription(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    endpoint = models.TextField(unique=True)
+    p256dh = models.TextField()
+    auth = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class PhoneNotificationDelivery(models.Model):
+    subscription = models.ForeignKey(PhoneSubscription, on_delete=models.CASCADE)
+    payment = models.ForeignKey('RecurringPayment', on_delete=models.CASCADE)
+    due_date = models.DateField()
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['subscription', 'payment', 'due_date'], name='unique_phone_payment_notice')]
+
+
 class Transaction(models.Model):
     CATEGORY_CHOICES = [
         ("rent", "Rent"),

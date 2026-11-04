@@ -1927,29 +1927,31 @@ body[data-theme="dark"] .txn-icon.lend {
 @media (max-width: 768px) {
   .app {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto;
     overflow: auto;
     height: auto;
     min-height: 100vh;
     min-height: 100dvh;
   }
 
-  body { overflow: auto; }
+  body { overflow: auto; padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 
   /* ── Bottom nav bar on mobile ── */
   .sidebar {
     flex-direction: row;
     width: 100%;
-    height: calc(64px + env(safe-area-inset-top, 0px));
-    padding: env(safe-area-inset-top, 0px) 16px 0;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding: 0 16px env(safe-area-inset-bottom, 0px);
     gap: 0;
     justify-content: space-between;
     align-items: center;
     border-right: none;
-    border-bottom: 1px solid var(--border-sub);
-    box-shadow: 0 1px 0 var(--border);
-    position: sticky;
-    top: 0;
+    border-top: 1px solid var(--border-sub);
+    border-bottom: none;
+    box-shadow: 0 -1px 0 var(--border);
+    position: fixed;
+    left: 0;
+    bottom: 0;
     z-index: 100;
     background: var(--glass);
     backdrop-filter: blur(20px) saturate(1.8);
@@ -5324,3 +5326,6 @@ body.modal-keyboard-open #txnModal .modal-card {
     display: none;
   }
 }
+
+/* Compact payment calendar on the dashboard. */
+.home-calendar-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.home-calendar-heading h2{font-size:1.1rem;margin:4px 0 0}.home-calendar-heading a{color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap}.home-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.home-calendar-grid>span{text-align:center;color:var(--sub);font-size:.72rem;font-weight:700}.home-calendar-day{min-height:48px;min-width:0;border:1px solid var(--border-sub);border-radius:8px;padding:5px}.home-calendar-day.outside{opacity:.35}.home-calendar-day.today{border-color:var(--accent)}.home-calendar-day strong{font-size:.75rem}.home-calendar-day small{display:block;margin-top:2px;padding:2px 4px;border-radius:4px;background:var(--accent);color:#fff;font-size:.65rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:640px){.home-calendar-day{min-height:40px;padding:2px}.home-calendar-day small{font-size:.55rem;padding:1px 2px}.home-calendar-heading h2{font-size:1rem}}

@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from login.models import RecurringPayment, Transaction, UserProfile
 from login.planner import record_automatic_payments
+from login.phone_push import send_phone_reminders
 from django.contrib.auth import get_user_model
 
 
@@ -19,6 +20,7 @@ class Command(BaseCommand):
         today = timezone.localdate()
         sent = 0
         failed = 0
+        send_phone_reminders(today)
         user_ids = RecurringPayment.objects.filter(active=True, auto_record=True, next_due__lte=today).values_list('user_id', flat=True).distinct()
         for user in get_user_model().objects.filter(pk__in=user_ids):
             record_automatic_payments(user, today)

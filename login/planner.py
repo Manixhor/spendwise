@@ -24,6 +24,22 @@ def next_month(due: date, day: int) -> date:
     return date(year, month, min(day, calendar.monthrange(year, month)[1]))
 
 
+def payment_calendar(payments, month_start: date):
+    end_year, end_month = (month_start.year + 1, 1) if month_start.month == 12 else (month_start.year, month_start.month + 1)
+    month_end = date(end_year, end_month, 1) - timedelta(days=1)
+    due_by_day = defaultdict(list)
+    for item in payments:
+        if not item.active:
+            continue
+        due = item.next_due
+        while due <= month_end:
+            if due >= month_start:
+                due_by_day[due].append(item)
+            due = next_month(due, item.day_of_month)
+    return [[{'date': day, 'in_month': day.month == month_start.month, 'items': due_by_day[day]}
+             for day in week] for week in calendar.Calendar().monthdatescalendar(month_start.year, month_start.month)]
+
+
 def positive_amount(raw):
     try:
         amount = Decimal(str(raw))
@@ -152,21 +168,7 @@ def planner(request: HttpRequest) -> HttpResponse:
         except ValueError:
             month_start = today.replace(day=1)
     end_year, end_month = (month_start.year + 1, 1) if month_start.month == 12 else (month_start.year, month_start.month + 1)
-    month_end = date(end_year, end_month, 1) - timedelta(days=1)
-    calendar_items = []
-    due_by_day = defaultdict(list)
-    for item in payments:
-        if not item.active:
-            continue
-        due = item.next_due
-        while due <= month_end:
-            if due >= month_start:
-                calendar_items.append((due, item))
-                due_by_day[due].append(item)
-            due = next_month(due, item.day_of_month)
-    calendar_items.sort(key=lambda entry: (entry[0], entry[1].name))
-    weeks = [[{'date': day, 'in_month': day.month == month_start.month, 'items': due_by_day[day]} for day in week]
-             for week in calendar.Calendar().monthdatescalendar(month_start.year, month_start.month)]
+    weeks = payment_calendar(payments, month_start)
 
     recent_start = today - timedelta(days=30)
     prior_start = today - timedelta(days=120)
@@ -178,7 +180,7 @@ def planner(request: HttpRequest) -> HttpResponse:
     budget_alert = bool(profile.salary and profile.salary > 0 and month_spend >= profile.salary * Decimal('0.8'))
     return render(request, 'login/planner.html', {
         'profile': profile, 'active_nav': 'planner', 'accounts': accounts,
-        'payments': payments, 'upcoming': upcoming, 'calendar_items': calendar_items,
+        'payments': payments, 'upcoming': upcoming,
         'calendar_weeks': weeks, 'today': today, 'month_label': month_start.strftime('%B %Y'),
         'previous_month': (month_start - timedelta(days=1)).strftime('%Y-%m'),
         'next_month': date(end_year, end_month, 1).strftime('%Y-%m'),

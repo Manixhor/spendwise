@@ -55,3 +55,21 @@ self.addEventListener('fetch', (event) => {
       .catch(() => caches.match(request))
   );
 });
+
+self.addEventListener('push', (event) => {
+  let message = {};
+  try { message = event.data?.json() || {}; } catch (_) { message = {}; }
+  event.waitUntil(self.registration.showNotification(message.title || 'SpendWise', {
+    body: message.body || 'You have a payment reminder.',
+    icon: '/static/icons/spendwise-sw-icon-192.png',
+    badge: '/static/icons/spendwise-sw-icon-192.png',
+    data: { url: message.url || '/planner/' },
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || '/planner/', self.location.origin);
+  if (url.origin !== self.location.origin) return;
+  event.waitUntil(self.clients.openWindow(url.href));
+});
