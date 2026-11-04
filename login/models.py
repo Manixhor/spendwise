@@ -120,6 +120,10 @@ class MonthlyAnalysisDelivery(models.Model):
         constraints = [models.UniqueConstraint(fields=['user', 'month'], name='unique_monthly_analysis_delivery')]
 
 
+class AutomationState(models.Model):
+    next_check_at = models.DateTimeField()
+
+
 class Transaction(models.Model):
     CATEGORY_CHOICES = [
         ("rent", "Rent"),

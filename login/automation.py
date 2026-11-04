@@ -1,0 +1,73 @@
+"""Run due SpendWise jobs inside a running web service.
+
+The database lease lets multiple web workers check safely. The first check runs on
+startup, and later checks run hourly while the service is running.
+"""
+import logging
+import os
+import sys
+import threading
+from datetime import timedelta
+
+from django.conf import settings
+from django.core.management import call_command
+from django.db import close_old_connections
+from django.utils import timezone
+
+from .models import AutomationState
+
+logger = logging.getLogger(__name__)
+_check_interval = timedelta(hours=1)
+_start_lock = threading.Lock()
+_thread = None
+_thread_pid = None
+
+
+def run_due_jobs(now=None):
+    now = now or timezone.now()
+    AutomationState.objects.get_or_create(pk=1, defaults={'next_check_at': now})
+    claimed = AutomationState.objects.filter(pk=1, next_check_at__lte=now).update(
+        next_check_at=now + _check_interval
+    )
+    if not claimed:
+        return False
+    for command in ('send_spendwise_reminders', 'send_monthly_analysis_emails'):
+        try:
+            call_command(command)
+        except Exception:
+            logger.exception('SpendWise automatic job failed: %s', command)
+    return True
+
+
+def _loop():
+    while True:
+        close_old_connections()
+        try:
+            run_due_jobs()
+        except Exception:
+            # A new release can start before migrations finish. Retry after a minute.
+            logger.exception('SpendWise automatic job check failed')
+        finally:
+            close_old_connections()
+        threading.Event().wait(60)
+
+
+def ensure_scheduler():
+    global _thread, _thread_pid
+    if settings.DEBUG or 'test' in sys.argv[1:] or 'PYTEST_CURRENT_TEST' in os.environ:
+        return
+    with _start_lock:
+        pid = os.getpid()
+        if _thread_pid != pid or _thread is None or not _thread.is_alive():
+            _thread_pid = pid
+            _thread = threading.Thread(target=_loop, name='spendwise-automation', daemon=True)
+            _thread.start()
+
+
+class AutomationMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        ensure_scheduler()
+        return self.get_response(request)

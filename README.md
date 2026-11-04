@@ -298,12 +298,11 @@ OPENAI_API_KEY=sk-...
 
 ### Deployment to Northflank
 
-For automatic recurring expenses and opted-in payment and budget reminder emails, add a Northflank cron job
-running `python manage.py send_spendwise_reminders` once daily with the same
-database and SMTP environment variables as the web service. The command
-records which due date or budget month was emailed, so repeated runs do not
-send the same reminder twice. The planner also shows due-soon and budget
-alerts in the app without this cron job.
+The web service starts an in-app scheduler that checks monthly analysis emails,
+automatic recurring expenses, and opted-in payment and budget reminders hourly.
+No separate cron job is required. Multiple web workers share a database check
+time and recipients are recorded to avoid duplicate sends. The service must
+remain running and have working SMTP credentials.
 
 The [GitHub Actions workflow](.github/workflows/ci.yml) runs Django checks,
 migration checks, tests, and a production static build on pushes to `main` and
