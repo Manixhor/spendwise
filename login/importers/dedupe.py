@@ -17,4 +17,5 @@ def filter_new(user, parsed_items) -> List:
         k = (user.id, p.date, f'{p.amount:.2f}', p.txn_type, p.title[:60])
         if k not in existing:
             out.append(p)
+            existing.add(k)
     return out

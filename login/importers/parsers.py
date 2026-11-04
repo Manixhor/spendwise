@@ -172,8 +172,8 @@ def parse_xlsx(file_content: bytes) -> List[ParsedTransaction]:
     for k in ['amount', 'amt', 'transaction_amount']:
         if k in idx:
             amt_idx = idx[k]; break
-    db_idx = idx.get('debit') or idx.get('dr') or idx.get('withdrawal')
-    cr_idx = idx.get('credit') or idx.get('cr') or idx.get('deposit')
+    db_idx = next((idx[k] for k in ('debit', 'dr', 'withdrawal') if k in idx), None)
+    cr_idx = next((idx[k] for k in ('credit', 'cr', 'deposit') if k in idx), None)
     if date_idx is None or (amt_idx is None and db_idx is None and cr_idx is None):
         raise ValueError('cannot detect required columns')
     results = []
