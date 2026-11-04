@@ -527,6 +527,7 @@ def _dashboard_stats_payload(stats):
         "insight_total": float(stats["insight_total"]),
         "insight_stock": stats["insight_stock"],
         "chart_months": stats["chart_months"],
+        "daily_spending": stats["daily_spending"],
         "coach": get_spending_message(stats["spend_pct"]),
     }
 

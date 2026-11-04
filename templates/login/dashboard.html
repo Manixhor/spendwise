@@ -7,7 +7,7 @@
   {% include "login/includes/pwa_meta.html" %}
   <title>SpendWise – Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}" />
+  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}?v=gold-price-colors-2" />
   <link rel="stylesheet" href="{% static 'login/install_prompt.css' %}?v=3" />
   <script src="{% static 'login/install_prompt.js' %}?v=5" defer></script>
 </head>
@@ -31,6 +31,16 @@
       <span class="joke-banner-label">😄 SPND Joke</span>
       <p class="joke-banner-text" id="jokeBannerText">{{ dad_joke }}</p>
     </div>
+
+    <section class="joke-banner gold-price-banner" aria-label="Live gold price in INR">
+      <strong class="joke-banner-label gold-label">Gold · 24K</strong>
+      <div class="gold-quote">
+        <strong class="gold-price-value" id="goldPriceValue">—</strong>
+        <span class="gold-price-unit">/ gram · INR</span>
+        <span id="goldPriceChange" class="gold-price-change"></span>
+      </div>
+      <small id="goldPriceStatus" role="status">Loading latest quote…</small>
+    </section>
 
     <section class="card home-calendar" aria-label="Bills this month">
       <div class="home-calendar-heading"><div><span class="card-label">Upcoming payments</span><h2>Bills this month · {{ payment_calendar_month }}</h2></div><a href="{% url 'planner' %}">See all</a></div>
@@ -94,7 +104,8 @@
             </span>
           </div>
           <div class="insight-stock-chart-wrap">
-            <svg viewBox="0 0 220 92" class="insight-stock-chart" id="insightStockChart" aria-label="Expense trend chart"></svg>
+            <svg viewBox="0 0 220 92" class="insight-stock-chart" id="insightStockChart" role="img" aria-label="Daily spending bar chart"></svg>
+            <small class="spending-chart-legend">Daily totals · gaps mean no spending</small>
           </div>
         </div>
       </div>
@@ -122,6 +133,8 @@
       </div>
 
     </div>
+
+
 
     <!-- ── Add Expense + Latest Transactions ──────────────── -->
     <section class="card txn-section">
@@ -294,9 +307,10 @@
 </div>
 
 <!-- ── Chart data from Django ──────────────────────────── -->
+{{ daily_spending|json_script:"daily-spending-data" }}
 <script>
   let dashboardChartData = {{ chart_months|safe }};
-  let dailySpendingData = {{ daily_spending|safe }};
+  let dailySpendingData = JSON.parse(document.getElementById("daily-spending-data").textContent);
   // Hoisted so onclick="editTransaction(...)" can access these globals
   let _txnSaveBtn = null;
   let _txnModal   = null;
@@ -412,6 +426,7 @@
         updateMotivationCard(data.total_saved, data.total_expense);
         if (Array.isArray(data.chart_months)) {
           dashboardChartData = data.chart_months;
+          if (Array.isArray(data.daily_spending)) dailySpendingData = data.daily_spending;
           renderSparkline(dashboardChartData);
           renderInsightStockChart(dashboardChartData);
           renderChart(dashboardChartData);
@@ -506,6 +521,7 @@ try {
 
       if (Array.isArray(data.chart_months)) {
         dashboardChartData = data.chart_months;
+          if (Array.isArray(data.daily_spending)) dailySpendingData = data.daily_spending;
         renderSparkline(dashboardChartData);
         renderInsightStockChart(dashboardChartData);
         renderChart(dashboardChartData);
@@ -843,188 +859,84 @@ try {
     }
   }
 
-  function renderInsightStockChart(data) {
+  function renderInsightStockChart() {
     const svg = document.getElementById('insightStockChart');
-    if (!svg || !dailySpendingData || !dailySpendingData.length) return;
-
-    [...svg.querySelectorAll('path,circle,rect')].forEach(el => el.remove());
-
-    const W = 220;
-    const H = 92;
-    const PAD_X = 6;
-    const PAD_Y = 10;
-    
-    // Use daily spending data
-    const dailyData = dailySpendingData;
-    const maxVal = Math.max(...dailyData.map(d => d.amount), 1);
-    const minVal = 0; // Always start from 0 for spending
-    const range = Math.max(maxVal - minVal, 1);
-    const step = (W - PAD_X * 2) / Math.max(dailyData.length - 1, 1);
-    
-    const latestValue = dailyData[dailyData.length - 1]?.amount ?? 0;
-    const previousValue = dailyData[dailyData.length - 2]?.amount ?? latestValue;
-    const isUpTrend = latestValue >= previousValue;
-    const strokeColor = isUpTrend ? '#ef4444' : '#22c55e'; // Red for up (bad), green for down (good)
-    const fillColor = isUpTrend ? 'rgba(239, 68, 68, 0.12)' : 'rgba(34, 197, 94, 0.12)';
-
-    const pts = dailyData.map((d, i) => ({
-      x: PAD_X + i * step,
-      y: H - PAD_Y - ((d.amount - minVal) / range) * (H - PAD_Y * 2),
-      day: d.day,
-      amount: d.amount,
-    }));
-
-    let lineD = `M${pts[0].x},${pts[0].y}`;
-    for (let i = 1; i < pts.length; i++) {
-      const cpx = (pts[i - 1].x + pts[i].x) / 2;
-      lineD += ` C${cpx},${pts[i - 1].y} ${cpx},${pts[i].y} ${pts[i].x},${pts[i].y}`;
+    if (!svg) return;
+    svg.replaceChildren();
+    const days = dailySpendingData || [];
+    const ns = 'http://www.w3.org/2000/svg';
+    if (!days.some(day => day.amount > 0)) {
+      const text = document.createElementNS(ns, 'text');
+      text.setAttribute('x', 110); text.setAttribute('y', 46);
+      text.setAttribute('text-anchor', 'middle'); text.setAttribute('fill', 'currentColor');
+      text.setAttribute('font-size', 11); text.textContent = 'No spending this month';
+      svg.appendChild(text); return;
     }
-
-    const area = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    area.setAttribute('d', `${lineD} L${pts[pts.length - 1].x},${H - 2} L${pts[0].x},${H - 2} Z`);
-    area.setAttribute('fill', fillColor);
-    svg.appendChild(area);
-
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    line.setAttribute('d', lineD);
-    line.setAttribute('fill', 'none');
-    line.setAttribute('stroke', strokeColor);
-    line.setAttribute('stroke-width', '2.6');
-    line.setAttribute('stroke-linecap', 'round');
-    line.setAttribute('stroke-linejoin', 'round');
-    svg.appendChild(line);
-
-    // Add invisible hover areas for each point
-    pts.forEach((pt, i) => {
-      const hoverArea = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      const areaWidth = step > 0 ? step : 10;
-      hoverArea.setAttribute('x', pt.x - areaWidth / 2);
-      hoverArea.setAttribute('y', 0);
-      hoverArea.setAttribute('width', areaWidth);
-      hoverArea.setAttribute('height', H);
-      hoverArea.setAttribute('fill', 'transparent');
-      hoverArea.style.cursor = 'pointer';
-      
-      // Create tooltip element if it doesn't exist
-      let tooltip = document.getElementById('dailySpendingTooltip');
-      if (!tooltip) {
-        tooltip = document.createElement('div');
-        tooltip.id = 'dailySpendingTooltip';
-        tooltip.style.cssText = `
-          display: none;
-          position: fixed;
-          background: rgba(255,255,255,0.96);
-          backdrop-filter: blur(8px);
-          border: 1px solid rgba(200,200,210,0.5);
-          border-radius: 10px;
-          padding: 6px 12px;
-          font-size: 0.80rem;
-          font-weight: 700;
-          color: #1c1c1e;
-          white-space: nowrap;
-          pointer-events: none;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.10);
-          z-index: 1000;
-        `;
-        document.body.appendChild(tooltip);
-      }
-      
-      hoverArea.addEventListener('mouseenter', () => {
-        // Show dot at this point
-        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        dot.setAttribute('cx', pt.x);
-        dot.setAttribute('cy', pt.y);
-        dot.setAttribute('r', '5');
-        dot.setAttribute('fill', strokeColor);
-        dot.setAttribute('stroke', '#fff');
-        dot.setAttribute('stroke-width', '2');
-        dot.id = 'hoverDot';
-        svg.appendChild(dot);
-        
-        // Show tooltip with dark mode support
-        const isDark = document.body.dataset.theme === 'dark';
-        if (isDark) {
-          tooltip.style.background = 'rgba(15,23,42,0.96)';
-          tooltip.style.borderColor = 'rgba(148,163,184,0.16)';
-          tooltip.style.color = '#f8fafc';
-        } else {
-          tooltip.style.background = 'rgba(255,255,255,0.96)';
-          tooltip.style.borderColor = 'rgba(200,200,210,0.5)';
-          tooltip.style.color = '#1c1c1e';
-        }
-        
-        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        const dateObj = new Date(dailyData[i].date + 'T00:00:00');
-        const label = `${months[dateObj.getMonth()]} ${dateObj.getDate()}`;
-        tooltip.textContent = `${label}: ${formatCurrency(pt.amount)}`;
-        tooltip.style.display = 'block';
-      });
-      
-      hoverArea.addEventListener('mousemove', (e) => {
-        const tooltipRect = tooltip.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const mobile = viewportWidth <= 640;
-        const offsetX = mobile ? 0 : 12;
-        const offsetY = mobile ? 14 : -42;
-
-        let left = mobile
-          ? e.clientX - (tooltipRect.width / 2)
-          : e.clientX + offsetX;
-        let top = e.clientY + offsetY;
-
-        left = Math.max(8, Math.min(left, viewportWidth - tooltipRect.width - 8));
-        top = Math.max(8, Math.min(top, viewportHeight - tooltipRect.height - 8));
-
-        tooltip.style.left = `${left}px`;
-        tooltip.style.top = `${top}px`;
-      });
-
-      hoverArea.addEventListener('touchstart', (e) => {
-        const touch = e.touches[0];
-        if (!touch) return;
-
-        const tooltipRect = tooltip.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-
-        let left = touch.clientX - (tooltipRect.width / 2);
-        let top = touch.clientY - tooltipRect.height - 14;
-
-        left = Math.max(8, Math.min(left, viewportWidth - tooltipRect.width - 8));
-        top = Math.max(8, Math.min(top, viewportHeight - tooltipRect.height - 8));
-
-        tooltip.style.left = `${left}px`;
-        tooltip.style.top = `${top}px`;
-        tooltip.style.display = 'block';
-      }, { passive: true });
-      
-      hoverArea.addEventListener('mouseleave', () => {
-        const hoverDot = document.getElementById('hoverDot');
-        if (hoverDot) hoverDot.remove();
-        tooltip.style.display = 'none';
-      });
-
-      hoverArea.addEventListener('touchend', () => {
-        const hoverDot = document.getElementById('hoverDot');
-        if (hoverDot) hoverDot.remove();
-        tooltip.style.display = 'none';
-      }, { passive: true });
-      
-      svg.appendChild(hoverArea);
+    const max = Math.max(...days.map(day => day.amount), 1);
+    const step = 208 / Math.max(days.length, 1);
+    days.forEach((day, index) => {
+      const x = 6 + step * (index + 0.5);
+      const group = document.createElementNS(ns, 'g');
+      group.setAttribute('tabindex', '0');
+      const label = `${day.date}: ${formatCurrency(day.amount)} spent`;
+      group.setAttribute('aria-label', label);
+      const title = document.createElementNS(ns, 'title'); title.textContent = label; group.appendChild(title);
+      const height = day.amount > 0 ? Math.max(1, day.amount / max * 66) : 0;
+      const width = Math.min(16, step * 0.7);
+      const bar = document.createElementNS(ns, 'rect');
+      Object.entries({x:x-width/2, y:78-height, width, height, fill:'#818cf8', rx:1.5}).forEach(([k,v]) => bar.setAttribute(k,v));
+      group.appendChild(bar);
+      const hit = document.createElementNS(ns, 'rect');
+      Object.entries({x:x-step/2, y:8, width:step, height:72, fill:'transparent'}).forEach(([k,v]) => hit.setAttribute(k,v));
+      group.appendChild(hit);
+      svg.appendChild(group);
     });
-
-    // Add the last point dot (always visible)
-    const last = pts[pts.length - 1];
-    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    dot.setAttribute('cx', last.x);
-    dot.setAttribute('cy', last.y);
-    dot.setAttribute('r', '4.5');
-    dot.setAttribute('fill', strokeColor);
-    svg.appendChild(dot);
+    [days[0], days[days.length - 1]].forEach((day, index) => {
+      if (days.length === 1 && index === 1) return;
+      const label = document.createElementNS(ns, 'text');
+      Object.entries({x:index ? 214 : 6, y:91, fill:'currentColor', 'font-size':8, 'text-anchor':index ? 'end' : 'start'}).forEach(([k,v]) => label.setAttribute(k,v));
+      label.textContent = `Day ${day.day}`; svg.appendChild(label);
+    });
   }
 
   renderInsightStockChart(dashboardChartData);
+
+  const goldCurrency = 'INR';
+  let goldLoading = false;
+  async function refreshGoldPrice() {
+    if (goldLoading || document.hidden) return;
+    goldLoading = true;
+    const status = document.getElementById('goldPriceStatus');
+    try {
+      const response = await fetch("{% url 'api_gold_price' %}", {signal: AbortSignal.timeout(10000)});
+      if (!response.ok) throw new Error('Quote unavailable');
+      const quote = await response.json();
+      const updated = new Date(quote.updatedAt);
+      if (quote.symbol !== 'XAU' || quote.currency !== goldCurrency || !Number.isFinite(quote.price) || quote.price <= 0 || !Number.isFinite(updated.getTime())) throw new Error('Invalid quote');
+      const priceEl = document.getElementById('goldPriceValue');
+      const changeEl = document.getElementById('goldPriceChange');
+      const hasComparison = Number.isFinite(quote.change24h);
+      const direction = hasComparison ? Math.sign(quote.change24h) : 0;
+      for (const el of [priceEl, changeEl]) {
+        el.classList.toggle('gold-up', direction > 0);
+        el.classList.toggle('gold-down', direction < 0);
+      }
+      changeEl.textContent = hasComparison ? `${direction > 0 ? '↑' : direction < 0 ? '↓' : ''} ${Math.abs(quote.change24h).toFixed(2)}% · 24h` : '';
+      changeEl.setAttribute('aria-label', hasComparison ? `${quote.change24h.toFixed(2)} percent compared with 24 hours ago` : '24-hour comparison unavailable');
+      changeEl.title = 'Compared with 24 hours ago';
+      document.getElementById('goldPriceValue').textContent = new Intl.NumberFormat(undefined, {style:'currency', currency:goldCurrency, maximumFractionDigits:2}).format(quote.price / 31.1035);
+      const stale = Date.now() - updated.getTime() > 5 * 60 * 1000;
+      status.textContent = `${stale ? 'Last available quote' : 'Live spot'} · ${updated.toLocaleString()}${hasComparison ? '' : ' · 24h comparison unavailable'}`;
+    } catch (error) {
+      status.textContent = 'Live price unavailable · retrying in 30 seconds';
+      document.getElementById('goldPriceValue').textContent = '—';
+      document.getElementById('goldPriceValue').classList.remove('gold-up', 'gold-down');
+      document.getElementById('goldPriceChange').textContent = '';
+    } finally { goldLoading = false; }
+  }
+  refreshGoldPrice();
+  setInterval(refreshGoldPrice, 30000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshGoldPrice(); });
 
   // ── Chart rendering ───────────────────────────────────
   function renderChart(data) {
@@ -1518,6 +1430,7 @@ try {
         updateMotivationCard(data.total_saved, data.total_expense);
         if (Array.isArray(data.chart_months)) {
           dashboardChartData = data.chart_months;
+          if (Array.isArray(data.daily_spending)) dailySpendingData = data.daily_spending;
           renderSparkline(dashboardChartData);
           renderInsightStockChart(dashboardChartData);
           renderChart(dashboardChartData);

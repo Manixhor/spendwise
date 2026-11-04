@@ -49,10 +49,12 @@ from .views import (
     api_check_email,
 )
 from .views_import import api_import_transactions
+from .gold import api_gold_price
 from .planner import planner
 from .phone_push import push_public_key, subscribe_phone, unsubscribe_phone
 
 urlpatterns = [
+    path("api/gold/price/", api_gold_price, name="api_gold_price"),
     path("", onboarding, name="onboarding"),
     path("signup/", signup, name="signup"),
     path("signup/verify/", signup_verify, name="signup_verify"),

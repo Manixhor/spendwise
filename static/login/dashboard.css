@@ -5329,3 +5329,27 @@ body.modal-keyboard-open #txnModal .modal-card {
 
 /* Compact payment calendar on the dashboard. */
 .home-calendar-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.home-calendar-heading h2{font-size:1.1rem;margin:4px 0 0}.home-calendar-heading a{color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap}.home-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.home-calendar-grid>span{text-align:center;color:var(--sub);font-size:.72rem;font-weight:700}.home-calendar-day{min-height:48px;min-width:0;border:1px solid var(--border-sub);border-radius:8px;padding:5px}.home-calendar-day.outside{opacity:.35}.home-calendar-day.today{border-color:var(--accent)}.home-calendar-day strong{font-size:.75rem}.home-calendar-day small{display:block;margin-top:2px;padding:2px 4px;border-radius:4px;background:var(--accent);color:#fff;font-size:.65rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:640px){.home-calendar-day{min-height:40px;padding:2px}.home-calendar-day small{font-size:.55rem;padding:1px 2px}.home-calendar-heading h2{font-size:1rem}}
+
+/* Live gold and daily spending bars */
+
+
+.spending-chart-legend { color: var(--muted); font-size: .75rem; line-height: 1.6; }
+
+.insight-stock-chart-wrap { height: auto; min-height: 125px; }
+.spending-chart-legend { display: block; margin-top: 5px; }
+.insight-stock-chart g:focus { outline: 1px solid currentColor; }
+
+.gold-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.gold-heading a { font-size:.8rem; }
+.insight-stock-chart-wrap { overflow:visible; }
+
+.gold-price-banner { flex-wrap: wrap; }
+.gold-price-banner .gold-label { font-weight: 900; }
+.gold-quote { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.gold-price-banner .gold-price-value { font-size: 1.2rem; font-weight: 900; color: var(--ink); }
+.gold-price-unit, .gold-price-banner small { font-size: .75rem; color: var(--muted); }
+.gold-price-banner small { margin-left: auto; }
+.gold-price-change { font-weight: 900; }
+.gold-price-banner .gold-price-value.gold-up, .gold-price-banner .gold-price-change.gold-up { color: #22c55e; }
+.gold-price-banner .gold-price-value.gold-down, .gold-price-banner .gold-price-change.gold-down { color: #ef4444; }
+@media (max-width: 640px) { .gold-price-banner small { margin-left: 0; } }

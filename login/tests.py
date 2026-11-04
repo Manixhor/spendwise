@@ -546,6 +546,23 @@ class DashboardInsightsTests(TestCase):
         self.profile.save(update_fields=['salary', 'target_savings'])
         self.client.force_login(self.user)
 
+    def test_daily_spending_bars_use_totals_and_refresh_payload(self):
+        from .views import _dashboard_stats, _dashboard_stats_payload
+        from datetime import date
+        for amount in ('100', '300', '50', '150'):
+            Transaction.objects.create(user=self.user, title='Expense', amount=Decimal(amount),
+                                       txn_type='expense', category='food', date=date.today())
+        Transaction.objects.create(user=self.user, title='Income', amount=Decimal('900'),
+                                   txn_type='income', category='other', date=date.today())
+        stats = _dashboard_stats(self.user, self.profile)
+        day = stats['daily_spending'][-1]
+        self.assertEqual(day['amount'], 600)
+        self.assertEqual(_dashboard_stats_payload(stats)['daily_spending'], stats['daily_spending'])
+        response = self.client.get(reverse('dashboard'))
+        self.assertContains(response, 'daily-spending-data')
+        self.assertContains(response, 'Daily spending bar chart')
+        self.assertContains(response, 'goldPriceValue')
+
     def test_spend_joke_changes_on_each_refresh(self):
         previous = None
         for _ in range(8):

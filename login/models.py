@@ -382,3 +382,9 @@ class PageView(models.Model):
     def __str__(self):
         user_str = self.user.username if self.user else "Anonymous"
         return f"{user_str} | {self.path} — {self.view_count} views"
+
+
+class GoldPriceQuote(models.Model):
+    """Shared INR spot quotes for rolling 24-hour comparisons."""
+    quoted_at = models.DateTimeField(unique=True)
+    price = models.FloatField()
