@@ -27,7 +27,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from .models import OfficeBalance, OfficeEntry, OfficeHiddenSuggestion, Transaction, UserProfile, SavingsGoal
+from .models import OfficeBalance, OfficeEntry, OfficeHiddenSuggestion, Transaction, UserProfile, SavingsGoal, MoneyAccount
 from .spending_coach import (
     dad_joke_fallback,
     fetch_dad_joke,
@@ -1970,6 +1970,8 @@ def logout_view(request: HttpRequest) -> HttpResponse:
 # ── Dashboard ─────────────────────────────────────────────
 @login_required(login_url="/login/")
 def dashboard(request: HttpRequest) -> HttpResponse:
+    from .planner import record_automatic_payments
+    record_automatic_payments(request.user, timezone.localdate())
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     stats = _dashboard_stats(request.user, profile)
     coach = get_spending_message(stats["spend_pct"])
@@ -2017,6 +2019,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             "dad_joke": dad_joke,
             "motivation": motivation,
             "categories": Transaction.CATEGORY_CHOICES,
+            "money_accounts": MoneyAccount.objects.filter(user=request.user),
             "today": date.today().isoformat(),
             "active_nav": "dashboard",
             **stats,
@@ -3382,6 +3385,12 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
         amount = data.get("amount", 0)
         txn_type = data.get("txn_type", "expense").strip()
         category = data.get("category", "other").strip()
+        account_id = data.get("account")
+        if account_id and not str(account_id).isdigit():
+            return JsonResponse({"error": "Choose a valid account."}, status=400)
+        account = MoneyAccount.objects.filter(user=request.user, pk=account_id).first() if account_id else None
+        if account_id and account is None:
+            return JsonResponse({"error": "Choose a valid account."}, status=400)
         txn_date_str = data.get("date", str(date.today()))
         try:
             txn_date = date.fromisoformat(txn_date_str)
@@ -3437,6 +3446,7 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
 
         txn = Transaction.objects.create(
             user=request.user,
+            account=account,
             title=title,
             amount=amount,
             txn_type=txn_type,
@@ -3743,6 +3753,14 @@ def api_update_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
         amount = data.get("amount", 0)
         txn_type = data.get("txn_type", "expense").strip()
         category = data.get("category", "other").strip()
+        account_id = data.get("account")
+        if "account" in data:
+            if account_id and not str(account_id).isdigit():
+                return JsonResponse({"error": "Choose a valid account."}, status=400)
+            account = MoneyAccount.objects.filter(user=request.user, pk=account_id).first() if account_id else None
+            if account_id and account is None:
+                return JsonResponse({"error": "Choose a valid account."}, status=400)
+            txn.account = account
         txn_date_str = data.get("date", str(date.today()))
 
         try:

@@ -42,6 +42,7 @@
 | **Savings Goals** | Create multiple goals with priority-based auto-allocation (high/medium/low) |
 | **Dashboard** | Real-time summary with spending ring, category breakdown, 6-month trend chart, daily spending bar chart, expense insights donut, stock-style trend card, and motivation quotes |
 | **Monthly Analysis** | Detailed monthly breakdown with weekly bar chart, category donut, top spending days, month-over-month comparison, and financial health score |
+| **Money Planner** | Accounts, monthly bills and subscriptions, payment calendar, CSV/XLSX import, and spending alerts at `/planner/` |
 | **Lend Tracker** | Track money lent to others with pending/paid status and mark-as-paid functionality |
 | **Profile** | User profile with name, email, and avatar upload |
 
@@ -296,6 +297,13 @@ OPENAI_API_KEY=sk-...
 ```
 
 ### Deployment to Northflank
+
+For automatic recurring expenses and opted-in payment and budget reminder emails, add a Northflank cron job
+running `python manage.py send_spendwise_reminders` once daily with the same
+database and SMTP environment variables as the web service. The command
+records which due date or budget month was emailed, so repeated runs do not
+send the same reminder twice. The planner also shows due-soon and budget
+alerts in the app without this cron job.
 
 The [GitHub Actions workflow](.github/workflows/ci.yml) runs Django checks,
 migration checks, tests, and a production static build on pushes to `main` and

@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from .models import MonthlyAnalysisMailSetting
+from .models import MonthlyAnalysisMailSetting, MonthlyAnalysisDelivery
 from .views import send_monthly_analysis_email
 
 
@@ -24,9 +24,13 @@ def send_monthly_analysis_batch(month: str, update_setting: bool = True) -> dict
     users = User.objects.filter(is_active=True, is_staff=False, email__gt="").order_by("id")
     sent = 0
     failed = 0
+    skipped = 0
     failures = []
 
     for user in users:
+        if update_setting and MonthlyAnalysisDelivery.objects.filter(user=user, month=month).exists():
+            skipped += 1
+            continue
         try:
             recipient = send_monthly_analysis_email(user, month)
         except Exception as exc:
@@ -35,8 +39,10 @@ def send_monthly_analysis_batch(month: str, update_setting: bool = True) -> dict
             continue
 
         sent += 1
+        if update_setting:
+            MonthlyAnalysisDelivery.objects.get_or_create(user=user, month=month)
 
-    if update_setting and sent:
+    if update_setting and not failed and (sent or skipped):
         setting, _ = MonthlyAnalysisMailSetting.objects.get_or_create(pk=1)
         setting.last_sent_month = month
         setting.last_sent_at = timezone.now()
@@ -46,5 +52,6 @@ def send_monthly_analysis_batch(month: str, update_setting: bool = True) -> dict
         "month": month,
         "sent": sent,
         "failed": failed,
+        "skipped": skipped,
         "failures": failures,
     }

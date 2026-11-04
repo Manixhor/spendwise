@@ -23,6 +23,7 @@
     <!-- Header -->
     <header class="main-header">
       <h1 class="welcome">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+      <a href="{% url 'planner' %}" class="add-expense-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">Planner &amp; accounts</a>
     </header>
 
     <!-- ── Dad Joke Banner ───────────────────────────────── -->
@@ -168,7 +169,7 @@
             <span class="txn-paid-pill">Paid</span>
             {% endif %}
             <button class="txn-edit"
-              onclick="editTransaction({{ txn.id }}, '{{ txn.title|escapejs }}', '{{ txn.amount }}', '{{ txn.category }}', '{{ txn.date|date:'Y-m-d' }}', '{{ txn.txn_type }}')"
+              onclick="editTransaction({{ txn.id }}, '{{ txn.title|escapejs }}', '{{ txn.amount }}', '{{ txn.category }}', '{{ txn.date|date:'Y-m-d' }}', '{{ txn.txn_type }}', '{{ txn.account_id|default:'' }}')"
               title="Edit" aria-label="Edit transaction">
               <!-- Apple pencil icon -->
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -232,6 +233,11 @@
       {% for val, label in categories %}
       <option value="{{ val }}">{{ label }}</option>
       {% endfor %}
+    </select>
+    <label class="modal-field-label" for="txnAccount">Account</label>
+    <select id="txnAccount" class="modal-select modal-select--transparent" style="margin-bottom:4px;">
+      <option value="">Unassigned</option>
+      {% for account in money_accounts %}<option value="{{ account.id }}">{{ account.name }}</option>{% endfor %}
     </select>
 
     <label class="modal-field-label" for="txnAmount">Amount</label>
@@ -349,7 +355,7 @@
   }
 
   // ── Edit transaction (global for onclick access) ───────
-  async function editTransaction(id, title, amount, category, txnDate, txnType) {
+  async function editTransaction(id, title, amount, category, txnDate, txnType, accountId) {
     try {
       const btn = _txnSaveBtn;
       if (!btn) return;
@@ -359,6 +365,7 @@
       document.getElementById('txnAmount').value   = amount || '';
       document.getElementById('txnDate').value     = txnDate || getLocalDateInputValue();
       document.getElementById('txnCategory').value = category || 'other';
+      document.getElementById('txnAccount').value = accountId || '';
 
       document.getElementById('txnModalTitle').textContent = 'Edit Transaction';
       btn.textContent = 'Update Transaction';
@@ -1105,6 +1112,26 @@ try {
   const txnCategoryInput = document.getElementById('txnCategory');
   const txnAmountInput = document.getElementById('txnAmount');
   const txnTitleInput = document.getElementById('txnTitle');
+  txnTitleInput?.addEventListener('input', () => {
+    if (!txnCategoryInput || txnCategoryInput.value !== 'other') return;
+    const title = txnTitleInput.value.toLowerCase();
+    const hints = {
+      groceries: ['grocery', 'supermarket', 'bigbasket', 'milk'],
+      transport: ['uber', 'ola', 'metro', 'fuel', 'petrol'],
+      entertainment: ['netflix', 'spotify', 'movie', 'cinema'],
+      food: ['coffee', 'restaurant', 'swiggy', 'zomato'],
+      utilities: ['electricity', 'internet', 'wifi', 'recharge'],
+      health: ['pharmacy', 'doctor', 'hospital'],
+      shopping: ['amazon', 'flipkart', 'myntra'],
+      rent: ['rent'],
+    };
+    for (const [category, words] of Object.entries(hints)) {
+      if (words.some(word => title.includes(word))) {
+        txnCategoryInput.value = category;
+        break;
+      }
+    }
+  });
   const txnDateInput = document.getElementById('txnDate');
   const activeType  = 'expense'; // always expense
   const offlineQueueKey = 'spendwise-offline-mutations';
@@ -1355,6 +1382,7 @@ try {
       document.getElementById('txnTitle').value = '';
       document.getElementById('txnAmount').value = '';
       document.getElementById('txnCategory').value = 'other';
+      document.getElementById('txnAccount').value = '';
       document.getElementById('txnDate').value = getLocalDateInputValue();
     }
     txnModal.classList.add('active');
@@ -1438,6 +1466,7 @@ try {
     const title     = document.getElementById('txnTitle').value.trim() || 'Untitled';
     const amount    = parseFloat(document.getElementById('txnAmount').value) || 0;
     const category  = document.getElementById('txnCategory').value || 'other';
+    const account   = document.getElementById('txnAccount').value || '';
     const txnDate   = document.getElementById('txnDate').value || getLocalDateInputValue();
     const editingId = txnSaveBtn.dataset.editingId || null;
 
@@ -1451,7 +1480,7 @@ try {
     txnError.textContent = '';
 
     try {
-      const payload = { title, amount: +amount, txn_type: activeType, category, date: txnDate };
+      const payload = { title, amount: +amount, txn_type: activeType, category, account, date: txnDate };
 
       if (!editingId && !navigator.onLine) {
         queueOfflineMutation({ op: 'add', payload });

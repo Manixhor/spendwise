@@ -7,6 +7,6 @@ Create a Northflank **Cron Job** that uses the same SpendWise repository and pro
 - Concurrency policy: `Forbid`
 - Time zone used by SpendWise: `Asia/Kolkata`
 
-The job runs hourly so the admin schedule can control the exact day and time without editing Northflank again. The command only sends once per report month, checks the Auto send setting, and sends the previous completed calendar month's report.
+The job runs hourly so the admin schedule can control the day and time without editing Northflank again. If Northflank misses the configured hour or day, the next run catches up during that month. Successful recipients are recorded individually so failed recipients can be retried without duplicate emails. The command checks the Auto send setting and sends the previous completed calendar month's report.
 
-Copy the web service's runtime variables to the job, especially `SECRET_KEY`, `DATABASE_URL` or the database variables, and all `SMTP_*` variables. Manage deployments for the job in Northflank.
+Copy the web service's runtime variables to the job, especially `SECRET_KEY`, `DATABASE_URL` or the database variables, and all `SMTP_*` variables. The job fails visibly if SMTP credentials are missing in production. Manage deployments for the job in Northflank.

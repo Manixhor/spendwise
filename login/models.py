@@ -52,6 +52,8 @@ class UserProfile(models.Model):
     email_verification_sent_at = models.DateTimeField(null=True, blank=True)
     password_reset_code = models.CharField(max_length=4, blank=True, default="")
     password_reset_sent_at = models.DateTimeField(null=True, blank=True)
+    reminders_enabled = models.BooleanField(default=False)
+    last_budget_reminder_month = models.CharField(max_length=7, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -109,6 +111,15 @@ class MonthlyAnalysisMailSetting(models.Model):
         return f"{status} - day {self.send_day} at {self.send_time:%H:%M}"
 
 
+class MonthlyAnalysisDelivery(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    month = models.CharField(max_length=7)
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user', 'month'], name='unique_monthly_analysis_delivery')]
+
+
 class Transaction(models.Model):
     CATEGORY_CHOICES = [
         ("rent", "Rent"),
@@ -130,6 +141,10 @@ class Transaction(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="transactions"
     )
+    account = models.ForeignKey(
+        "MoneyAccount", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="transactions",
+    )
     title = models.CharField(max_length=120)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     txn_type = models.CharField(max_length=10, choices=TYPE_CHOICES)
@@ -150,6 +165,45 @@ class Transaction(models.Model):
     def __str__(self):
         sign = "+" if self.txn_type == "income" else "-"
         return f"{self.user.username} | {self.title} {sign}₹{self.amount}"
+
+
+class MoneyAccount(models.Model):
+    KIND_CHOICES = [("cash", "Cash"), ("bank", "Bank"), ("card", "Credit card"), ("wallet", "Wallet")]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="money_accounts")
+    name = models.CharField(max_length=60)
+    kind = models.CharField(max_length=10, choices=KIND_CHOICES)
+    opening_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+        constraints = [models.UniqueConstraint(fields=["user", "name"], name="unique_user_money_account_name")]
+
+    def __str__(self):
+        return self.name
+
+
+class RecurringPayment(models.Model):
+    KIND_CHOICES = [("bill", "Bill"), ("subscription", "Subscription")]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="recurring_payments")
+    name = models.CharField(max_length=120)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    kind = models.CharField(max_length=12, choices=KIND_CHOICES)
+    category = models.CharField(max_length=20, choices=Transaction.CATEGORY_CHOICES, default="other")
+    account = models.ForeignKey(MoneyAccount, null=True, blank=True, on_delete=models.SET_NULL)
+    next_due = models.DateField()
+    day_of_month = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(31)])
+    active = models.BooleanField(default=True)
+    auto_record = models.BooleanField(default=False)
+    last_recorded_due = models.DateField(null=True, blank=True)
+    last_reminded_due = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["next_due", "name"]
+
+    def __str__(self):
+        return self.name
 
 
 class OfficeBalance(models.Model):

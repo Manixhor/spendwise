@@ -49,6 +49,7 @@ from .views import (
     api_check_email,
 )
 from .views_import import api_import_transactions
+from .planner import planner
 
 urlpatterns = [
     path("", onboarding, name="onboarding"),
@@ -62,6 +63,7 @@ urlpatterns = [
     path("forgot-password/verify/", forgot_password_verify, name="forgot_password_verify"),
     path("forgot-password/reset/", forgot_password_reset, name="forgot_password_reset"),
     path("dashboard/", dashboard, name="dashboard"),
+    path("planner/", planner, name="planner"),
     path("monthly/", monthly, name="monthly"),
     path("lend/", lend, name="lend"),
     path("office/", office, name="office"),

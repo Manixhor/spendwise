@@ -1,4 +1,6 @@
 from django.core.management.base import BaseCommand
+from django.core.management.base import CommandError
+from django.conf import settings
 from django.utils import timezone
 from datetime import time
 
@@ -26,6 +28,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        if not settings.DEBUG and settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
+            raise CommandError('SMTP is not configured for this job. Set SMTP_USERNAME and SMTP_PASSWORD.')
         setting, _ = MonthlyAnalysisMailSetting.objects.get_or_create(pk=1)
         local_now = timezone.localtime()
         month = options.get("month")
@@ -50,37 +54,18 @@ class Command(BaseCommand):
 
         if not should_send:
             day8 = setting.send_day_8_enabled
-            is_day8 = local_now.day == 8 and local_now.time().replace(microsecond=0) >= time(0, 0)
-            if day8 and is_day8:
-                if setting.last_sent_month_day8 == month:
-                    self.stdout.write(self.style.WARNING(f"Day-8 schedule already sent for {month}."))
-                    return
-                reason = 'day8'
-                should_send = True
-                scheduled_run = True
-            else:
-                if local_now.day != setting.send_day:
-                    self.stdout.write(
-                        self.style.WARNING(
-                            f"Not scheduled today. Configured day is {setting.send_day}."
-                        )
-                    )
-                    return
-                if local_now.time().replace(microsecond=0) < setting.send_time:
-                    self.stdout.write(
-                        self.style.WARNING(
-                            f"Not time yet. Configured send time is {setting.send_time:%H:%M}."
-                        )
-                    )
-                    return
-                if setting.last_sent_month == month:
-                    self.stdout.write(
-                        self.style.WARNING(f"Monthly analysis already sent for {month}.")
-                    )
-                    return
+            primary_due = local_now.day > setting.send_day or (
+                local_now.day == setting.send_day and local_now.time().replace(microsecond=0) >= setting.send_time
+            )
+            if primary_due and setting.last_sent_month != month:
                 reason = 'primary'
                 should_send = True
-                scheduled_run = True
+            elif day8 and local_now.day >= 8 and setting.last_sent_month_day8 != month:
+                reason = 'day8'
+                should_send = True
+            else:
+                self.stdout.write(self.style.WARNING('No unsent monthly schedule is due yet.'))
+                return
 
         if not should_send:
             self.stdout.write(self.style.WARNING("No schedule matched."))
@@ -90,7 +75,10 @@ class Command(BaseCommand):
         for failure in result["failures"]:
             self.stderr.write(self.style.ERROR(f"Failed: {failure}"))
 
-        if scheduled_run and not (send_now or force):
+        if result['failed']:
+            raise CommandError(f"Monthly analysis delivery failed for {result['failed']} recipient(s); retry on the next cron run.")
+
+        if scheduled_run and not (send_now or force) and (result['sent'] or result.get('skipped', 0)):
             if reason == 'day8':
                 setting.last_sent_month_day8 = month
                 setting.last_sent_at = timezone.now()
