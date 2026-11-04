@@ -124,6 +124,14 @@ class AutomationState(models.Model):
     next_check_at = models.DateTimeField()
 
 
+class ScheduledTestMail(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    report_month = models.CharField(max_length=7)
+    scheduled_at = models.DateTimeField()
+    sent_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.CharField(max_length=250, blank=True, default='')
+
+
 class Transaction(models.Model):
     CATEGORY_CHOICES = [
         ("rent", "Rent"),

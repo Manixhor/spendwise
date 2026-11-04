@@ -11,10 +11,11 @@ from datetime import datetime, time, timedelta
 
 from django.conf import settings
 from django.core.management import call_command
+from django.db.models import Min
 from django.db import close_old_connections
 from django.utils import timezone
 
-from .models import AutomationState
+from .models import AutomationState, ScheduledTestMail
 
 logger = logging.getLogger(__name__)
 _check_interval = timedelta(hours=1)
@@ -31,18 +32,39 @@ def run_due_jobs(now=None):
         timezone.get_current_timezone(),
     )
     next_check = min(now + _check_interval, next_midnight)
+    scheduled_mail_at = ScheduledTestMail.objects.filter(sent_at__isnull=True, scheduled_at__gt=now).aggregate(first=Min('scheduled_at'))['first']
+    if scheduled_mail_at:
+        next_check = min(next_check, scheduled_mail_at)
     AutomationState.objects.get_or_create(pk=1, defaults={'next_check_at': now})
     claimed = AutomationState.objects.filter(pk=1, next_check_at__lte=now).update(
         next_check_at=next_check
     )
     if not claimed:
         return False
+    send_due_test_mails(now)
     for command in ('send_spendwise_reminders', 'send_monthly_analysis_emails'):
         try:
             call_command(command)
         except Exception:
             logger.exception('SpendWise automatic job failed: %s', command)
     return True
+
+
+def send_due_test_mails(now):
+    from .views import send_monthly_analysis_email
+    for item in ScheduledTestMail.objects.select_related('user').filter(sent_at__isnull=True, scheduled_at__lte=now):
+        try:
+            if not settings.DEBUG and settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
+                raise RuntimeError('SMTP is not configured')
+            send_monthly_analysis_email(item.user, item.report_month)
+        except Exception:
+            logger.exception('Scheduled SpendWise test email failed')
+            item.last_error = 'Email delivery failed; retrying on the next check.'
+            item.save(update_fields=['last_error'])
+        else:
+            item.sent_at = timezone.now()
+            item.last_error = ''
+            item.save(update_fields=['sent_at', 'last_error'])
 
 
 def _loop():
