@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import TemplateView
 
 from .views import (
     onboarding,
@@ -64,6 +65,7 @@ urlpatterns = [
     path("forgot-password/verify/", forgot_password_verify, name="forgot_password_verify"),
     path("forgot-password/reset/", forgot_password_reset, name="forgot_password_reset"),
     path("dashboard/", dashboard, name="dashboard"),
+    path("quick-add/", TemplateView.as_view(template_name="login/quick_add.html"), name="quick_add"),
     path("monthly/", monthly, name="monthly"),
     path("lend/", lend, name="lend"),
     path("office/", office, name="office"),
