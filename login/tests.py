@@ -120,6 +120,18 @@ class LoginTests(TestCase):
 
         self.assertRedirects(response, reverse('dashboard'))
 
+    def test_quick_add_opens_after_login_and_is_consumed(self):
+        dashboard = reverse('dashboard')
+        self.client.get(f'{dashboard}?quick_add=1', follow=True)
+        response = self.client.post(reverse('login'), {
+            'email': self.user.email,
+            'password': 'StrongPass123!',
+        }, follow=True)
+
+        self.assertContains(response, 'data-quick-add="true"')
+        self.assertNotContains(self.client.get(dashboard), 'data-quick-add="true"')
+        self.assertContains(self.client.get(f'{dashboard}?quick_add=1'), 'data-quick-add="true"')
+
 
 class InvitationSetupTests(TestCase):
     def setUp(self):

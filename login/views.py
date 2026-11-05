@@ -24,6 +24,7 @@ from django.db.models import Sum, Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import strip_tags
 from django.views.decorators.cache import never_cache
@@ -1948,6 +1949,8 @@ def forgot_password_reset(request: HttpRequest) -> HttpResponse:
 @ensure_csrf_cookie
 @otp_limited
 def login_view(request: HttpRequest) -> HttpResponse:
+    if request.method == "GET" and request.GET.get("next") == f'{reverse("dashboard")}?quick_add=1':
+        request.session["pending_quick_add"] = True
     if request.user.is_authenticated:
         return redirect("dashboard")
 
@@ -2005,6 +2008,7 @@ def logout_view(request: HttpRequest) -> HttpResponse:
 # ── Dashboard ─────────────────────────────────────────────
 @login_required(login_url="/login/")
 def dashboard(request: HttpRequest) -> HttpResponse:
+    pending_quick_add = request.session.pop("pending_quick_add", False)
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     stats = _dashboard_stats(request.user, profile)
     coach = get_spending_message(stats["spend_pct"])
@@ -2055,6 +2059,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             "categories": Transaction.CATEGORY_CHOICES,
             "today": date.today().isoformat(),
             "active_nav": "dashboard",
+            "quick_add": pending_quick_add or request.GET.get("quick_add") == "1",
             **stats,
             "chart_months": json.dumps(stats["chart_months"]),
             "insight_segments_json": json.dumps(stats["insight_segments"]),

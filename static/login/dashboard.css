@@ -3385,7 +3385,8 @@ body.ios-modal-keyboard-open .modal-overlay.active .modal-card {
   min-width: 104px;
 }
 
-.txn-item:hover .txn-actions { opacity: 1; }
+.txn-item:hover .txn-actions,
+.txn-item:focus-within .txn-actions { opacity: 1; }
 
 /* Shared base for both buttons */
 .txn-edit,

@@ -42,6 +42,12 @@
   ],
   "shortcuts": [
     {
+      "name": "Quick Add Expense",
+      "short_name": "Quick Add",
+      "description": "Open a new expense with today's date.",
+      "url": "/dashboard/?quick_add=1"
+    },
+    {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "Open your SpendWise dashboard.",
