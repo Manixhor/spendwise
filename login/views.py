@@ -34,7 +34,7 @@ from .security import otp_limited, clean_avatar
 
 logger = logging.getLogger(__name__)
 
-from .models import OfficeBalance, OfficeEntry, OfficeHiddenSuggestion, Transaction, UserProfile, SavingsGoal, MoneyAccount, RecurringPayment
+from .models import OfficeBalance, OfficeEntry, OfficeHiddenSuggestion, Transaction, UserProfile, SavingsGoal, MoneyAccount
 from .spending_coach import (
     dad_joke_fallback,
     fetch_dad_joke,
@@ -2005,7 +2005,7 @@ def logout_view(request: HttpRequest) -> HttpResponse:
 # ── Dashboard ─────────────────────────────────────────────
 @login_required(login_url="/login/")
 def dashboard(request: HttpRequest) -> HttpResponse:
-    from .planner import payment_calendar, record_automatic_payments
+    from .planner import record_automatic_payments
     record_automatic_payments(request.user, timezone.localdate())
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     stats = _dashboard_stats(request.user, profile)
@@ -2056,12 +2056,6 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             "motivation": motivation,
             "categories": Transaction.CATEGORY_CHOICES,
             "money_accounts": MoneyAccount.objects.filter(user=request.user),
-            "payment_calendar_weeks": payment_calendar(
-                list(RecurringPayment.objects.filter(user=request.user)),
-                timezone.localdate().replace(day=1),
-            ),
-            "payment_calendar_month": timezone.localdate().strftime('%B %Y'),
-            "payment_calendar_today": timezone.localdate(),
             "today": date.today().isoformat(),
             "active_nav": "dashboard",
             **stats,

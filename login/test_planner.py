@@ -60,14 +60,14 @@ class PlannerTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Transaction.objects.get(user=self.user).account, account)
 
-    def test_dashboard_shows_payment_calendar(self):
+    def test_payment_calendar_is_only_on_planner_page(self):
         RecurringPayment.objects.create(
             user=self.user, name='Rent', kind='bill', amount=Decimal('100.00'),
             next_due=timezone.localdate(), day_of_month=timezone.localdate().day,
         )
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'Bills this month')
-        self.assertContains(response, 'Rent')
+        self.assertNotContains(response, 'Bills this month')
+        self.assertContains(self.client.get(reverse('planner')), 'Rent')
 
     def test_phone_subscription_and_reminder_send_once(self):
         endpoint = 'https://fcm.googleapis.com/fcm/send/test-subscription'
