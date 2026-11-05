@@ -192,6 +192,10 @@ class Transaction(models.Model):
         default=False,
         help_text="Marks lending transactions as paid back.",
     )
+    split_parent = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.CASCADE, related_name="split_shares"
+    )
+    split_key = models.UUIDField(null=True, blank=True, unique=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

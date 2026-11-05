@@ -54,7 +54,7 @@ def admin_dashboard(request):
     ).count()
 
     # ── Transaction stats ──────────────────────────────────
-    customer_transactions = Transaction.objects.filter(user__is_staff=False)
+    customer_transactions = Transaction.objects.filter(user__is_staff=False, split_parent__isnull=True)
     total_txns = customer_transactions.count()
     total_income = customer_transactions.filter(txn_type='income').aggregate(s=Sum('amount'))['s'] or Decimal('0')
     total_expense = customer_transactions.filter(txn_type='expense').aggregate(s=Sum('amount'))['s'] or Decimal('0')

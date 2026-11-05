@@ -64,7 +64,7 @@
           <div class="lend-icon">{{ profile.currency_symbol }}</div>
           <div class="lend-info">
             <h3>{{ txn.title }}</h3>
-            <p>{{ txn.date|date:"M d, Y" }} · Pending return</p>
+            <p>{{ txn.date|date:"M d, Y" }} · Pending return{% if txn.split_parent %} · {{ txn.split_parent.title }}{% endif %}</p>
           </div>
           <strong class="lend-amount negative" data-amount="{{ txn.amount }}" data-curr>{{ txn.amount|currency:profile.currency }}</strong>
           <button class="lend-paid-btn" type="button" data-lend-id="{{ txn.id }}">Mark paid</button>
@@ -89,7 +89,7 @@
           <div class="lend-icon">{{ profile.currency_symbol }}</div>
           <div class="lend-info">
             <h3>{{ txn.title }}</h3>
-            <p>{{ txn.date|date:"M d, Y" }} · Paid back</p>
+            <p>{{ txn.date|date:"M d, Y" }} · Paid back{% if txn.split_parent %} · {{ txn.split_parent.title }}{% endif %}</p>
           </div>
           <strong class="lend-amount" data-amount="{{ txn.amount }}" data-curr>{{ txn.amount|currency:profile.currency }}</strong>
           <span class="lend-paid-pill">Paid</span>

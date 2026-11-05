@@ -7,7 +7,7 @@
   {% include "login/includes/pwa_meta.html" %}
   <title>SpendWise – Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}?v=repeat-expense-1" />
+  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}?v=spending-tools-1" />
   <link rel="stylesheet" href="{% static 'login/install_prompt.css' %}?v=3" />
   <script src="{% static 'login/install_prompt.js' %}?v=5" defer></script>
 </head>
@@ -67,6 +67,53 @@
       </div>
       <div class="savings-blob savings-blob-1" aria-hidden="true"></div>
       <div class="savings-blob savings-blob-2" aria-hidden="true"></div>
+    </div>
+
+    <div class="spending-checks">
+      <section class="card spending-check" aria-labelledby="dailyAllowanceTitle">
+        <h2 id="dailyAllowanceTitle">Daily spending allowance</h2>
+        {% if daily_allowance %}
+          <p class="spending-check-amount"><span data-amount="{{ daily_allowance.per_day|unlocalize }}" data-curr>{{ daily_allowance.per_day|currency:profile.currency }}</span> <small>/ day</small></p>
+          {% if daily_allowance.over %}
+            <p>You're <span data-amount="{{ daily_allowance.over|unlocalize }}" data-curr>{{ daily_allowance.over|currency:profile.currency }}</span> over your monthly budget.</p>
+          {% else %}
+            <p><span data-amount="{{ daily_allowance.remaining|unlocalize }}" data-curr>{{ daily_allowance.remaining|currency:profile.currency }}</span> left across {{ daily_allowance.days }} day{{ daily_allowance.days|pluralize }}, including today.</p>
+          {% endif %}
+          <details>
+            <summary>How it’s calculated</summary>
+            <p>Monthly budget: <span data-amount="{{ daily_allowance.budget|unlocalize }}" data-curr>{{ daily_allowance.budget|currency:profile.currency }}</span> (salary plus extra income, minus savings target). Logged spending: <span data-amount="{{ daily_allowance.spent|unlocalize }}" data-curr>{{ daily_allowance.spent|currency:profile.currency }}</span>. The remaining budget is divided by the days left this month.</p>
+          </details>
+        {% else %}
+          <p>Set your monthly salary to calculate an allowance from your budget and logged spending.</p>
+        {% endif %}
+      </section>
+      <section class="card spending-check" aria-labelledby="weeklyCheckTitle">
+        <h2 id="weeklyCheckTitle">Weekly spending check-in</h2>
+        <p class="spending-check-amount"><span data-amount="{{ weekly_check_in.current|unlocalize }}" data-curr>{{ weekly_check_in.current|currency:profile.currency }}</span></p>
+        <p>{{ weekly_check_in.current_start|date:"M j" }}–{{ weekly_check_in.today|date:"M j" }} ·
+          {% if weekly_check_in.difference %}
+            <span data-amount="{{ weekly_check_in.difference|unlocalize }}" data-curr>{{ weekly_check_in.difference|currency:profile.currency }}</span> {% if weekly_check_in.current > weekly_check_in.previous %}more{% else %}less{% endif %} than the prior 7 days
+          {% else %}
+            Same as the prior 7 days
+          {% endif %}
+        </p>
+        <details>
+          <summary>See what changed</summary>
+          <p>{{ weekly_check_in.previous_start|date:"M j" }}–{{ weekly_check_in.previous_end|date:"M j" }}: <span data-amount="{{ weekly_check_in.previous|unlocalize }}" data-curr>{{ weekly_check_in.previous|currency:profile.currency }}</span></p>
+          {% if weekly_check_in.category %}
+            <p><strong>{{ weekly_check_in.category }}</strong> changed most: <span data-amount="{{ weekly_check_in.category_difference|unlocalize }}" data-curr>{{ weekly_check_in.category_difference|currency:profile.currency }}</span> {% if weekly_check_in.category_higher %}more{% else %}less{% endif %}.</p>
+            <p>Largest {{ weekly_check_in.category|lower }} expenses by period</p>
+            <ul>
+              {% for entry in weekly_check_in.current_examples %}
+                <li>{{ entry.date|date:"M j" }} · {{ entry.title }} · <span data-amount="{{ entry.amount|unlocalize }}" data-curr>{{ entry.amount|currency:profile.currency }}</span></li>
+              {% endfor %}
+              {% for entry in weekly_check_in.previous_examples %}
+                <li>{{ entry.date|date:"M j" }} · {{ entry.title }} · <span data-amount="{{ entry.amount|unlocalize }}" data-curr>{{ entry.amount|currency:profile.currency }}</span></li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </details>
+      </section>
     </div>
 
     <!-- Top row: SPND + Target Savings + Motivation -->
@@ -158,7 +205,7 @@
           <div class="txn-info">
             <span class="txn-name">{{ txn.title }}</span>
             <span class="txn-time" data-date="{{ txn.date|date:'Y-m-d' }}">
-              {{ txn.date }} · {{ txn.get_category_display }}{% if txn.category == 'lend' and txn.is_settled %} · Paid{% endif %}
+              {{ txn.date }} · {{ txn.get_category_display }}{% if txn.split_key %} · My share{% endif %}{% if txn.category == 'lend' and txn.is_settled %} · Paid{% endif %}
             </span>
           </div>
           <span class="txn-amt {% if txn.txn_type == 'expense' %}neg{% endif %}{% if txn.category == 'lend' and txn.is_settled %} settled{% endif %}">
@@ -174,7 +221,7 @@
             {% endif %}
             {% if txn.txn_type == 'expense' and txn.category != 'lend' %}
             <button type="button" class="txn-edit txn-repeat" title="Repeat expense" aria-label="Repeat expense"
-              data-title="{{ txn.title }}" data-amount="{{ txn.amount|unlocalize }}" data-category="{{ txn.category }}">
+              data-title="{{ txn.title }}" data-repeat-amount="{{ txn.amount|unlocalize }}" data-category="{{ txn.category }}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4m14-1v2a3 3 0 0 1-3 3H3"/>
               </svg>
@@ -189,7 +236,7 @@
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
             </button>
-            <button class="txn-delete" onclick="deleteTransaction({{ txn.id }})" title="Delete" aria-label="Delete transaction">
+            <button class="txn-delete" onclick="deleteTransaction({{ txn.id }}, {{ txn.split_key|yesno:'true,false' }})" title="Delete" aria-label="Delete transaction">
               <!-- Apple trash icon -->
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"/>
@@ -263,6 +310,21 @@
         <input type="date" id="txnDate" class="modal-select modal-select--transparent" value="{{ today }}" enterkeyhint="done" />
       </div>
     </div>
+
+    <details class="expense-split" id="expenseSplit">
+      <summary>Split with friends</summary>
+      <p>Enter the full bill above, then add what each friend owes. Their shares go to Lend Tracker.</p>
+      <div id="expenseSplitRows"></div>
+      <button type="button" id="addSplitFriend">+ Add friend</button>
+      <p id="splitPersonalShare" aria-live="polite"></p>
+    </details>
+    <template id="expenseSplitRow">
+      <div class="expense-split-row">
+        <label>Name <input type="text" data-friend-name maxlength="120" autocomplete="off" /></label>
+        <label>Owes <input type="number" data-friend-amount inputmode="decimal" min="0.01" step="0.01" /></label>
+        <button type="button" data-remove-friend aria-label="Remove friend">×</button>
+      </div>
+    </template>
 
     <p class="modal-error" id="txnError"></p>
     <button class="modal-save-btn" id="txnSave">Add Transaction</button>
@@ -384,7 +446,8 @@
   }
 
   // ── Delete transaction (global for onclick access) ─────
-  async function deleteTransaction(id) {
+  async function deleteTransaction(id, isSplit = false) {
+    if (isSplit && !confirm("Delete your expense and all linked shares from Lend Tracker?")) return;
     try {
       if (!navigator.onLine && window.spendwiseOffline.queueMutation) {
         window.spendwiseOffline.queueMutation({ op: 'delete', txnId: id });
@@ -421,6 +484,7 @@
         }
         renderInsightStockSummary(data.insight_stock);
         renderCategoryTiles(data.cat_tiles || []);
+        location.reload();
       }
     } catch (e) {
       if (window.spendwiseOffline.queueMutation && (!navigator.onLine || e instanceof TypeError)) {
@@ -1246,6 +1310,41 @@ try {
     }
   }
 
+  const expenseSplit = document.getElementById('expenseSplit');
+  const expenseSplitRows = document.getElementById('expenseSplitRows');
+  const addSplitFriend = document.getElementById('addSplitFriend');
+  let splitKey;
+
+  function addFriendRow() {
+    if (expenseSplitRows.children.length >= 20) return;
+    expenseSplitRows.appendChild(document.getElementById('expenseSplitRow').content.cloneNode(true));
+  }
+
+  function updateSplitForm() {
+    expenseSplit.hidden = Boolean(txnSaveBtn?.dataset.editingId) || txnCategoryInput.value === 'lend';
+    if (expenseSplit.hidden) expenseSplit.open = false;
+    const owedCents = Array.from(expenseSplitRows.querySelectorAll('[data-friend-amount]'))
+      .reduce((sum, input) => sum + Math.round(Number(input.value) * 100), 0);
+    const remainingCents = Math.round(Number(txnAmountInput.value) * 100) - owedCents;
+    document.getElementById('splitPersonalShare').textContent = remainingCents >= 0
+      ? `Your share: ${formatCurrency(remainingCents / 100)}`
+      : 'Friends’ shares exceed the bill.';
+    addSplitFriend.disabled = expenseSplitRows.children.length >= 20;
+  }
+
+  addSplitFriend.addEventListener('click', () => {
+    addFriendRow();
+    updateSplitForm();
+  });
+  expenseSplitRows.addEventListener('click', (event) => {
+    const remove = event.target.closest('[data-remove-friend]');
+    if (!remove) return;
+    remove.parentElement.remove();
+    updateSplitForm();
+  });
+  expenseSplitRows.addEventListener('input', updateSplitForm);
+  txnAmountInput.addEventListener('input', updateSplitForm);
+
   function openTxnModal(focusField = txnCategoryInput) {
     if (!txnModal) return;
     if (!txnSaveBtn || !txnSaveBtn.dataset.editingId) {
@@ -1256,6 +1355,11 @@ try {
       document.getElementById('txnCategory').value = 'other';
       document.getElementById('txnDate').value = getLocalDateInputValue();
     }
+    expenseSplit.open = false;
+    expenseSplitRows.replaceChildren();
+    addFriendRow();
+    splitKey = undefined;
+    updateSplitForm();
     txnModal.classList.add('active');
     syncAppVisualViewport();
     requestAnimationFrame(() => focusField?.focus());
@@ -1279,12 +1383,16 @@ try {
     document.getElementById('txnTitle').value = expense.title;
     document.getElementById('txnAmount').value = expense.amount;
     document.getElementById('txnCategory').value = expense.category;
+    updateSplitForm();
     if (txnError) txnError.textContent = '';
   }
 
   document.getElementById('txnList')?.addEventListener('click', (event) => {
     const button = event.target.closest('.txn-repeat');
-    if (button) openRepeatedExpense(button.dataset);
+    if (button) {
+      const { title, repeatAmount: amount, category } = button.dataset;
+      openRepeatedExpense({ title, amount, category });
+    }
   });
 
   if (document.body.dataset.quickAdd === 'true') {
@@ -1302,6 +1410,7 @@ try {
     if (txnSaveBtn) delete txnSaveBtn.dataset.editingId;
     openTxnModal();
     if (txnCategoryInput) txnCategoryInput.value = 'lend';
+    updateSplitForm();
     txnAmountInput?.focus();
   }
 
@@ -1328,6 +1437,7 @@ try {
 
   if (txnCategoryInput) {
     txnCategoryInput.addEventListener('change', () => {
+      updateSplitForm();
       txnAmountInput?.focus();
     });
   }
@@ -1372,16 +1482,41 @@ try {
       return;
     }
 
+    const payload = { title, amount, txn_type: activeType, category, date: txnDate };
+    let offlineExpense = payload;
+    if (!editingId && category !== 'lend' && expenseSplit.open) {
+      const shares = Array.from(expenseSplitRows.children, row => ({
+        name: row.querySelector('[data-friend-name]').value.trim(),
+        amount: row.querySelector('[data-friend-amount]').value,
+      }));
+      if (!shares.length || shares.some(share => !share.name || !/^\d+(\.\d{1,2})?$/.test(share.amount) || Number(share.amount) <= 0)) {
+        txnError.textContent = 'Enter a name and a valid amount for each friend.';
+        return;
+      }
+      if (txnDate > getLocalDateInputValue()) {
+        txnError.textContent = 'A split expense cannot be dated in the future.';
+        return;
+      }
+      const personalCents = Math.round(amount * 100) -
+        shares.reduce((sum, share) => sum + Math.round(Number(share.amount) * 100), 0);
+      if (personalCents <= 0) {
+        txnError.textContent = 'Friends’ shares must leave a positive amount for your share.';
+        return;
+      }
+      splitKey ??= crypto.randomUUID();
+      payload.shares = shares;
+      payload.split_key = splitKey;
+      offlineExpense = { ...payload, amount: personalCents / 100 };
+    }
+
     txnSaveBtn.disabled = true;
     txnSaveBtn.textContent = editingId ? 'Updating…' : 'Saving…';
     txnError.textContent = '';
 
     try {
-      const payload = { title, amount: +amount, txn_type: activeType, category, date: txnDate };
-
       if (!editingId && !navigator.onLine) {
         queueOfflineMutation({ op: 'add', payload });
-        renderOfflineTransaction(payload);
+        renderOfflineTransaction(offlineExpense);
         closeTxnModal();
         txnSaveBtn.disabled = false;
         txnSaveBtn.textContent = 'Add Transaction';
@@ -1439,15 +1574,13 @@ try {
       }
     } catch (err) {
       if (!editingId) {
-        const payload = { title, amount: +amount, txn_type: activeType, category, date: txnDate };
-        queueOfflineMutation({ op: 'add', payload });
-        renderOfflineTransaction(payload);
+          queueOfflineMutation({ op: 'add', payload });
+        renderOfflineTransaction(offlineExpense);
         closeTxnModal();
         txnSaveBtn.disabled = false;
         txnSaveBtn.textContent = 'Add Transaction';
       } else {
-        const payload = { title, amount: +amount, txn_type: activeType, category, date: txnDate };
-        queueOfflineMutation({ op: 'update', txnId: editingId, payload });
+          queueOfflineMutation({ op: 'update', txnId: editingId, payload });
         renderOfflineUpdate(editingId, payload);
         closeTxnModal();
         txnSaveBtn.disabled = false;

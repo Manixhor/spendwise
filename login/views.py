@@ -5,9 +5,11 @@ import decimal
 import random
 import urllib.error
 import urllib.request
+from calendar import monthrange
 from datetime import date, timedelta
 from decimal import Decimal
 from math import ceil, pi
+from uuid import UUID
 
 from django.conf import settings
 from django.contrib import messages
@@ -19,7 +21,8 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
-from django.core.validators import validate_email
+from django.core.validators import DecimalValidator, validate_email
+from django.db import transaction
 from django.db.models import Sum, Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -306,7 +309,7 @@ MOTIVATION_BADGES = {
 
 def _active_expense_qs(qs):
     """Expense queryset excluding lend items that have already been paid back."""
-    return qs.filter(txn_type="expense").exclude(category="lend", is_settled=True)
+    return qs.filter(txn_type="expense", split_parent__isnull=True).exclude(category="lend", is_settled=True)
 
 
 def _motivation_tone(saved_amount: float, expense_amount: float) -> str:
@@ -908,7 +911,7 @@ def _build_monthly_analysis(
     current_month_str = month_start.strftime("%Y-%m")
 
     month_txns = Transaction.objects.filter(
-        user=user, date__gte=month_start, date__lte=month_end
+        user=user, date__gte=month_start, date__lte=month_end, split_parent__isnull=True
     )
     total_income = month_txns.filter(txn_type="income").aggregate(s=Sum("amount"))[
         "s"
@@ -1220,7 +1223,7 @@ def _build_insight_stock_card(chart_months, total_expense):
 
 def _dashboard_stats(user, profile):
     """Compute all dynamic stats for the dashboard."""
-    today = date.today()
+    today = timezone.localdate()
     month_start = today.replace(day=1)
     current_month_str = month_start.strftime("%Y-%m")
 
@@ -1282,7 +1285,7 @@ def _dashboard_stats(user, profile):
     ring_dash = round((savings_pct or 0) / 100 * CIRC, 1)
 
     # Last 7 transactions
-    recent_txns = Transaction.objects.filter(user=user).order_by(
+    recent_txns = Transaction.objects.filter(user=user, split_parent__isnull=True).order_by(
         "-date", "-created_at"
     )[:7]
 
@@ -2008,9 +2011,60 @@ def logout_view(request: HttpRequest) -> HttpResponse:
     return redirect("onboarding")
 
 
+def _daily_spending_allowance(today, profile, stats):
+    if not profile.salary or profile.salary <= 0:
+        return None
+    target = profile.target_savings or Decimal("0")
+    budget = max(profile.salary + stats["excess_income"] - target, Decimal("0"))
+    remaining = budget - stats["total_expense"]
+    days = monthrange(today.year, today.month)[1] - today.day + 1
+    return {
+        "budget": budget,
+        "spent": stats["total_expense"],
+        "remaining": max(remaining, Decimal("0")),
+        "over": max(-remaining, Decimal("0")),
+        "days": days,
+        "per_day": (max(remaining, Decimal("0")) / days).quantize(
+            Decimal("0.01"), rounding=decimal.ROUND_DOWN,
+        ),
+    }
+
+
+def _weekly_spending_check_in(user, today):
+    current_start = today - timedelta(days=6)
+    previous_start = today - timedelta(days=13)
+    previous_end = current_start - timedelta(days=1)
+    expenses = _active_expense_qs(Transaction.objects.filter(
+        user=user, date__range=(previous_start, today),
+    ))
+    rows = list(expenses.order_by().values("category").annotate(
+        current=Sum("amount", filter=Q(date__gte=current_start), default=0),
+        previous=Sum("amount", filter=Q(date__lt=current_start), default=0),
+    ))
+    current = sum((row["current"] for row in rows), Decimal("0"))
+    previous = sum((row["previous"] for row in rows), Decimal("0"))
+    result = {
+        "current": current, "previous": previous, "difference": abs(current - previous),
+        "current_start": current_start, "today": today,
+        "previous_start": previous_start, "previous_end": previous_end,
+    }
+    biggest = max(rows, key=lambda row: abs(row["current"] - row["previous"]), default=None)
+    if biggest and biggest["current"] != biggest["previous"]:
+        category_expenses = expenses.filter(category=biggest["category"]).order_by("-amount", "-date", "-pk")
+        result.update({
+            "category": dict(Transaction.CATEGORY_CHOICES).get(biggest["category"], biggest["category"]),
+            "category_difference": abs(biggest["current"] - biggest["previous"]),
+            "category_higher": biggest["current"] > biggest["previous"],
+            "current_examples": list(category_expenses.filter(date__gte=current_start)[:5]),
+            "previous_examples": list(category_expenses.filter(date__lt=current_start)[:5]),
+        })
+    return result
+
+
 # ── Dashboard ─────────────────────────────────────────────
 @login_required(login_url="/login/")
 def dashboard(request: HttpRequest) -> HttpResponse:
+    today = timezone.localdate()
     pending_quick_add = request.session.pop("pending_quick_add", None)
     quick_add = request.GET.get("quick_add")
     if quick_add not in ("1", "repeat"):
@@ -2018,7 +2072,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     repeat_expense = None
     if quick_add == "repeat":
         expense = Transaction.objects.filter(
-            user=request.user, txn_type="expense", date__lte=date.today(),
+            user=request.user, txn_type="expense", date__lte=today,
         ).exclude(category="lend").order_by("-date", "-created_at", "-pk").first()
         if expense:
             repeat_expense = {
@@ -2072,10 +2126,12 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             "dad_joke": dad_joke,
             "motivation": motivation,
             "categories": Transaction.CATEGORY_CHOICES,
-            "today": date.today().isoformat(),
+            "today": today.isoformat(),
             "active_nav": "dashboard",
             "quick_add": quick_add in ("1", "repeat"),
             "repeat_expense": repeat_expense,
+            "daily_allowance": _daily_spending_allowance(today, profile, stats),
+            "weekly_check_in": _weekly_spending_check_in(request.user, today),
             **stats,
             "chart_months": json.dumps(stats["chart_months"]),
             "insight_segments_json": json.dumps(stats["insight_segments"]),
@@ -2724,7 +2780,7 @@ def lend(request: HttpRequest) -> HttpResponse:
             user=request.user,
             txn_type="expense",
             category="lend",
-        ).order_by("is_settled", "-date", "-created_at")
+        ).select_related("split_parent").order_by("is_settled", "-date", "-created_at")
     )
     pending_lends = [txn for txn in lends if not txn.is_settled]
     paid_lends = [txn for txn in lends if txn.is_settled]
@@ -3142,7 +3198,7 @@ def api_export_monthly_pdf(request: HttpRequest) -> HttpResponse:
 
     # Get transactions for the month
     transactions = Transaction.objects.filter(
-        user=request.user, date__gte=start_date, date__lte=end_date
+        user=request.user, date__gte=start_date, date__lte=end_date, split_parent__isnull=True
     ).order_by("-date")
 
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
@@ -3316,7 +3372,7 @@ def api_export_monthly_xlsx(request: HttpRequest) -> HttpResponse:
 
     # Get transactions for the month
     transactions = Transaction.objects.filter(
-        user=request.user, date__gte=start_date, date__lte=end_date
+        user=request.user, date__gte=start_date, date__lte=end_date, split_parent__isnull=True
     ).order_by("-date")
 
     # Create Excel workbook
@@ -3399,7 +3455,7 @@ def api_export_monthly_csv(request: HttpRequest) -> HttpResponse:
         )
 
     transactions = Transaction.objects.filter(
-        user=request.user, date__gte=start_date, date__lte=end_date
+        user=request.user, date__gte=start_date, date__lte=end_date, split_parent__isnull=True
     ).order_by("-date")
 
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
@@ -3443,6 +3499,55 @@ def api_export_monthly_csv(request: HttpRequest) -> HttpResponse:
     return response
 
 
+def _save_split_expense(user, fields, shares, request_key):
+    """Save the personal expense and its receivables as one retryable write."""
+    if fields["txn_type"] != "expense" or fields["category"] == "lend":
+        raise ValidationError("Choose a regular expense to split.")
+    if fields["date"] > timezone.localdate():
+        raise ValidationError("A split expense cannot be dated in the future.")
+    if not isinstance(shares, list) or not 1 <= len(shares) <= 20:
+        raise ValidationError("Add between 1 and 20 friends to split the expense.")
+    try:
+        key = UUID(str(request_key))
+    except (ValueError, TypeError):
+        raise ValidationError("Reopen the expense form and try again.")
+
+    validate_amount = DecimalValidator(12, 2)
+    validate_amount(fields["amount"])
+    receivables = []
+    for share in shares:
+        if not isinstance(share, dict) or not isinstance(share.get("name"), str):
+            raise ValidationError("Enter a name for each friend.")
+        name = share["name"].strip()
+        if not name or len(name) > 120:
+            raise ValidationError("Enter a name of up to 120 characters for each friend.")
+        try:
+            amount = Decimal(str(share.get("amount")))
+            validate_amount(amount)
+        except (decimal.InvalidOperation, ValidationError):
+            raise ValidationError("Enter valid amounts with up to two decimal places.")
+        if amount <= 0:
+            raise ValidationError("Each friend's share must be greater than zero.")
+        receivables.append((name, amount))
+
+    personal_amount = fields["amount"] - sum(amount for _, amount in receivables)
+    if personal_amount <= 0:
+        raise ValidationError("Friends' shares must leave a positive amount for your share.")
+    with transaction.atomic():
+        expense, created = Transaction.objects.get_or_create(
+            user=user, split_key=key, defaults={**fields, "amount": personal_amount},
+        )
+        if created:
+            Transaction.objects.bulk_create([
+                Transaction(
+                    user=user, title=name, amount=amount, txn_type="expense", category="lend",
+                    date=expense.date, split_parent=expense,
+                )
+                for name, amount in receivables
+            ])
+    return expense
+
+
 # ── API: Add Transaction ──────────────────────────────────
 @login_required(login_url="/login/")
 @require_POST
@@ -3476,6 +3581,9 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
             amount_decimal = Decimal(str(amount))
         except (decimal.InvalidOperation, TypeError, ValueError):
             amount_decimal = Decimal("0")
+
+        if not amount_decimal.is_finite():
+            return JsonResponse({"error": "Enter a valid amount."}, status=400)
 
         if category == "lend":
             if not raw_title:
@@ -3511,18 +3619,19 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
                 status=400,
             )
 
-        amount = amount_decimal
-
-        txn = Transaction.objects.create(
-            user=request.user,
-            account=account,
-            title=title,
-            amount=amount,
-            txn_type=txn_type,
-            category=category,
-            date=txn_date,
-            note=data.get("note", ""),
-        )
+        fields = {
+            "account": account, "title": title, "amount": amount_decimal, "txn_type": txn_type,
+            "category": category, "date": txn_date, "note": data.get("note", ""),
+        }
+        if "shares" in data:
+            if len(title) > 120:
+                return JsonResponse({"error": "Use a title of up to 120 characters."}, status=400)
+            try:
+                txn = _save_split_expense(request.user, fields, data["shares"], data.get("split_key"))
+            except ValidationError as exc:
+                return JsonResponse({"error": exc.messages[0]}, status=400)
+        else:
+            txn = Transaction.objects.create(user=request.user, **fields)
 
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         stats = _dashboard_stats(request.user, profile)
@@ -3823,6 +3932,8 @@ def api_motivation_message(request: HttpRequest) -> JsonResponse:
 def api_update_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
     try:
         txn = Transaction.objects.get(id=txn_id, user=request.user)
+        if txn.split_parent_id:
+            return JsonResponse({"error": "This share belongs to a split expense."}, status=400)
         data = json.loads(request.body)
 
         title = data.get("title", "").strip()
@@ -3861,6 +3972,9 @@ def api_update_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
         if not title:
             return JsonResponse({"error": "Title is required."}, status=400)
 
+        if txn.split_key and (category == "lend" or txn_type != "expense" or txn_date > timezone.localdate()):
+            return JsonResponse({"error": "Keep the split as a regular expense dated today or earlier."}, status=400)
+
         # Update the transaction
         txn.title = title
         txn.amount = amount_decimal
@@ -3870,7 +3984,10 @@ def api_update_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
             txn.is_settled = False
         txn.date = txn_date
         txn.note = data.get("note", "")
-        txn.save()
+        with transaction.atomic():
+            txn.save()
+            if txn.split_key:
+                txn.split_shares.update(date=txn_date)
 
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         stats = _dashboard_stats(request.user, profile)

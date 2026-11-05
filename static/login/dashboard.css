@@ -5354,3 +5354,51 @@ body.modal-keyboard-open #txnModal .modal-card {
 .gold-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
 .gold-heading a { font-size:.8rem; }
 .insight-stock-chart-wrap { overflow:visible; }
+
+.spending-checks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.spending-check {
+  padding: 18px;
+  color: var(--muted);
+  font-size: .85rem;
+  line-height: 1.5;
+}
+
+.spending-check h2 { color: var(--ink); font-size: .95rem; }
+.spending-check-amount { color: var(--ink); font-size: 1.5rem; font-weight: 800; }
+.spending-check-amount small { font-size: .75rem; }
+.spending-check details { margin-top: 8px; }
+.spending-check summary { cursor: pointer; font-weight: 700; }
+.spending-check ul { padding-left: 18px; }
+
+@media (max-width: 640px) {
+  .spending-checks { grid-template-columns: 1fr; }
+}
+
+.expense-split {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: .85rem;
+}
+.expense-split summary { cursor: pointer; color: var(--ink); font-weight: 700; }
+.expense-split p { margin: 8px 0; }
+.expense-split-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, .6fr) auto;
+  align-items: end;
+  gap: 6px;
+  margin: 8px 0;
+}
+.expense-split input, .expense-split button {
+  padding: 7px;
+  border: 1px solid var(--border-sub);
+  border-radius: 8px;
+  background: var(--glass);
+  color: var(--ink);
+}
+.expense-split input { width: 100%; font-size: 16px; }
+.expense-split button { cursor: pointer; }

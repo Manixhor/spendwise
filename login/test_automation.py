@@ -12,7 +12,7 @@ from django.contrib.auth.models import User
 class AutomationTests(TestCase):
     @patch('login.automation.call_command')
     def test_due_jobs_run_once_per_interval(self, command):
-        now = timezone.now()
+        now = timezone.make_aware(datetime(2026, 11, 7, 12, 0))
         self.assertTrue(run_due_jobs(now))
         self.assertFalse(run_due_jobs(now + timedelta(minutes=59)))
         self.assertTrue(run_due_jobs(now + timedelta(hours=1)))
