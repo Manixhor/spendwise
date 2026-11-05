@@ -132,6 +132,31 @@ class LoginTests(TestCase):
         self.assertNotContains(self.client.get(dashboard), 'data-quick-add="true"')
         self.assertContains(self.client.get(f'{dashboard}?quick_add=1'), 'data-quick-add="true"')
 
+    def test_repeat_shortcut_after_login_uses_latest_regular_expense(self):
+        today = date.today()
+        for title, category, txn_type in [
+            ('Coffee', 'food', 'expense'),
+            ('Loan', 'lend', 'expense'),
+            ('Salary', 'other', 'income'),
+        ]:
+            Transaction.objects.create(
+                user=self.user, title=title, amount=Decimal('80.25'),
+                category=category, txn_type=txn_type, date=today,
+            )
+        dashboard = reverse('dashboard')
+        self.client.get(f'{dashboard}?quick_add=repeat', follow=True)
+        response = self.client.post(reverse('login'), {
+            'email': self.user.email,
+            'password': 'StrongPass123!',
+        }, follow=True)
+
+        self.assertEqual(response.context['repeat_expense'], {
+            'title': 'Coffee', 'amount': '80.25', 'category': 'food',
+        })
+        self.assertContains(response, 'id="repeatExpense"')
+        self.assertEqual(Transaction.objects.filter(user=self.user).count(), 3)
+        self.assertNotContains(self.client.get(dashboard), 'id="repeatExpense"')
+
 
 class InvitationSetupTests(TestCase):
     def setUp(self):
@@ -600,7 +625,7 @@ class DashboardInsightsTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'daily-spending-data')
         self.assertContains(response, 'Daily spending bar chart')
-        self.assertContains(response, 'goldPriceValue')
+        self.assertNotContains(response, 'goldPriceValue')
 
     def test_spend_joke_changes_on_each_refresh(self):
         previous = None

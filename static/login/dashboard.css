@@ -5354,13 +5354,3 @@ body.modal-keyboard-open #txnModal .modal-card {
 .gold-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
 .gold-heading a { font-size:.8rem; }
 .insight-stock-chart-wrap { overflow:visible; }
-
-.gold-price-banner { flex-wrap: wrap; }
-.gold-quote { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.gold-price-banner .gold-price-value { font-size: 1.2rem; font-weight: 900; color: var(--ink); }
-.gold-price-unit, .gold-price-banner small { font-size: .75rem; color: var(--muted); }
-.gold-price-banner small { margin-left: auto; }
-.gold-price-change { font-weight: 900; }
-.gold-price-banner .gold-price-value.gold-up, .gold-price-banner .gold-price-change.gold-up { color: #22c55e; }
-.gold-price-banner .gold-price-value.gold-down, .gold-price-banner .gold-price-change.gold-down { color: #ef4444; }
-@media (max-width: 640px) { .gold-price-banner small { margin-left: 0; } }

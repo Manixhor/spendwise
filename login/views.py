@@ -1949,8 +1949,11 @@ def forgot_password_reset(request: HttpRequest) -> HttpResponse:
 @ensure_csrf_cookie
 @otp_limited
 def login_view(request: HttpRequest) -> HttpResponse:
-    if request.method == "GET" and request.GET.get("next") == f'{reverse("dashboard")}?quick_add=1':
-        request.session["pending_quick_add"] = True
+    if request.method == "GET":
+        for mode in ("1", "repeat"):
+            if request.GET.get("next") == f'{reverse("dashboard")}?quick_add={mode}':
+                request.session["pending_quick_add"] = mode
+                break
     if request.user.is_authenticated:
         return redirect("dashboard")
 
@@ -2008,7 +2011,19 @@ def logout_view(request: HttpRequest) -> HttpResponse:
 # ── Dashboard ─────────────────────────────────────────────
 @login_required(login_url="/login/")
 def dashboard(request: HttpRequest) -> HttpResponse:
-    pending_quick_add = request.session.pop("pending_quick_add", False)
+    pending_quick_add = request.session.pop("pending_quick_add", None)
+    quick_add = request.GET.get("quick_add")
+    if quick_add not in ("1", "repeat"):
+        quick_add = "1" if pending_quick_add is True else pending_quick_add
+    repeat_expense = None
+    if quick_add == "repeat":
+        expense = Transaction.objects.filter(
+            user=request.user, txn_type="expense", date__lte=date.today(),
+        ).exclude(category="lend").order_by("-date", "-created_at", "-pk").first()
+        if expense:
+            repeat_expense = {
+                "title": expense.title, "amount": str(expense.amount), "category": expense.category,
+            }
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     stats = _dashboard_stats(request.user, profile)
     coach = get_spending_message(stats["spend_pct"])
@@ -2059,7 +2074,8 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             "categories": Transaction.CATEGORY_CHOICES,
             "today": date.today().isoformat(),
             "active_nav": "dashboard",
-            "quick_add": pending_quick_add or request.GET.get("quick_add") == "1",
+            "quick_add": quick_add in ("1", "repeat"),
+            "repeat_expense": repeat_expense,
             **stats,
             "chart_months": json.dumps(stats["chart_months"]),
             "insight_segments_json": json.dumps(stats["insight_segments"]),

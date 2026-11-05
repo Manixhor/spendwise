@@ -12,6 +12,7 @@
   <script src="{% static 'login/install_prompt.js' %}?v=5" defer></script>
 </head>
 <body{% if quick_add %} data-quick-add="true"{% endif %}>
+{% if repeat_expense %}{{ repeat_expense|json_script:"repeatExpense" }}{% endif %}
 <div class="app">
 
   <!-- ── Sidebar ─────────────────────────────────────── -->
@@ -30,15 +31,6 @@
       <span class="joke-banner-label">😄 SPND Joke</span>
       <p class="joke-banner-text" id="jokeBannerText">{{ dad_joke }}</p>
     </div>
-
-    <section class="joke-banner gold-price-banner" aria-label="Live gold price in INR">
-      <div class="gold-quote">
-        <strong class="gold-price-value" id="goldPriceValue">—</strong>
-        <span class="gold-price-unit">/ gram · INR</span>
-        <span id="goldPriceChange" class="gold-price-change"></span>
-      </div>
-      <small id="goldPriceStatus" role="status">Loading latest quote…</small>
-    </section>
 
     <!-- ── Savings widget ────────────────────────────────── -->
     <div class="card savings-card">
@@ -914,44 +906,6 @@ try {
 
   renderInsightStockChart(dashboardChartData);
 
-  const goldCurrency = 'INR';
-  let goldLoading = false;
-  async function refreshGoldPrice() {
-    if (goldLoading || document.hidden) return;
-    goldLoading = true;
-    const status = document.getElementById('goldPriceStatus');
-    try {
-      const response = await fetch("{% url 'api_gold_price' %}", {signal: AbortSignal.timeout(10000)});
-      if (!response.ok) throw new Error('Quote unavailable');
-      const quote = await response.json();
-      const updated = new Date(quote.updatedAt);
-      if (quote.symbol !== 'XAU' || quote.currency !== goldCurrency || !Number.isFinite(quote.price) || quote.price <= 0 || !Number.isFinite(updated.getTime())) throw new Error('Invalid quote');
-      const priceEl = document.getElementById('goldPriceValue');
-      const changeEl = document.getElementById('goldPriceChange');
-      const stale = Date.now() - updated.getTime() > 5 * 60 * 1000;
-      const hasComparison = Number.isFinite(quote.change24h) && !stale;
-      const changePct = hasComparison ? quote.change24h : 0;
-      const direction = Math.sign(changePct);
-      for (const el of [priceEl, changeEl]) {
-        el.classList.toggle('gold-up', direction > 0);
-        el.classList.toggle('gold-down', direction < 0);
-      }
-      changeEl.textContent = hasComparison ? `${changePct > 0 ? '↑' : changePct < 0 ? '↓' : ''} ${Math.abs(changePct).toFixed(2)}% · 24h` : '';
-      changeEl.setAttribute('aria-label', hasComparison ? `${changePct.toFixed(2)} percent compared with 24 hours ago` : '24-hour comparison unavailable');
-      changeEl.title = 'Compared with 24 hours ago · quote updates every 30 seconds';
-      document.getElementById('goldPriceValue').textContent = new Intl.NumberFormat(undefined, {style:'currency', currency:goldCurrency, maximumFractionDigits:2}).format(quote.price / 31.1035);
-      status.textContent = `${stale ? 'Last available quote' : 'Live spot'} · ${updated.toLocaleString()}${hasComparison ? '' : ' · 24h comparison unavailable'}`;
-    } catch (error) {
-      status.textContent = 'Live price unavailable · retrying in 30 seconds';
-      document.getElementById('goldPriceValue').textContent = '—';
-      document.getElementById('goldPriceValue').classList.remove('gold-up', 'gold-down');
-      document.getElementById('goldPriceChange').textContent = '';
-    } finally { goldLoading = false; }
-  }
-  refreshGoldPrice();
-  setInterval(refreshGoldPrice, 30000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshGoldPrice(); });
-
   // ── Chart rendering ───────────────────────────────────
   function renderChart(data) {
     const svg = document.getElementById('overviewSvg');
@@ -1317,21 +1271,30 @@ try {
     });
   }
 
+  function openRepeatedExpense(expense) {
+    if (!txnSaveBtn) return;
+    delete txnSaveBtn.dataset.editingId;
+    openTxnModal(txnAmountInput);
+    document.getElementById('txnModalTitle').textContent = 'Repeat Expense';
+    document.getElementById('txnTitle').value = expense.title;
+    document.getElementById('txnAmount').value = expense.amount;
+    document.getElementById('txnCategory').value = expense.category;
+    if (txnError) txnError.textContent = '';
+  }
+
   document.getElementById('txnList')?.addEventListener('click', (event) => {
     const button = event.target.closest('.txn-repeat');
-    if (!button || !txnSaveBtn) return;
-    delete txnSaveBtn.dataset.editingId;
-    openTxnModal();
-    document.getElementById('txnModalTitle').textContent = 'Repeat Expense';
-    document.getElementById('txnTitle').value = button.dataset.title;
-    document.getElementById('txnAmount').value = button.dataset.amount;
-    document.getElementById('txnCategory').value = button.dataset.category;
-    if (txnError) txnError.textContent = '';
+    if (button) openRepeatedExpense(button.dataset);
   });
 
   if (document.body.dataset.quickAdd === 'true') {
-    openTxnModal(txnAmountInput);
-    document.getElementById('txnModalTitle').textContent = 'Quick Add Expense';
+    const repeatExpense = document.getElementById('repeatExpense');
+    if (repeatExpense) {
+      openRepeatedExpense(JSON.parse(repeatExpense.textContent));
+    } else {
+      openTxnModal(txnAmountInput);
+      document.getElementById('txnModalTitle').textContent = 'Quick Add Expense';
+    }
     const url = new URL(window.location.href);
     url.searchParams.delete('quick_add');
     history.replaceState(history.state, '', url);
