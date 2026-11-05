@@ -4,6 +4,7 @@ from datetime import date
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from .security import validate_avatar
 
 
 class ExcessIncome(models.Model):
@@ -46,11 +47,11 @@ class UserProfile(models.Model):
     priority = models.CharField(
         max_length=10, choices=PRIORITY_CHOICES, default="medium"
     )
-    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
+    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True, validators=[validate_avatar])
     email_is_verified = models.BooleanField(default=False)
-    email_verification_code = models.CharField(max_length=4, blank=True, default="")
+    email_verification_code = models.CharField(max_length=128, blank=True, default="")
     email_verification_sent_at = models.DateTimeField(null=True, blank=True)
-    password_reset_code = models.CharField(max_length=4, blank=True, default="")
+    password_reset_code = models.CharField(max_length=128, blank=True, default="")
     password_reset_sent_at = models.DateTimeField(null=True, blank=True)
     reminders_enabled = models.BooleanField(default=False)
     last_budget_reminder_month = models.CharField(max_length=7, blank=True, default="")
@@ -388,3 +389,9 @@ class GoldPriceQuote(models.Model):
     """Shared INR spot quotes for rolling 24-hour comparisons."""
     quoted_at = models.DateTimeField(unique=True)
     price = models.FloatField()
+
+
+class AuthAttemptWindow(models.Model):
+    key = models.CharField(max_length=64, unique=True)
+    attempts = models.PositiveIntegerField(default=0)
+    expires_at = models.DateTimeField(db_index=True)

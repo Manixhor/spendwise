@@ -43,3 +43,6 @@ Thumbs.db
 
 # Local tool runtime state
 .freebuff/
+
+# Alternate local environment file
+.envy

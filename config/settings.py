@@ -112,6 +112,7 @@ WHITENOISE_ENABLED = os.getenv('USE_WHITENOISE', '1') == '1' and importlib.util.
 IS_TEST_RUN = 'test' in sys.argv
 IS_COLLECTSTATIC_BUILD = 'collectstatic' in sys.argv
 DEBUG = env_bool('DEBUG', IS_TEST_RUN)
+SERVE_MEDIA_WITH_DJANGO = env_bool('SERVE_MEDIA_WITH_DJANGO', False)
 SECRET_KEY = os.getenv('SECRET_KEY', '').strip()
 if not SECRET_KEY:
     # Northflank runs collectstatic in an isolated build workload, before
@@ -120,6 +121,11 @@ if not SECRET_KEY:
         SECRET_KEY = 'django-insecure-development-only-key'
     else:
         raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is disabled.')
+
+if not DEBUG and not IS_TEST_RUN and not IS_COLLECTSTATIC_BUILD and (
+    SECRET_KEY.startswith(('dev-only-', 'django-insecure-')) or len(SECRET_KEY) < 50
+):
+    raise ImproperlyConfigured('Configure a unique, strong production SECRET_KEY.')
 
 ALLOWED_HOSTS = list(dict.fromkeys([
     "127.0.0.1",
@@ -376,7 +382,7 @@ SMTP_PASSWORD = os.getenv('SMTP_PASSWORD', os.getenv('MAILTRAP_SMTP_PASSWORD', '
 SMTP_FROM_EMAIL = os.getenv('SMTP_FROM_EMAIL', os.getenv('MAILTRAP_FROM_EMAIL', '')).strip()
 EMAIL_BACKEND = (
     'django.core.mail.backends.smtp.EmailBackend'
-    if SMTP_HOST and SMTP_USERNAME and SMTP_PASSWORD
+    if not DEBUG or (SMTP_HOST and SMTP_USERNAME and SMTP_PASSWORD)
     else 'django.core.mail.backends.console.EmailBackend'
 )
 EMAIL_HOST = SMTP_HOST or 'localhost'

@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from django.contrib.auth.hashers import make_password
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -15,7 +16,8 @@ class AuthFixTests(TestCase):
             password="StrongPass123!", is_active=False,
         )
         profile = UserProfile.objects.get(user=user)
-        profile.email_verification_code = "1234"
+        profile.email_verification_code = make_password("1234")
+        previous_code = profile.email_verification_code
         profile.email_verification_sent_at = timezone.now()
         profile.save(update_fields=["email_verification_code", "email_verification_sent_at"])
         session = self.client.session
@@ -27,7 +29,7 @@ class AuthFixTests(TestCase):
 
         self.assertContains(response, "could not resend")
         profile.refresh_from_db()
-        self.assertEqual(profile.email_verification_code, "1234")
+        self.assertEqual(profile.email_verification_code, previous_code)
         self.assertIsNotNone(profile.email_verification_sent_at)
 
     def test_signup_email_error_shows_first_step(self):

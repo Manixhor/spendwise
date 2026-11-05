@@ -902,8 +902,6 @@ try {
   renderInsightStockChart(dashboardChartData);
 
   const goldCurrency = 'INR';
-  let previousGoldPrice = null;
-  let goldPriceDirection = 0;
   let goldLoading = false;
   async function refreshGoldPrice() {
     if (goldLoading || document.hidden) return;
@@ -918,20 +916,18 @@ try {
       const priceEl = document.getElementById('goldPriceValue');
       const changeEl = document.getElementById('goldPriceChange');
       const stale = Date.now() - updated.getTime() > 5 * 60 * 1000;
-      const hasComparison = previousGoldPrice !== null && !stale;
-      const changePct = hasComparison ? (quote.price / previousGoldPrice - 1) * 100 : 0;
-      if (hasComparison && changePct !== 0) goldPriceDirection = Math.sign(changePct);
-      const direction = stale ? 0 : goldPriceDirection;
+      const hasComparison = Number.isFinite(quote.change24h) && !stale;
+      const changePct = hasComparison ? quote.change24h : 0;
+      const direction = Math.sign(changePct);
       for (const el of [priceEl, changeEl]) {
         el.classList.toggle('gold-up', direction > 0);
         el.classList.toggle('gold-down', direction < 0);
       }
-      changeEl.textContent = hasComparison ? `${changePct > 0 ? '↑' : changePct < 0 ? '↓' : ''} ${Math.abs(changePct).toFixed(2)}%` : '';
-      changeEl.setAttribute('aria-label', hasComparison ? `${changePct.toFixed(2)} percent compared with previous refresh` : 'Waiting for next refresh');
-      changeEl.title = 'Compared with previous refresh · updates every 30 seconds';
-      previousGoldPrice = stale ? null : quote.price;
+      changeEl.textContent = hasComparison ? `${changePct > 0 ? '↑' : changePct < 0 ? '↓' : ''} ${Math.abs(changePct).toFixed(2)}% · 24h` : '';
+      changeEl.setAttribute('aria-label', hasComparison ? `${changePct.toFixed(2)} percent compared with 24 hours ago` : '24-hour comparison unavailable');
+      changeEl.title = 'Compared with 24 hours ago · quote updates every 30 seconds';
       document.getElementById('goldPriceValue').textContent = new Intl.NumberFormat(undefined, {style:'currency', currency:goldCurrency, maximumFractionDigits:2}).format(quote.price / 31.1035);
-      status.textContent = `${stale ? 'Last available quote' : 'Live spot'} · ${updated.toLocaleString()}`;
+      status.textContent = `${stale ? 'Last available quote' : 'Live spot'} · ${updated.toLocaleString()}${hasComparison ? '' : ' · 24h comparison unavailable'}`;
     } catch (error) {
       status.textContent = 'Live price unavailable · retrying in 30 seconds';
       document.getElementById('goldPriceValue').textContent = '—';

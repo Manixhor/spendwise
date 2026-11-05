@@ -1,3 +1,5 @@
+import logging
+import secrets
 import json
 import decimal
 import random
@@ -13,6 +15,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password, check_password
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
@@ -26,6 +29,10 @@ from django.utils.html import strip_tags
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
+
+from .security import otp_limited, clean_avatar
+
+logger = logging.getLogger(__name__)
 
 from .models import OfficeBalance, OfficeEntry, OfficeHiddenSuggestion, Transaction, UserProfile, SavingsGoal, MoneyAccount, RecurringPayment
 from .spending_coach import (
@@ -1380,8 +1387,8 @@ def onboarding(request: HttpRequest) -> HttpResponse:
 
 #try it 
 def _issue_signup_otp(profile: UserProfile) -> str:
-    code = f"{random.randint(1000, 9999)}"
-    profile.email_verification_code = code
+    code = f"{secrets.randbelow(10000):04d}"
+    profile.email_verification_code = make_password(code)
     profile.email_verification_sent_at = timezone.now()
     profile.email_is_verified = False
     profile.save(
@@ -1448,6 +1455,7 @@ def _send_new_signup_otp(user: User, profile: UserProfile) -> None:
 # ── Sign Up ───────────────────────────────────────────────
 @never_cache
 @ensure_csrf_cookie
+@otp_limited
 def signup(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -1552,6 +1560,7 @@ def signup(request: HttpRequest) -> HttpResponse:
 
 @never_cache
 @ensure_csrf_cookie
+@otp_limited
 def signup_verify(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -1587,9 +1596,9 @@ def signup_verify(request: HttpRequest) -> HttpResponse:
         if not code or not code.isdigit() or len(code) != 4:
             errors["otp"] = "Enter the 4-digit OTP."
         elif not sent_at or timezone.now() > sent_at + timedelta(minutes=expiry_minutes):
-            errors["otp"] = "That OTP expired. Please resend a new one."
-        elif code != profile.email_verification_code:
-            errors["otp"] = "That OTP is incorrect."
+            errors["otp"] = "That OTP is incorrect or expired."
+        elif not check_password(code, profile.email_verification_code):
+            errors["otp"] = "That OTP is incorrect or expired."
 
         if not errors:
             profile.email_is_verified = True
@@ -1624,6 +1633,7 @@ def _get_pending_invitation_user(request: HttpRequest) -> User | None:
 
 @never_cache
 @ensure_csrf_cookie
+@otp_limited
 def invitation_verify(request: HttpRequest) -> HttpResponse:
     user = _get_pending_invitation_user(request)
     if not user:
@@ -1653,7 +1663,7 @@ def invitation_verify(request: HttpRequest) -> HttpResponse:
         sent_at = profile.email_verification_sent_at
         if not code or not code.isdigit() or len(code) != 4:
             errors['otp'] = 'Enter the 4-digit OTP.'
-        elif code != profile.email_verification_code:
+        elif not check_password(code, profile.email_verification_code):
             errors['otp'] = 'That OTP is incorrect.'
         elif not sent_at or timezone.now() > sent_at + timedelta(minutes=expiry_minutes):
             errors['otp'] = 'That OTP expired. Please resend a new one.'
@@ -1731,8 +1741,8 @@ def invitation_setup(request: HttpRequest) -> HttpResponse:
 
 # ── Forgot Password ───────────────────────────────────────
 def _issue_password_reset_otp(profile: UserProfile) -> str:
-    code = f"{random.randint(1000, 9999)}"
-    profile.password_reset_code = code
+    code = f"{secrets.randbelow(10000):04d}"
+    profile.password_reset_code = make_password(code)
     profile.password_reset_sent_at = timezone.now()
     profile.save(update_fields=["password_reset_code", "password_reset_sent_at"])
     return code
@@ -1767,6 +1777,7 @@ def _send_password_reset_otp_email(user: User, code: str) -> None:
 
 @never_cache
 @ensure_csrf_cookie
+@otp_limited
 def forgot_password(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -1783,6 +1794,10 @@ def forgot_password(request: HttpRequest) -> HttpResponse:
                 errors["email"] = "Enter a valid email address."
 
         if not errors:
+            request.session.pop("password_reset_verified", None)
+            request.session.pop("password_reset_verified_at", None)
+            request.session.pop("password_reset_user_id", None)
+            request.session["password_reset_email"] = email
             user = User.objects.filter(email=email, is_active=True).first()
             if user:
                 profile, _ = UserProfile.objects.get_or_create(user=user)
@@ -1790,15 +1805,10 @@ def forgot_password(request: HttpRequest) -> HttpResponse:
                 try:
                     _send_password_reset_otp_email(user, code)
                 except Exception:
-                    errors["general"] = "We could not send the OTP. Please try again."
-                    return render(
-                        request, "login/forgot_password.html", {"errors": errors, "form": request.POST}
-                    )
+                    logger.exception("Password reset email delivery failed")
                 request.session["password_reset_user_id"] = user.id
-                messages.success(request, f"We sent a 4-digit OTP to {user.email}.")
-                return redirect("forgot_password_verify")
-            else:
-                errors["general"] = "No account found with that email."
+            messages.success(request, "If an account exists for this email, a reset code has been sent.")
+            return redirect("forgot_password_verify")
 
         return render(
             request, "login/forgot_password.html", {"errors": errors, "form": request.POST}
@@ -1809,15 +1819,31 @@ def forgot_password(request: HttpRequest) -> HttpResponse:
 
 @never_cache
 @ensure_csrf_cookie
+@otp_limited
 def forgot_password_verify(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
 
+    if request.method == "POST":
+        request.session.pop("password_reset_verified", None)
+        request.session.pop("password_reset_verified_at", None)
+
     user_id = request.session.get("password_reset_user_id")
     user = User.objects.filter(id=user_id, is_active=True).first()
     if not user:
-        messages.error(request, "Your reset session expired. Please try again.")
-        return redirect("forgot_password")
+        email = request.session.get("password_reset_email")
+        if not email:
+            return redirect("forgot_password")
+        errors = {}
+        if request.method == "POST":
+            if request.POST.get("action") == "resend":
+                messages.success(request, "If an account exists for this email, a reset code has been sent.")
+            else:
+                code = request.POST.get("otp", "").strip()
+                # Match both validation and password-hash work for unknown accounts.
+                check_password(code, make_password("invalid-reset-code"))
+                errors["otp"] = "That OTP is incorrect or expired." if code.isdigit() and len(code) == 4 else "Enter the 4-digit OTP."
+        return render(request, "login/forgot_password_verify.html", {"errors": errors, "email": email})
 
     profile, _ = UserProfile.objects.get_or_create(user=user)
     errors = {}
@@ -1826,12 +1852,15 @@ def forgot_password_verify(request: HttpRequest) -> HttpResponse:
         action = request.POST.get("action", "verify")
 
         if action == "resend":
+            request.session.pop("password_reset_verified", None)
+            request.session.pop("password_reset_verified_at", None)
             code = _issue_password_reset_otp(profile)
             try:
                 _send_password_reset_otp_email(user, code)
-                messages.success(request, f"A fresh OTP was sent to {user.email}.")
+                messages.success(request, "If an account exists for this email, a reset code has been sent.")
             except Exception:
-                errors["general"] = "We could not resend the OTP. Please try again."
+                logger.exception("Password reset email delivery failed")
+                messages.success(request, "If an account exists for this email, a reset code has been sent.")
             return render(
                 request,
                 "login/forgot_password_verify.html",
@@ -1844,12 +1873,15 @@ def forgot_password_verify(request: HttpRequest) -> HttpResponse:
 
         if not code or not code.isdigit() or len(code) != 4:
             errors["otp"] = "Enter the 4-digit OTP."
-        elif code != profile.password_reset_code:
-            errors["otp"] = "That OTP is incorrect."
+        elif not check_password(code, profile.password_reset_code):
+            errors["otp"] = "That OTP is incorrect or expired."
         elif not sent_at or timezone.now() > sent_at + timedelta(minutes=expiry_minutes):
-            errors["otp"] = "That OTP expired. Please resend a new one."
+            errors["otp"] = "That OTP is incorrect or expired."
 
         if not errors:
+            profile.password_reset_code = ""
+            profile.save(update_fields=["password_reset_code"])
+            request.session["password_reset_verified_at"] = timezone.now().timestamp()
             request.session["password_reset_verified"] = True
             return redirect("forgot_password_reset")
 
@@ -1869,7 +1901,8 @@ def forgot_password_reset(request: HttpRequest) -> HttpResponse:
     user_id = request.session.get("password_reset_user_id")
     verified = request.session.get("password_reset_verified")
     user = User.objects.filter(id=user_id, is_active=True).first()
-    if not user or not verified:
+    verified_at = request.session.get("password_reset_verified_at", 0)
+    if not user or not verified or timezone.now().timestamp() - verified_at > 600:
         messages.error(request, "Your reset session expired. Please try again.")
         return redirect("forgot_password")
 
@@ -1913,6 +1946,7 @@ def forgot_password_reset(request: HttpRequest) -> HttpResponse:
 # ── Login ─────────────────────────────────────────────────
 @never_cache
 @ensure_csrf_cookie
+@otp_limited
 def login_view(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -2285,7 +2319,8 @@ def api_create_goal(request: HttpRequest) -> JsonResponse:
         )
         return JsonResponse({"success": True, "goal": _goal_json(goal)})
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API request failed")
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
 
 
 # ── API: Update Goal ──────────────────────────────────────
@@ -2321,7 +2356,8 @@ def api_update_goal(request: HttpRequest, goal_id: int) -> JsonResponse:
     except SavingsGoal.DoesNotExist:
         return JsonResponse({"error": "Not found."}, status=404)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API request failed")
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
 
 
 # ── API: Delete Goal ──────────────────────────────────────
@@ -2335,7 +2371,8 @@ def api_delete_goal(request: HttpRequest, goal_id: int) -> JsonResponse:
     except SavingsGoal.DoesNotExist:
         return JsonResponse({"error": "Not found."}, status=404)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API request failed")
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
 
 
 # ── API: Contribute to Goal ───────────────────────────────
@@ -2364,7 +2401,8 @@ def api_contribute_goal(request: HttpRequest, goal_id: int) -> JsonResponse:
     except SavingsGoal.DoesNotExist:
         return JsonResponse({"error": "Not found."}, status=404)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API request failed")
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
 
 
 # ── API: Get Goal Allocation Breakdown ─────────────────────
@@ -2466,7 +2504,8 @@ def api_goal_allocations(request: HttpRequest) -> JsonResponse:
             }
         )
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API request failed")
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
 
 
 def _goal_json(goal: "SavingsGoal") -> dict:
@@ -2603,6 +2642,16 @@ def profile_view(request: HttpRequest) -> HttpResponse:
         last_name = request.POST.get("last_name", "").strip()
         email = request.POST.get("email", "").strip().lower()
 
+        cleaned_avatar = None
+        if "avatar" in request.FILES:
+            try:
+                cleaned_avatar = clean_avatar(request.FILES["avatar"])
+            except ValidationError as exc:
+                return render(request, "login/profile.html", {
+                    "user": request.user, "profile": profile, "active_nav": "profile",
+                    "success": False, "error": exc.messages[0],
+                }, status=400)
+
         if email and email != request.user.email and (
             User.objects.filter(email=email).exclude(pk=request.user.pk).exists()
         ):
@@ -2616,7 +2665,7 @@ def profile_view(request: HttpRequest) -> HttpResponse:
             request.user.save()
 
             if "avatar" in request.FILES:
-                profile.avatar = request.FILES["avatar"]
+                profile.avatar = cleaned_avatar
             profile.save()
             success = True
 
@@ -3482,7 +3531,8 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
             }
         )
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API request failed")
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
 
 
 # ── API: Delete Transaction ───────────────────────────────
@@ -3504,7 +3554,8 @@ def api_delete_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
     except Transaction.DoesNotExist:
         return JsonResponse({"error": "Transaction not found."}, status=404)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API request failed")
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
 
 
 # ── API: Mark Lend Paid ───────────────────────────────────
@@ -3535,7 +3586,8 @@ def api_mark_lend_paid(request: HttpRequest, txn_id: int) -> JsonResponse:
     except Transaction.DoesNotExist:
         return JsonResponse({"error": "Transaction not found."}, status=404)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API request failed")
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
 
 
 # ── API: Check Email Exists ───────────────────────────────
@@ -3578,7 +3630,8 @@ def api_set_currency(request: HttpRequest) -> JsonResponse:
             "currency_symbol": profile.currency_symbol,
         })
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API request failed")
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
 
 
 # ── API: Set Salary ───────────────────────────────────────
@@ -3615,7 +3668,8 @@ def api_set_salary(request: HttpRequest) -> JsonResponse:
     except (ValueError, TypeError):
         return JsonResponse({"error": "Invalid salary value."}, status=400)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API request failed")
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
 
 
 # ── API: Set/Update Excess Income ─────────────────────────
@@ -3676,7 +3730,8 @@ def api_excess_income(request: HttpRequest) -> JsonResponse:
     except (ValueError, TypeError):
         return JsonResponse({"error": "Invalid amount value."}, status=400)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API request failed")
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
 
 
 # ── API: Set Target Savings ───────────────────────────────
@@ -3721,7 +3776,8 @@ def api_set_target_savings(request: HttpRequest) -> JsonResponse:
     except (ValueError, TypeError):
         return JsonResponse({"error": "Invalid value."}, status=400)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API request failed")
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)
 
 
 @login_required(login_url="/login/")
@@ -3818,4 +3874,5 @@ def api_update_transaction(request: HttpRequest, txn_id: int) -> JsonResponse:
     except Transaction.DoesNotExist:
         return JsonResponse({"error": "Transaction not found."}, status=404)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API request failed")
+        return JsonResponse({"error": "Something went wrong. Please try again."}, status=500)

@@ -1,3 +1,4 @@
+from django.contrib.auth.hashers import check_password, make_password
 import json
 import re
 from unittest.mock import patch
@@ -61,11 +62,11 @@ class SignupOtpTests(TestCase):
         profile = UserProfile.objects.get(user=user)
         self.assertFalse(user.is_active)
         self.assertFalse(profile.email_is_verified)
-        self.assertRegex(profile.email_verification_code, r'^\d{4}$')
+        self.assertTrue(profile.email_verification_code.startswith('pbkdf2_'))
         self.assertEqual(self.client.session['pending_signup_user_id'], user.id)
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ['newuser@example.com'])
-        self.assertIn(profile.email_verification_code, mail.outbox[0].body)
+        self.assertTrue(check_password(re.search(r'OTP.*?: (\d{4})', mail.outbox[0].body).group(1), profile.email_verification_code))
 
     def test_signup_verify_activates_user_and_logs_in(self):
         user = User.objects.create_user(
@@ -77,7 +78,7 @@ class SignupOtpTests(TestCase):
         )
         profile = UserProfile.objects.get(user=user)
         code = '1234'
-        profile.email_verification_code = code
+        profile.email_verification_code = make_password(code)
         profile.email_verification_sent_at = timezone.now()
         profile.email_is_verified = False
         profile.save()
@@ -138,12 +139,12 @@ class InvitationSetupTests(TestCase):
 
         self.assertRedirects(response, reverse('invitation_verify'))
         self.profile.refresh_from_db()
-        self.assertRegex(self.profile.email_verification_code, r'^\d{4}$')
+        self.assertTrue(self.profile.email_verification_code.startswith('pbkdf2_'))
         self.assertEqual(len(mail.outbox), 1)
 
         response = self.client.post(
             reverse('invitation_verify'),
-            {'otp': self.profile.email_verification_code},
+            {'otp': re.search(r'OTP.*?: (\d{4})', mail.outbox[0].body).group(1)},
         )
 
         self.assertRedirects(response, reverse('invitation_setup'))

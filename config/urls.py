@@ -39,12 +39,10 @@ urlpatterns = [
     path('', include('login.urls')),
 ]
 
-# Serve media in production too (Django's static() helper is a no-op when DEBUG=False).
-# For larger deployments, replace this with an external object store (S3/Cloudinary) via
-# DEFAULT_FILE_STORAGE — but for a small Render app this keeps uploaded avatars working.
+# Production media must be served by an external web server or storage backend.
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-else:
+elif settings.SERVE_MEDIA_WITH_DJANGO:
     urlpatterns += [
         path(
             "media/<path:path>",
