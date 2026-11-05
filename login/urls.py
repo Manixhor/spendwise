@@ -50,8 +50,6 @@ from .views import (
 )
 from .views_import import api_import_transactions
 from .gold import api_gold_price
-from .planner import planner
-from .phone_push import push_public_key, subscribe_phone, unsubscribe_phone
 
 urlpatterns = [
     path("api/gold/price/", api_gold_price, name="api_gold_price"),
@@ -66,10 +64,6 @@ urlpatterns = [
     path("forgot-password/verify/", forgot_password_verify, name="forgot_password_verify"),
     path("forgot-password/reset/", forgot_password_reset, name="forgot_password_reset"),
     path("dashboard/", dashboard, name="dashboard"),
-    path("planner/", planner, name="planner"),
-    path("api/push/key/", push_public_key, name="push_public_key"),
-    path("api/push/subscribe/", subscribe_phone, name="subscribe_phone"),
-    path("api/push/unsubscribe/", unsubscribe_phone, name="unsubscribe_phone"),
     path("monthly/", monthly, name="monthly"),
     path("lend/", lend, name="lend"),
     path("office/", office, name="office"),

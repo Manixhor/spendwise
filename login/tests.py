@@ -547,6 +547,32 @@ class DashboardInsightsTests(TestCase):
         self.profile.save(update_fields=['salary', 'target_savings'])
         self.client.force_login(self.user)
 
+    def test_retired_planner_leaves_saved_bills_without_posting_expenses(self):
+        from .models import RecurringPayment
+
+        today = timezone.localdate()
+        payment = RecurringPayment.objects.create(
+            user=self.user, name='Rent', kind='bill', amount=Decimal('100.00'),
+            next_due=today, day_of_month=today.day, auto_record=True,
+        )
+        self.assertEqual(self.client.get('/planner/').status_code, 404)
+        self.assertEqual(self.client.get(reverse('dashboard')).status_code, 200)
+        self.assertFalse(Transaction.objects.filter(user=self.user).exists())
+        payment.refresh_from_db()
+        self.assertEqual(payment.next_due, today)
+
+    def test_transaction_rejects_another_users_legacy_account(self):
+        from .models import MoneyAccount
+
+        other = User.objects.create_user(username='other@example.com')
+        account = MoneyAccount.objects.create(user=other, name='Other bank', kind='bank')
+        response = self.client.post(reverse('api_add_transaction'), {
+            'title': 'Coffee', 'amount': '10', 'txn_type': 'expense',
+            'category': 'food', 'account': account.pk, 'date': '2026-11-01',
+        }, content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Transaction.objects.filter(user=self.user).exists())
+
     def test_daily_spending_bars_use_totals_and_refresh_payload(self):
         from .views import _dashboard_stats, _dashboard_stats_payload
         from datetime import date

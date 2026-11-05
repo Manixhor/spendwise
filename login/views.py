@@ -2005,8 +2005,6 @@ def logout_view(request: HttpRequest) -> HttpResponse:
 # ── Dashboard ─────────────────────────────────────────────
 @login_required(login_url="/login/")
 def dashboard(request: HttpRequest) -> HttpResponse:
-    from .planner import record_automatic_payments
-    record_automatic_payments(request.user, timezone.localdate())
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     stats = _dashboard_stats(request.user, profile)
     coach = get_spending_message(stats["spend_pct"])
@@ -2055,7 +2053,6 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             "dad_joke": dad_joke,
             "motivation": motivation,
             "categories": Transaction.CATEGORY_CHOICES,
-            "money_accounts": MoneyAccount.objects.filter(user=request.user),
             "today": date.today().isoformat(),
             "active_nav": "dashboard",
             **stats,

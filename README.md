@@ -42,7 +42,6 @@
 | **Savings Goals** | Create multiple goals with priority-based auto-allocation (high/medium/low) |
 | **Dashboard** | Real-time summary with spending ring, category breakdown, 6-month trend chart, daily spending bar chart, expense insights donut, stock-style trend card, and motivation quotes |
 | **Monthly Analysis** | Detailed monthly breakdown with weekly bar chart, category donut, top spending days, month-over-month comparison, and financial health score |
-| **Money Planner** | Accounts, monthly bills and subscriptions, payment calendar, CSV/XLSX import, and spending alerts at `/planner/` |
 | **Lend Tracker** | Track money lent to others with pending/paid status and mark-as-paid functionality |
 | **Profile** | User profile with name, email, and avatar upload |
 

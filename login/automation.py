@@ -39,11 +39,10 @@ def run_due_jobs(now=None):
     )
     if not claimed:
         return False
-    for command in ('send_spendwise_reminders', 'send_monthly_analysis_emails'):
-        try:
-            call_command(command)
-        except Exception:
-            logger.exception('SpendWise automatic job failed: %s', command)
+    try:
+        call_command('send_monthly_analysis_emails')
+    except Exception:
+        logger.exception('SpendWise monthly analysis job failed')
     return True
 
 

@@ -7,7 +7,7 @@
   {% include "login/includes/pwa_meta.html" %}
   <title>SpendWise – Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}?v=gold-price-colors-2" />
+  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}?v=spending-tooltip-1" />
   <link rel="stylesheet" href="{% static 'login/install_prompt.css' %}?v=3" />
   <script src="{% static 'login/install_prompt.js' %}?v=5" defer></script>
 </head>
@@ -98,6 +98,7 @@
           </div>
           <div class="insight-stock-chart-wrap">
             <svg viewBox="0 0 220 92" class="insight-stock-chart" id="insightStockChart" role="img" aria-label="Daily spending bar chart"></svg>
+            <div class="spending-chart-tooltip" id="spendingChartTooltip" aria-hidden="true" hidden></div>
             <small class="spending-chart-legend">Daily totals · gaps mean no spending</small>
           </div>
         </div>
@@ -180,7 +181,7 @@
             <span class="txn-paid-pill">Paid</span>
             {% endif %}
             <button class="txn-edit"
-              onclick="editTransaction({{ txn.id }}, '{{ txn.title|escapejs }}', '{{ txn.amount }}', '{{ txn.category }}', '{{ txn.date|date:'Y-m-d' }}', '{{ txn.txn_type }}', '{{ txn.account_id|default:'' }}')"
+              onclick="editTransaction({{ txn.id }}, '{{ txn.title|escapejs }}', '{{ txn.amount }}', '{{ txn.category }}', '{{ txn.date|date:'Y-m-d' }}', '{{ txn.txn_type }}')"
               title="Edit" aria-label="Edit transaction">
               <!-- Apple pencil icon -->
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -244,11 +245,6 @@
       {% for val, label in categories %}
       <option value="{{ val }}">{{ label }}</option>
       {% endfor %}
-    </select>
-    <label class="modal-field-label" for="txnAccount">Account</label>
-    <select id="txnAccount" class="modal-select modal-select--transparent" style="margin-bottom:4px;">
-      <option value="">Unassigned</option>
-      {% for account in money_accounts %}<option value="{{ account.id }}">{{ account.name }}</option>{% endfor %}
     </select>
 
     <label class="modal-field-label" for="txnAmount">Amount</label>
@@ -367,7 +363,7 @@
   }
 
   // ── Edit transaction (global for onclick access) ───────
-  async function editTransaction(id, title, amount, category, txnDate, txnType, accountId) {
+  async function editTransaction(id, title, amount, category, txnDate, txnType) {
     try {
       const btn = _txnSaveBtn;
       if (!btn) return;
@@ -377,7 +373,6 @@
       document.getElementById('txnAmount').value   = amount || '';
       document.getElementById('txnDate').value     = txnDate || getLocalDateInputValue();
       document.getElementById('txnCategory').value = category || 'other';
-      document.getElementById('txnAccount').value = accountId || '';
 
       document.getElementById('txnModalTitle').textContent = 'Edit Transaction';
       btn.textContent = 'Update Transaction';
@@ -855,6 +850,9 @@ try {
   function renderInsightStockChart() {
     const svg = document.getElementById('insightStockChart');
     if (!svg) return;
+    const tooltip = document.getElementById('spendingChartTooltip');
+    const hideTooltip = () => { tooltip.hidden = true; };
+    hideTooltip();
     svg.replaceChildren();
     const days = dailySpendingData || [];
     const ns = 'http://www.w3.org/2000/svg';
@@ -873,7 +871,6 @@ try {
       group.setAttribute('tabindex', '0');
       const label = `${day.date}: ${formatCurrency(day.amount)} spent`;
       group.setAttribute('aria-label', label);
-      const title = document.createElementNS(ns, 'title'); title.textContent = label; group.appendChild(title);
       const height = day.amount > 0 ? Math.max(1, day.amount / max * 66) : 0;
       const width = Math.min(16, step * 0.7);
       const bar = document.createElementNS(ns, 'rect');
@@ -883,6 +880,21 @@ try {
       Object.entries({x:x-step/2, y:8, width:step, height:72, fill:'transparent'}).forEach(([k,v]) => hit.setAttribute(k,v));
       group.appendChild(hit);
       svg.appendChild(group);
+      const showTooltip = () => {
+        const chartBounds = svg.parentElement.getBoundingClientRect();
+        const barBounds = (height ? bar : hit).getBoundingClientRect();
+        tooltip.textContent = label;
+        tooltip.hidden = false;
+        const center = barBounds.left + barBounds.width / 2 - chartBounds.left;
+        const left = Math.min(Math.max(center - tooltip.offsetWidth / 2, 0),
+                              Math.max(chartBounds.width - tooltip.offsetWidth, 0));
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${barBounds.top - chartBounds.top - tooltip.offsetHeight - 8}px`;
+      };
+      group.addEventListener('pointerenter', showTooltip);
+      group.addEventListener('pointerleave', hideTooltip);
+      group.addEventListener('focus', showTooltip);
+      group.addEventListener('blur', hideTooltip);
     });
     [days[0], days[days.length - 1]].forEach((day, index) => {
       if (days.length === 1 && index === 1) return;
@@ -1280,7 +1292,6 @@ try {
       document.getElementById('txnTitle').value = '';
       document.getElementById('txnAmount').value = '';
       document.getElementById('txnCategory').value = 'other';
-      document.getElementById('txnAccount').value = '';
       document.getElementById('txnDate').value = getLocalDateInputValue();
     }
     txnModal.classList.add('active');
@@ -1364,7 +1375,6 @@ try {
     const title     = document.getElementById('txnTitle').value.trim() || 'Untitled';
     const amount    = parseFloat(document.getElementById('txnAmount').value) || 0;
     const category  = document.getElementById('txnCategory').value || 'other';
-    const account   = document.getElementById('txnAccount').value || '';
     const txnDate   = document.getElementById('txnDate').value || getLocalDateInputValue();
     const editingId = txnSaveBtn.dataset.editingId || null;
 
@@ -1378,7 +1388,7 @@ try {
     txnError.textContent = '';
 
     try {
-      const payload = { title, amount: +amount, txn_type: activeType, category, account, date: txnDate };
+      const payload = { title, amount: +amount, txn_type: activeType, category, date: txnDate };
 
       if (!editingId && !navigator.onLine) {
         queueOfflineMutation({ op: 'add', payload });

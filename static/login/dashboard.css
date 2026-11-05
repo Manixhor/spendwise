@@ -5336,6 +5336,18 @@ body.modal-keyboard-open #txnModal .modal-card {
 
 .insight-stock-chart-wrap { height: auto; min-height: 125px; }
 .spending-chart-legend { display: block; margin-top: 5px; }
+.spending-chart-tooltip {
+  position: absolute;
+  z-index: 2;
+  max-width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #151b31;
+  color: #fff;
+  font-size: .75rem;
+  line-height: 1.4;
+  pointer-events: none;
+}
 .insight-stock-chart g:focus { outline: 1px solid currentColor; }
 
 .gold-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
