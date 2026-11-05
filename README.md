@@ -405,3 +405,39 @@ MIT License
 ## Support
 
 For issues or questions, please open a GitHub issue.
+
+### Gold price collection and dashboard colors
+
+The production WSGI service starts a minute-by-minute gold collector alongside the
+existing background jobs. It saves INR spot quotes even when nobody opens the
+dashboard. A database lease prevents simultaneous collectors in multiple workers
+from duplicating the same collection job. The dashboard still refreshes its price
+every 30 seconds and colors the number using the stored 24-hour comparison.
+
+Apply migrations before restarting the web service:
+
+```sh
+python manage.py migrate --noinput
+```
+
+For a deployment that suspends idle web services, run this on an always-on worker
+with the same database and environment instead:
+
+```sh
+python manage.py collect_gold_prices --continuous
+```
+
+Alternatively, invoke `python manage.py collect_gold_prices` once per minute from
+your hosting scheduler. These commands do not require visitors or send email.
+A continuous worker can safely run alongside the web collector because they share
+the database lease. Debug-mode web servers do not start background jobs; use the
+worker command explicitly during local development.
+
+There is a one-time 24-hour warm-up after collection begins. The initial price is
+neutral; the collector cannot reconstruct earlier quotes from the free live feed.
+After warm-up, a visitor's first response includes the 24-hour change: green for
+higher, red for lower, neutral for equal. Quotes over five minutes old or missing
+a baseline within five minutes before the 24-hour target remain neutral rather
+than showing a guessed direction. Keep the collector running and retain the same
+persistent database across deployments. Existing three-day quote retention keeps
+storage bounded.

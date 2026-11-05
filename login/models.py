@@ -395,3 +395,8 @@ class AuthAttemptWindow(models.Model):
     key = models.CharField(max_length=64, unique=True)
     attempts = models.PositiveIntegerField(default=0)
     expires_at = models.DateTimeField(db_index=True)
+
+
+class GoldCollectionState(models.Model):
+    """Singleton database lease shared by gold collectors in all workers."""
+    next_check_at = models.DateTimeField()

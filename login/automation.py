@@ -73,6 +73,12 @@ def _loop():
     while True:
         close_old_connections()
         try:
+            # Gold has its own per-minute database lease; mail keeps its hourly lease.
+            from .gold import collect_gold_quote
+            try:
+                collect_gold_quote()
+            except Exception:
+                logger.exception('SpendWise gold collection failed; retrying next minute')
             run_due_jobs()
         except Exception:
             # A new release can start before migrations finish. Retry after a minute.

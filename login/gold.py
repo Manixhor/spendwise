@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_GET
 
-from .models import GoldPriceQuote
+from .models import GoldCollectionState, GoldPriceQuote
 
 
 def gold_quote():
@@ -42,6 +42,19 @@ def gold_quote():
     GoldPriceQuote.objects.filter(quoted_at__lt=timezone.now() - timedelta(days=3)).delete()
     cache.set('gold-inr-quote', payload, 30)
     return payload
+
+
+def collect_gold_quote(now=None):
+    """Collect once per minute across processes, independently of page visits."""
+    now = now or timezone.now()
+    GoldCollectionState.objects.get_or_create(pk=1, defaults={'next_check_at': now})
+    claimed = GoldCollectionState.objects.filter(pk=1, next_check_at__lte=now).update(
+        next_check_at=now + timedelta(minutes=1),
+    )
+    if not claimed:
+        return False
+    gold_quote()
+    return True
 
 
 @login_required(login_url='/login/')
