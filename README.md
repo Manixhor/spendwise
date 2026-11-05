@@ -297,6 +297,9 @@ OPENAI_API_KEY=sk-...
 
 ### Deployment to Northflank
 
+The Android download page is `/download/android/`, and the signed APK is served at `/static/downloads/Spendwise.apk`. The APK uses the same live Spendwise host as the iOS app. Run the normal production database migration step before a deployment; this download page adds no database schema changes.
+
+
 The web service starts an in-app scheduler that checks monthly analysis emails,
 automatic recurring expenses, and opted-in payment and budget reminders hourly.
 No separate cron job is required. Multiple web workers share a database check

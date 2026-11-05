@@ -1,0 +1,10 @@
+{% load static %}
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Download Spendwise for Android</title></head>
+<body style="margin:0;background:#0b1020;color:white;font:16px/1.6 system-ui,sans-serif"><main style="max-width:600px;margin:8vh auto;padding:32px">
+<img src="{% static 'icons/spendwise-sw-icon-192.png' %}" alt="Spendwise icon" width="72" height="72">
+<h1>Spendwise for Android</h1><p>Track spending, savings, and monthly reports on your phone.</p>
+<p><a href="{% static 'downloads/Spendwise.apk' %}" download style="display:inline-block;background:#75e2c0;color:#0b1020;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:700">Download APK</a></p>
+<p>Version 1.0.0 · Android 8.0 or newer. After downloading, Android may ask you to allow installation from your browser.</p>
+<p>This app uses the Spendwise website and needs an internet connection for account features. Browser push notifications are not available inside this Android app yet.</p>
+<p><a href="{% url 'onboarding' %}" style="color:#75e2c0">Back to Spendwise</a></p>
+</main></body></html>

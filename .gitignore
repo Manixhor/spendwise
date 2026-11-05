@@ -46,3 +46,9 @@ Thumbs.db
 
 # Alternate local environment file
 .envy
+
+# Android signing material and generated output
+android/.signing/
+android/build/
+android/app/build/
+android/.gradle/

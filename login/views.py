@@ -2699,6 +2699,11 @@ def _calculate_goal_allocations(available_amount: float, goals: list) -> dict:
 
 
 # ── Profile ───────────────────────────────────────────────
+@require_GET
+def android_download(request: HttpRequest) -> HttpResponse:
+    return render(request, "login/android_download.html")
+
+
 @login_required(login_url="/login/")
 def profile_view(request: HttpRequest) -> HttpResponse:
     profile, _ = UserProfile.objects.get_or_create(user=request.user)

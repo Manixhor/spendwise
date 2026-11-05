@@ -25,6 +25,7 @@ from .views import (
     api_office_hide_suggestion,
     savings,
     profile_view,
+    android_download,
     api_email_monthly_analysis,
     api_export_monthly_pdf,
     api_export_monthly_csv,
@@ -94,6 +95,7 @@ urlpatterns = [
     path("monthly/export/xlsx/", api_export_monthly_xlsx, name="api_export_monthly_xlsx"),
     path("savings/", savings, name="savings"),
     path("profile/", profile_view, name="profile"),
+    path("download/android/", android_download, name="android_download"),
     # Transaction APIs
     path("api/transactions/", api_add_transaction, name="api_add_transaction"),
     path(
