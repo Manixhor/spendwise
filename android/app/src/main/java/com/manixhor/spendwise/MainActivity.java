@@ -1,10 +1,13 @@
 package com.manixhor.spendwise;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.webkit.CookieManager;
@@ -33,7 +36,7 @@ public class MainActivity extends Activity {
         webView.getSettings().setAllowFileAccessFromFileURLs(false);
         webView.getSettings().setAllowUniversalAccessFromFileURLs(false);
         webView.getSettings().setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        webView.getSettings().setUserAgentString(webView.getSettings().getUserAgentString() + " SpendwiseAndroid/2");
+        webView.getSettings().setUserAgentString(webView.getSettings().getUserAgentString() + " SpendwiseAndroid/3");
         webView.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
@@ -75,6 +78,12 @@ public class MainActivity extends Activity {
         });
         setContentView(webView);
         webView.loadUrl(HOME);
+        if (Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                && !getPreferences(MODE_PRIVATE).getBoolean("notification_prompt_requested", false)) {
+            getPreferences(MODE_PRIVATE).edit().putBoolean("notification_prompt_requested", true).apply();
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1002);
+        }
     }
 
     @Override protected void onActivityResult(int request, int result, Intent data) {

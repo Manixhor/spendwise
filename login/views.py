@@ -2710,7 +2710,7 @@ def android_download(request: HttpRequest) -> HttpResponse:
 @require_GET
 @never_cache
 def android_latest_version(request: HttpRequest) -> JsonResponse:
-    return JsonResponse({"version_code": 2, "version_name": "1.0.1", "download_url": "/static/downloads/Spendwise.apk"})
+    return JsonResponse({"version_code": 3, "version_name": "1.0.2", "download_url": "/static/downloads/Spendwise.apk"})
 
 
 @require_GET
