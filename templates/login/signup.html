@@ -166,6 +166,7 @@
 {% endblock %}
 
 {% block scripts %}
+  <script src="{% static 'login/auth_password.js' %}" defer></script>
 <script>
 (function(){
   /* ── Elements ── */
@@ -361,16 +362,6 @@
   });
 
   /* ── Password toggle ── */
-  document.querySelectorAll('.su-toggle-pw').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var target = document.getElementById(btn.dataset.target);
-      var isPassword = target.type === 'password';
-      target.type = isPassword ? 'text' : 'password';
-      btn.querySelector('.eye-open').style.display  = isPassword ? 'none' : 'block';
-      btn.querySelector('.eye-closed').style.display = isPassword ? 'block' : 'none';
-    });
-  });
-
   /* ── Submit button state ── */
   function updateSubmitBtn() {
     var ok = pwValid && confirmValid;

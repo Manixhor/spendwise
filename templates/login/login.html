@@ -69,6 +69,7 @@
 {% endblock %}
 
 {% block scripts %}
+  <script src="{% static 'login/auth_password.js' %}" defer></script>
 <script>
 (function(){
   var emailInput  = document.getElementById('liEmail');
@@ -86,16 +87,6 @@
   var DISPOSABLE = ['mailinator','guerrillamail','tempmail','throwaway','yopmail','10minutemail','trashmail','sharklasers','guerrillamailblock','grr.la','dispostable','maildrop'];
 
   /* ── Password toggle ── */
-  document.querySelectorAll('.su-toggle-pw').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var target = document.getElementById(btn.dataset.target);
-      var isPassword = target.type === 'password';
-      target.type = isPassword ? 'text' : 'password';
-      btn.querySelector('.eye-open').style.display  = isPassword ? 'none' : 'block';
-      btn.querySelector('.eye-closed').style.display = isPassword ? 'block' : 'none';
-    });
-  });
-
   /* ── Submit button state ── */
   function updateSubmitBtn() {
     var ok = emailValid && pwValid;
