@@ -1,0 +1,38 @@
+:root{font-family:"SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#1b2340;background:#e8e8ed}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 13% 8%,#d9d9ff 0,transparent 31%),radial-gradient(circle at 87% 20%,#f9d9ef 0,transparent 30%),#e8e8ed}
+.download-shell{max-width:1120px;margin:auto;padding:28px 24px 64px}
+.download-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:62px}
+.brand{display:inline-flex;align-items:center;gap:11px;color:#22253f;text-decoration:none;font-size:20px;font-weight:800;letter-spacing:-.04em}
+.brand img{border-radius:13px;box-shadow:0 5px 16px #2227}
+.back-link{color:#6157b4;text-decoration:none;font-size:14px;font-weight:700}
+.back-link:hover,.footnote a:hover{text-decoration:underline}
+.intro{margin-bottom:30px}
+.eyebrow{margin:0 0 12px;font-size:11px;font-weight:800;letter-spacing:.19em;color:#7068b8}
+h1,h2,h3,p{margin-top:0}
+h1{font-size:clamp(36px,5vw,62px);line-height:1.05;letter-spacing:-.055em;margin-bottom:16px}
+h1 span{color:#6a5fea}
+.intro>p:last-child{color:#586079;font-size:18px;margin-bottom:0}
+.download-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:22px}
+.card{background:linear-gradient(140deg,#ffffffec,#f8f7ffdf);border:1px solid #ffffffd9;border-radius:24px;box-shadow:0 12px 34px #4444661a,0 1px 0 #fff inset}
+.app-card{display:grid;grid-template-columns:84px 1fr;column-gap:20px;align-content:start;padding:36px}
+.app-icon{display:grid;place-items:center;width:84px;height:84px;border-radius:21px;background:#f1f0ff;box-shadow:0 5px 16px #7972bf26}
+.app-icon img{border-radius:14px}
+.app-heading .eyebrow{margin:5px 0 5px}
+h2{font-size:28px;letter-spacing:-.04em;margin-bottom:5px}
+.app-heading>p:last-child{font-size:14px;color:#69718a}
+.download-button{grid-column:1/-1;margin-top:42px;display:block;text-align:center;padding:16px 24px;border-radius:14px;background:linear-gradient(110deg,#595ff0,#9262e7 57%,#d85fc1);box-shadow:0 12px 25px #706de04d;color:#fff;text-decoration:none;font-size:17px;font-weight:800}
+.download-button:hover{filter:brightness(1.06)}
+.small-copy{color:#69718a;font-size:13px;line-height:1.5}
+.app-card .small-copy{grid-column:1/-1;margin:18px 0 0}
+.qr-card{padding:32px;text-align:center}
+.qr-card .eyebrow{margin-bottom:7px}
+.qr-card h2{font-size:25px}
+.qr-card>p:not(.eyebrow){color:#69718a;font-size:14px;max-width:290px;margin:8px auto 0}
+.qr-frame{display:inline-grid;place-items:center;margin:18px auto 8px;padding:9px;border:1px solid #e8e5f3;border-radius:18px;background:white;box-shadow:0 6px 18px #4b4c6b15}
+.qr-frame img{display:block;width:212px;height:212px}
+.details-card{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:22px;padding:27px 32px}
+.detail-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:13px;background:#eceaff;color:#6559df;font-size:22px;margin-bottom:12px}
+h3{font-size:16px;margin-bottom:6px}.details-card p{font-size:13px;line-height:1.5;color:#69718a;margin-bottom:0}
+.footnote{max-width:920px;margin:25px auto 0;text-align:center;color:#71788d;font-size:13px;line-height:1.6}.footnote a{color:#6157b4;font-weight:700;text-decoration:none}
+@media(max-width:700px){.download-shell{padding:18px 16px 40px}.download-header{margin-bottom:43px}.back-link{font-size:12px}.intro>p:last-child{font-size:16px}.download-grid{grid-template-columns:1fr;gap:16px}.app-card,.qr-card{padding:24px}.app-card{grid-template-columns:72px 1fr;gap:15px}.app-icon{width:72px;height:72px}.app-icon img{width:64px;height:64px}.download-button{margin-top:25px}.details-card{grid-template-columns:1fr;gap:18px;padding:24px}.details-card>div{display:grid;grid-template-columns:40px 1fr;column-gap:14px}.detail-icon{grid-row:1/3;margin:0}.details-card h3{margin:0}.details-card p{margin:3px 0 0}.footnote{margin-top:18px}}

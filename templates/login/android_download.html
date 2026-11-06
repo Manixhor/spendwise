@@ -1,10 +1,54 @@
 {% load static %}
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Download Spendwise for Android</title></head>
-<body style="margin:0;background:#0b1020;color:white;font:16px/1.6 system-ui,sans-serif"><main style="max-width:600px;margin:8vh auto;padding:32px">
-<img src="{% static 'icons/spendwise-sw-icon-192.png' %}" alt="Spendwise icon" width="72" height="72">
-<h1>Spendwise for Android</h1><p>Track spending, savings, and monthly reports on your phone.</p>
-<p><a href="{% static 'downloads/Spendwise.apk' %}" download style="display:inline-block;background:#75e2c0;color:#0b1020;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:700">Download APK</a></p>
-<p>Version 1.0.0 · Android 8.0 or newer. After downloading, Android may ask you to allow installation from your browser.</p>
-<p>This app uses the Spendwise website and needs an internet connection for account features. Browser push notifications are not available inside this Android app yet.</p>
-<p><a href="{% url 'onboarding' %}" style="color:#75e2c0">Back to Spendwise</a></p>
-</main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#e8e8ed">
+  <title>Download Spendwise for Android</title>
+  <link rel="stylesheet" href="{% static 'login/android_download.css' %}">
+</head>
+<body>
+  <div class="download-shell">
+    <header class="download-header">
+      <a class="brand" href="{% url 'onboarding' %}" aria-label="Spendwise home">
+        <img src="{% static 'icons/spendwise-sw-icon-192.png' %}" alt="" width="42" height="42">
+        <span>spendwise</span>
+      </a>
+      <a class="back-link" href="{% url 'onboarding' %}">← Back to Spendwise</a>
+    </header>
+    <main>
+      <div class="intro">
+        <p class="eyebrow">SPENDWISE ON ANDROID</p>
+        <h1>Your money dashboard,<br><span>ready to go.</span></h1>
+        <p>Track spending, savings, and monthly reports from your phone.</p>
+      </div>
+      <div class="download-grid">
+        <section class="card app-card" aria-labelledby="app-title">
+          <div class="app-icon"><img src="{% static 'icons/spendwise-sw-icon-192.png' %}" alt="" width="72" height="72"></div>
+          <div class="app-heading">
+            <p class="eyebrow">ANDROID APP</p>
+            <h2 id="app-title">Spendwise</h2>
+            <p>Version 1.0.1 · Android 8.0 or newer</p>
+          </div>
+          <a class="download-button" href="{% static 'downloads/Spendwise.apk' %}" download>↓ Download APK</a>
+          <p class="small-copy">Installing over an older Spendwise APK keeps your app data. Android may ask you to allow installation from your browser.</p>
+        </section>
+        <section class="card qr-card" aria-labelledby="qr-title">
+          <p class="eyebrow">ON YOUR PHONE</p>
+          <h2 id="qr-title">Scan to download</h2>
+          <p>Open your camera and point it at this code to get the latest APK directly.</p>
+          <div class="qr-frame"><img src="{% static 'downloads/Spendwise-QR.png' %}" alt="QR code for the Spendwise Android APK" width="212" height="212"></div>
+          <p class="small-copy">The QR code opens the same download as the button.</p>
+        </section>
+      </div>
+      <section class="card details-card" aria-label="About this app">
+        <div><span class="detail-icon">↗</span><h3>Track expenses</h3><p>Record spending and income as it happens.</p></div>
+        <div><span class="detail-icon">◷</span><h3>See your month</h3><p>Review trends, categories, and reports.</p></div>
+        <div><span class="detail-icon">◎</span><h3>Plan savings</h3><p>Keep goals and budgets in view.</p></div>
+      </section>
+      <p class="footnote">Spendwise needs an internet connection for account features. Push notifications are not supported inside this Android app yet. <a href="https://github.com/Manixhor/spendwise/releases/tag/v1.0.1-android">View the GitHub release</a></p>
+    </main>
+  </div>
+</body>
+</html>

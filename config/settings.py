@@ -253,6 +253,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'login.context_processors.android_app',
             ],
         },
     },
@@ -372,6 +373,7 @@ if not DEBUG:
     CSRF_COOKIE_SAMESITE = 'None'
     SESSION_COOKIE_SAMESITE = 'None'
     SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', True)
+    SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000'))
 
 EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES = 10
 
@@ -399,6 +401,7 @@ elif SMTP_USERNAME:
 else:
     DEFAULT_FROM_EMAIL = 'SpendWise <no-reply@spendwise.local>'
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
+PRIVACY_CONTACT_EMAIL = os.getenv('PRIVACY_CONTACT_EMAIL', 'manigururam06@gmail.com').strip()
 
 # OpenAI (optional): used for dashboard savings motivation message generation.
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '').strip()

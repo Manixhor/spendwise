@@ -1,14 +1,20 @@
 package com.manixhor.spendwise;
 
 import android.app.Activity;
+import android.app.DownloadManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.webkit.CookieManager;
+import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
     private static final String HOME = "https://site--spendwise--m9lhjm5ftxzt.code.run/";
@@ -24,10 +30,15 @@ public class MainActivity extends Activity {
         webView.getSettings().setDomStorageEnabled(true);
         webView.getSettings().setAllowFileAccess(false);
         webView.getSettings().setAllowContentAccess(true);
+        webView.getSettings().setAllowFileAccessFromFileURLs(false);
+        webView.getSettings().setAllowUniversalAccessFromFileURLs(false);
+        webView.getSettings().setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        webView.getSettings().setUserAgentString(webView.getSettings().getUserAgentString() + " SpendwiseAndroid/2");
         webView.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 if ("https".equals(uri.getScheme()) && HOST.equals(uri.getHost())) return false;
+                if (!("https".equals(uri.getScheme()) || "http".equals(uri.getScheme()) || "mailto".equals(uri.getScheme()) || "tel".equals(uri.getScheme()))) return true;
                 try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (Exception ignored) { }
                 return true;
             }
@@ -41,7 +52,26 @@ public class MainActivity extends Activity {
             }
         });
         webView.setDownloadListener((url, agent, disposition, mime, length) -> {
-            try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); } catch (Exception ignored) { }
+            Uri uri = Uri.parse(url);
+            if (!"https".equals(uri.getScheme()) || !HOST.equals(uri.getHost())) {
+                try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (Exception ignored) { }
+                return;
+            }
+            String fileName = URLUtil.guessFileName(url, disposition, mime).replaceAll("[^A-Za-z0-9._-]", "_");
+            DownloadManager.Request download = new DownloadManager.Request(uri);
+            download.setTitle(fileName);
+            download.setMimeType(mime);
+            download.addRequestHeader("User-Agent", agent);
+            String cookie = CookieManager.getInstance().getCookie(url);
+            if (cookie != null) download.addRequestHeader("Cookie", cookie);
+            download.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            download.setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, fileName);
+            try {
+                ((DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE)).enqueue(download);
+                Toast.makeText(this, "Download started", Toast.LENGTH_SHORT).show();
+            } catch (Exception ex) {
+                Toast.makeText(this, "Download failed", Toast.LENGTH_LONG).show();
+            }
         });
         setContentView(webView);
         webView.loadUrl(HOME);

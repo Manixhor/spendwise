@@ -26,6 +26,9 @@ from .views import (
     savings,
     profile_view,
     android_download,
+    android_latest_version,
+    privacy_policy,
+    delete_account,
     api_email_monthly_analysis,
     api_export_monthly_pdf,
     api_export_monthly_csv,
@@ -96,6 +99,9 @@ urlpatterns = [
     path("savings/", savings, name="savings"),
     path("profile/", profile_view, name="profile"),
     path("download/android/", android_download, name="android_download"),
+    path("android/latest.json", android_latest_version, name="android_latest_version"),
+    path("privacy/", privacy_policy, name="privacy_policy"),
+    path("account/delete/", delete_account, name="delete_account"),
     # Transaction APIs
     path("api/transactions/", api_add_transaction, name="api_add_transaction"),
     path(

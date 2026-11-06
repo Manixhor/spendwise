@@ -1,4 +1,5 @@
 (() => {
+  if (/; wv\)/i.test(navigator.userAgent) || /SpendwiseAndroid\//i.test(navigator.userAgent)) return;
   const DISMISS_KEY = 'spendwise-dashboard-install-v2-dismissed-until';
   const DISMISS_MS = 30 * 24 * 60 * 60 * 1000;
   const isInstalled = () => window.matchMedia('(display-mode: standalone)').matches ||

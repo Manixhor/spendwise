@@ -299,6 +299,10 @@ OPENAI_API_KEY=sk-...
 
 The Android download page is `/download/android/`, and the signed APK is served at `/static/downloads/Spendwise.apk`. The APK uses the same live Spendwise host as the iOS app. Run the normal production database migration step before a deployment; this download page adds no database schema changes.
 
+The Android app shows an update notice when a newer signed APK is available. Website-only changes appear immediately in the app after the page reloads. Android code changes require a new APK signed with the same key and a higher version code; users must approve installation of website or GitHub updates.
+
+For database updates in production, back up the live database and run `python manage.py migrate --noinput` against the same `DATABASE_URL` as the web service. Run `python manage.py showmigrations login` to verify the result. The download, privacy, and account deletion pages add no schema changes. Local migrations do not update production data.
+
 
 The web service starts an in-app scheduler that checks monthly analysis emails,
 automatic recurring expenses, and opted-in payment and budget reminders hourly.

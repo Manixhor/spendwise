@@ -1,0 +1,13 @@
+{% load static %}
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Delete Spendwise account</title>
+<link rel="stylesheet" href="{% static 'login/auth.css' %}"></head>
+<body><main style="max-width:560px;margin:8vh auto;padding:32px;border-radius:20px;background:#fff;color:#172036;font:16px/1.5 system-ui,sans-serif">
+<h1>Delete your Spendwise account</h1>
+{% if deleted %}<p>Your account and associated financial records have been deleted.</p><a href="{% url 'onboarding' %}">Return to Spendwise</a>
+{% elif needs_login %}<p>Sign in to request deletion of your account and associated data. This page also works in a browser after uninstalling the app.</p><a href="{% url 'login' %}?next={% url 'delete_account' %}">Sign in to delete account</a>
+{% else %}<p>This permanently deletes your profile, transactions, budgets, savings goals, reminders, and associated records. You cannot undo this action.</p>
+{% if error %}<p role="alert" style="color:#a32121">{{ error }}</p>{% endif %}
+<form method="post">{% csrf_token %}{% if user.has_usable_password %}<p><label>Password<br><input type="password" name="password" required autocomplete="current-password"></label></p>{% else %}<p><label>Account email<br><input type="email" name="email" required autocomplete="email"></label></p>{% endif %}
+<p><label>Type DELETE to confirm<br><input type="text" name="confirmation" required autocomplete="off"></label></p>
+<button type="submit">Permanently delete my account</button></form>
+{% endif %}<p><a href="{% url 'privacy_policy' %}">Privacy policy</a></p></main></body></html>

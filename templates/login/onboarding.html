@@ -24,7 +24,7 @@
   </p>
 
   <a href="{% url 'signup' %}" class="cta-btn">Get started &rarr;</a>
-  <p class="footer-copy"><a href="{% url 'android_download' %}" class="link-accent">Download the Android app</a></p>
+  {% if not is_android_app %}<p class="footer-copy"><a href="{% url 'android_download' %}" class="link-accent">Download the Android app</a></p>{% endif %}
 
   <p class="footer-copy">
     Already have an account? <a href="{% url 'login' %}" class="link-accent">Sign in</a>

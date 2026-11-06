@@ -35,6 +35,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from .security import otp_limited, clean_avatar
+from .context_processors import is_android_webview
 
 logger = logging.getLogger(__name__)
 
@@ -2701,7 +2702,51 @@ def _calculate_goal_allocations(available_amount: float, goals: list) -> dict:
 # ── Profile ───────────────────────────────────────────────
 @require_GET
 def android_download(request: HttpRequest) -> HttpResponse:
+    if is_android_webview(request):
+        return redirect('dashboard' if request.user.is_authenticated else 'onboarding')
     return render(request, "login/android_download.html")
+
+
+@require_GET
+@never_cache
+def android_latest_version(request: HttpRequest) -> JsonResponse:
+    return JsonResponse({"version_code": 2, "version_name": "1.0.1", "download_url": "/static/downloads/Spendwise.apk"})
+
+
+@require_GET
+def privacy_policy(request: HttpRequest) -> HttpResponse:
+    return render(request, "login/privacy.html", {"privacy_contact_email": settings.PRIVACY_CONTACT_EMAIL})
+
+
+@require_http_methods(["GET", "POST"])
+def delete_account(request: HttpRequest) -> HttpResponse:
+    if not request.user.is_authenticated:
+        return render(request, "login/delete_account.html", {"needs_login": True})
+
+    if request.method == "POST":
+        password = request.POST.get("password", "")
+        confirmation = request.POST.get("confirmation", "").strip()
+        verified = (request.user.check_password(password) if request.user.has_usable_password()
+                    else request.POST.get("email", "").strip().lower() == request.user.email.lower())
+        if confirmation != "DELETE" or not verified:
+            return render(request, "login/delete_account.html", {
+                "error": "Confirm your account and type DELETE to continue.",
+            }, status=400)
+
+        user = request.user
+        avatar = getattr(getattr(user, "profile", None), "avatar", None)
+        avatar_name = avatar.name if avatar else None
+        with transaction.atomic():
+            user.delete()
+        logout(request)
+        if avatar_name:
+            try:
+                UserProfile._meta.get_field("avatar").storage.delete(avatar_name)
+            except Exception:
+                logger.exception("Could not remove avatar after account deletion")
+        return render(request, "login/delete_account.html", {"deleted": True})
+
+    return render(request, "login/delete_account.html")
 
 
 @login_required(login_url="/login/")

@@ -44,11 +44,11 @@
         <path d="M12 6v6l4 2"/>
       </svg>
     </a>
-    <a href="{% url 'android_download' %}" class="nav-icon" aria-label="App Download" title="App Download">
+    {% if not is_android_app %}<a href="{% url 'android_download' %}" class="nav-icon" aria-label="App Download" title="App Download">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"/>
       </svg>
-    </a>
+    </a>{% endif %}
     {% endif %}
     <form method="post" action="{% url 'logout' %}" class="logout-form">
       {% csrf_token %}
