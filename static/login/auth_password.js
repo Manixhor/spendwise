@@ -1,5 +1,7 @@
 (() => {
   const passwordFields = new Set();
+  const viewport = window.visualViewport;
+  let fullHeight = viewport?.height ?? window.innerHeight;
 
   document.querySelectorAll('.su-toggle-pw[data-target]').forEach((button) => {
     const input = document.getElementById(button.dataset.target);
@@ -7,7 +9,10 @@
     passwordFields.add(input);
 
     button.addEventListener('mousedown', (event) => {
-      if (document.activeElement === input) event.preventDefault();
+      const visibleHeight = viewport?.height ?? window.innerHeight;
+      if (document.activeElement === input && fullHeight - visibleHeight > 100) {
+        event.preventDefault();
+      }
     });
 
     button.addEventListener('click', () => {
@@ -24,8 +29,12 @@
     });
   });
 
-  const viewport = window.visualViewport;
+  window.addEventListener('orientationchange', () => {
+    fullHeight = 0;
+  });
+
   viewport?.addEventListener('resize', () => {
+    fullHeight = Math.max(fullHeight, viewport.height);
     const input = document.activeElement;
     if (!passwordFields.has(input)) return;
     const row = input.closest('.field-group');
