@@ -131,12 +131,23 @@
       <p class="pf-currency-status" id="currencyStatus"></p>
     </div>
 
+    <section class="card pf-fields-card pf-account-card" aria-labelledby="pfAccountTitle">
+      <h2 class="pf-section-title" id="pfAccountTitle">Privacy and account</h2>
+      <p class="pf-account-intro">Manage your privacy and account data.</p>
+      <div class="pf-account-actions">
+        <a class="pf-account-action" href="{% url 'privacy_policy' %}">
+          <span class="pf-account-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <span class="pf-account-copy"><strong>Privacy policy</strong><small>See how your information is protected</small></span>
+          <svg class="pf-account-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+        </a>
+        <a class="pf-account-action pf-account-action--danger" href="{% url 'delete_account' %}">
+          <span class="pf-account-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3"/></svg></span>
+          <span class="pf-account-copy"><strong>Delete account and data</strong><small>Review what will be removed</small></span>
+          <svg class="pf-account-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+    </section>
     <!-- Salary section -->
-    <div class="card pf-fields-card">
-      <h2 class="pf-section-title">Privacy and account</h2>
-      <p><a href="{% url 'privacy_policy' %}">Privacy policy</a></p>
-      <p><a href="{% url 'delete_account' %}">Delete my account and data</a></p>
-    </div>
     <div class="card pf-fields-card">
       <h2 class="pf-section-title">Financial Settings</h2>
       
