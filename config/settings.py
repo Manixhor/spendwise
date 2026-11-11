@@ -188,6 +188,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'login.automation.AutomationMiddleware',
     'login.middleware.PageViewMiddleware',
+    'login.middleware.SearchIndexingMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'

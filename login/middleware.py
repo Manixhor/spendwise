@@ -37,3 +37,22 @@ class PageViewMiddleware:
             )
         response = self.get_response(request)
         return response
+
+
+class SearchIndexingMiddleware:
+    """Keep sign-in and personal finance screens out of search results."""
+
+    INDEXABLE_PATHS = {"/", "/privacy/", "/download/android/"}
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        content_type = response.get("Content-Type", "")
+        if (
+            content_type.startswith("text/html")
+            and (request.path not in self.INDEXABLE_PATHS or response.status_code != 200)
+        ):
+            response["X-Robots-Tag"] = "noindex, nofollow"
+        return response

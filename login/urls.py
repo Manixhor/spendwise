@@ -56,8 +56,11 @@ from .views import (
 from .views_import import api_import_transactions
 from .gold import api_gold_price
 from .chatbot import chatbot_tools
+from .seo import robots_txt, sitemap
 
 urlpatterns = [
+    path("robots.txt", robots_txt, name="robots_txt"),
+    path("sitemap.xml", sitemap, name="sitemap"),
     path("api/chatbot/tools/", chatbot_tools, name="chatbot_tools"),
     path("api/gold/price/", api_gold_price, name="api_gold_price"),
     path("", onboarding, name="onboarding"),

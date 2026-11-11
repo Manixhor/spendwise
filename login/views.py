@@ -1386,7 +1386,11 @@ def _dashboard_stats(user, profile):
 def onboarding(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
-    return render(request, "login/onboarding.html")
+    return render(request, "login/onboarding.html", {
+        "seo_title": "SpendWise – Expense Tracker and Budget Planner",
+        "seo_description": "Track daily expenses, plan your budget, review monthly spending, and follow savings goals with SpendWise on web and Android.",
+        "seo_url": request.build_absolute_uri(reverse("onboarding")),
+    })
 
 
 #try it 
@@ -2667,7 +2671,11 @@ def _calculate_goal_allocations(available_amount: float, goals: list) -> dict:
 def android_download(request: HttpRequest) -> HttpResponse:
     if is_android_webview(request):
         return redirect('dashboard' if request.user.is_authenticated else 'onboarding')
-    context = {}
+    context = {
+        "seo_title": "Download SpendWise for Android",
+        "seo_description": "Download the SpendWise Android app to track expenses, savings, and monthly spending from your phone.",
+        "seo_url": request.build_absolute_uri(reverse("android_download")),
+    }
     if request.user.is_authenticated:
         context["profile"], _ = UserProfile.objects.get_or_create(user=request.user)
         context["active_nav"] = "download"
@@ -2682,7 +2690,12 @@ def android_latest_version(request: HttpRequest) -> JsonResponse:
 
 @require_GET
 def privacy_policy(request: HttpRequest) -> HttpResponse:
-    context = {"privacy_contact_email": settings.PRIVACY_CONTACT_EMAIL}
+    context = {
+        "privacy_contact_email": settings.PRIVACY_CONTACT_EMAIL,
+        "seo_title": "Privacy Policy – SpendWise",
+        "seo_description": "Read how SpendWise handles account information, financial entries, notifications, and account deletion.",
+        "seo_url": request.build_absolute_uri(reverse("privacy_policy")),
+    }
     if request.user.is_authenticated:
         context["profile"], _ = UserProfile.objects.get_or_create(user=request.user)
         context["active_nav"] = "profile"

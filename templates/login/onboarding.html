@@ -1,8 +1,8 @@
 {% extends "login/base_auth.html" %}
 {% load static %}
 
-{% block title %}SpendWise – Welcome{% endblock %}
-{% block left_tagline %}Your money, your rules.<br/>Banking built around you.{% endblock %}
+{% block title %}SpendWise – Expense Tracker and Budget Planner{% endblock %}
+{% block left_tagline %}Your money, made clearer.<br/>Track spending and savings in one place.{% endblock %}
 
 {% block card_content %}
   <div class="hero-art" aria-hidden="true">
@@ -12,16 +12,11 @@
     <div class="orb orb-right"></div>
   </div>
 
-  <p class="eyebrow">CONTROL YOUR BUDGET</p>
+  <p class="eyebrow">PERSONAL FINANCE, MADE SIMPLE</p>
 
-  <h2 class="hero-title">
-    Bank made by<br/>
-    users for <span class="accent">people</span>.
-  </h2>
+  <h1 class="hero-title">Track spending.<br/><span class="accent">Plan with confidence.</span></h1>
 
-  <p class="subcopy">
-    Track the money you spend with<br/>friends &amp; brands
-  </p>
+  <p class="subcopy">Record expenses, review monthly trends, set a daily allowance, and follow your savings goals with SpendWise.</p>
 
   <a href="{% url 'signup' %}" class="cta-btn">Get started &rarr;</a>
   {% if not is_android_app %}<p class="footer-copy"><a href="{% url 'android_download' %}" class="link-accent">Download the Android app</a></p>{% endif %}
@@ -29,4 +24,5 @@
   <p class="footer-copy">
     Already have an account? <a href="{% url 'login' %}" class="link-accent">Sign in</a>
   </p>
+  <p class="footer-copy"><a href="{% url 'privacy_policy' %}" class="link-accent">Privacy policy</a></p>
 {% endblock %}
