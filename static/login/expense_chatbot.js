@@ -149,6 +149,11 @@
       {label: 'What’s due next?', action: showBills},
       {label: 'Fix a category', action: () => startCategoryCorrection()},
       {label: '+ Add expense', action: resetForAnother},
+      {label: 'Open Spendwise', action: () => {
+        addMessage('Heading to Spendwise. Your dashboard has the full picture.');
+        showSuggestions();
+        window.setTimeout(() => window.location.assign(root.dataset.dashboardUrl), 1500);
+      }},
     ]);
   };
   const checkAllowance = async (proposed = 0) => {

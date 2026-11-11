@@ -1,5 +1,5 @@
 {% load static %}
-<div class="expense-chatbot" id="expenseChatbot" data-dashboard="{% if active_nav == 'dashboard' %}true{% else %}false{% endif %}">
+<div class="expense-chatbot" id="expenseChatbot" data-dashboard-url="{% url 'dashboard' %}" data-dashboard="{% if active_nav == 'dashboard' %}true{% else %}false{% endif %}">
   <button class="expense-chatbot-hint" id="expenseChatbotHint" type="button" hidden>
     Tap Quick add to record an expense faster
   </button>
