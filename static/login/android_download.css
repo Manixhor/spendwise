@@ -1,49 +1,38 @@
-:root{font-family:"SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#1b2340;background:#e8e8ed}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:radial-gradient(circle at 13% 8%,#d9d9ff 0,transparent 31%),radial-gradient(circle at 87% 20%,#f9d9ef 0,transparent 30%),#e8e8ed}
-.download-shell{max-width:1120px;margin:auto;padding:28px 24px 64px}
-.download-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:62px}
-.back-link:focus-visible,.download-button:focus-visible{outline:3px solid #7068ea;outline-offset:3px}
-.brand{display:inline-flex;align-items:center;gap:11px;color:#22253f;text-decoration:none;font-size:20px;font-weight:800;letter-spacing:-.04em}
-.brand img{border-radius:13px;box-shadow:0 5px 16px #2227}
-.back-link{color:#6157b4;text-decoration:none;font-size:14px;font-weight:700}
-.back-link:hover,.footnote a:hover{text-decoration:underline}
-.intro{margin-bottom:30px}
-.eyebrow{margin:0 0 12px;font-size:11px;font-weight:800;letter-spacing:.19em;color:#7068b8}
-h1,h2,h3,p{margin-top:0}
-h1{font-size:clamp(36px,5vw,62px);line-height:1.05;letter-spacing:-.055em;margin-bottom:16px}
-h1 span{color:#6a5fea}
-.intro>p:last-child{color:#586079;font-size:18px;margin-bottom:0}
-.download-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:22px}
-.card{background:linear-gradient(140deg,#ffffffec,#f8f7ffdf);border:1px solid #ffffffd9;border-radius:24px;box-shadow:0 12px 34px #4444661a,0 1px 0 #fff inset}
-.app-card{display:grid;grid-template-columns:84px 1fr;column-gap:20px;align-content:start;padding:36px}
-.app-icon{display:grid;place-items:center;width:84px;height:84px;border-radius:21px;background:#f1f0ff;box-shadow:0 5px 16px #7972bf26}
-.app-icon img{border-radius:14px}
-.app-heading .eyebrow{margin:5px 0 5px}
-h2{font-size:28px;letter-spacing:-.04em;margin-bottom:5px}
-.app-heading>p:last-child{font-size:14px;color:#69718a}
-.download-button{grid-column:1/-1;margin-top:42px;display:block;text-align:center;padding:16px 24px;border-radius:14px;background:linear-gradient(110deg,#595ff0,#9262e7 57%,#d85fc1);box-shadow:0 12px 25px #706de04d;color:#fff;text-decoration:none;font-size:17px;font-weight:800}
-.download-button:hover{filter:brightness(1.06)}
-.small-copy{color:#69718a;font-size:13px;line-height:1.5}
-.app-card .small-copy{grid-column:1/-1;margin:18px 0 0}
-.qr-card{padding:32px;text-align:center}
-.qr-card .eyebrow{margin-bottom:7px}
-.qr-card h2{font-size:25px}
-.qr-card>p:not(.eyebrow){color:#69718a;font-size:14px;max-width:290px;margin:8px auto 0}
-.qr-frame{display:inline-grid;place-items:center;margin:18px auto 8px;padding:9px;border:1px solid #e8e5f3;border-radius:18px;background:white;box-shadow:0 6px 18px #4b4c6b15}
-.qr-frame img{display:block;width:212px;height:212px}
-.details-card{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:22px;padding:27px 32px}
-.detail-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:13px;background:#eceaff;color:#6559df;font-size:22px;margin-bottom:12px}
-h3{font-size:16px;margin-bottom:6px}.details-card p{font-size:13px;line-height:1.5;color:#69718a;margin-bottom:0}
-.footnote{max-width:920px;margin:25px auto 0;text-align:center;color:#71788d;font-size:13px;line-height:1.6}.footnote a{color:#6157b4;font-weight:700;text-decoration:none}
-@media(max-width:700px){.download-shell{padding:18px 16px 40px}.download-header{margin-bottom:43px}.back-link{font-size:12px}.intro>p:last-child{font-size:16px}.download-grid{grid-template-columns:1fr;gap:16px}.app-card,.qr-card{padding:24px}.app-card{grid-template-columns:72px 1fr;gap:15px}.app-icon{width:72px;height:72px}.app-icon img{width:64px;height:64px}.download-button{margin-top:25px}.details-card{grid-template-columns:1fr;gap:18px;padding:24px}.details-card>div{display:grid;grid-template-columns:40px 1fr;column-gap:14px}.detail-icon{grid-row:1/3;margin:0}.details-card h3{margin:0}.details-card p{margin:3px 0 0}.footnote{margin-top:18px}}
-html[data-theme="dark"]{color:#f5f7ff;background:#0b1220;color-scheme:dark}
-html[data-theme="dark"] body{background:radial-gradient(circle at 16% 8%,#282b58 0,transparent 34%),radial-gradient(circle at 86% 20%,#412544 0,transparent 32%),#0b1220}
-html[data-theme="dark"] .brand{color:#f5f7ff}
-html[data-theme="dark"] .back-link,html[data-theme="dark"] .footnote a{color:#beaaff}
-html[data-theme="dark"] .eyebrow{color:#b9a5ff}
-html[data-theme="dark"] h1 span{color:#b29aff}
-html[data-theme="dark"] .intro>p:last-child,html[data-theme="dark"] .app-heading>p:last-child,html[data-theme="dark"] .small-copy,html[data-theme="dark"] .qr-card>p:not(.eyebrow),html[data-theme="dark"] .details-card p,html[data-theme="dark"] .footnote{color:#aab8d4}
-html[data-theme="dark"] .card{background:linear-gradient(140deg,#202b43ed,#172137ed);border-color:#39445e;box-shadow:0 14px 36px #02071470,0 1px 0 #ffffff12 inset}
-html[data-theme="dark"] .app-icon,html[data-theme="dark"] .detail-icon{background:#35345e;color:#c5b6ff}
-html[data-theme="dark"] .qr-frame{background:#fff;border-color:#5a6380}
+.download-intro { color: var(--sub); font-size: 1rem; line-height: 1.5; margin-top: -8px; }
+.download-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 18px; }
+.download-grid > .card { min-width: 0; padding: clamp(22px, 3vw, 34px); }
+.download-app-card { display: flex; flex-direction: column; align-items: flex-start; }
+.download-app-heading { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.download-app-icon { display: grid; place-items: center; flex: 0 0 84px; width: 84px; height: 84px; border-radius: 20px; background: var(--accent-lt); }
+.download-app-icon img { width: 72px; height: 72px; border-radius: 15px; }
+.download-label { color: var(--accent); font-size: .68rem; font-weight: 800; letter-spacing: .15em; margin-bottom: 7px; }
+.download-grid h2 { color: var(--ink); font-size: 1.35rem; letter-spacing: -.035em; line-height: 1.2; }
+.download-version, .download-help, .download-qr-card > p:not(.download-label) { color: var(--sub); font-size: .82rem; line-height: 1.5; }
+.download-version { margin-top: 7px; }
+.download-button { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 52px; margin-top: 30px; padding: 12px 18px; border-radius: 14px; background: var(--btn-primary-bg); box-shadow: var(--btn-primary-shadow); color: #fff; font-weight: 750; text-decoration: none; text-align: center; }
+.download-button:hover { filter: brightness(1.06); }
+.download-button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.download-app-card .download-help { margin-top: 16px; }
+.download-qr-card { text-align: center; }
+.download-qr-card > p:not(.download-label) { max-width: 32ch; margin: 9px auto 0; }
+.download-qr-frame { display: inline-grid; place-items: center; max-width: 100%; margin: 16px auto 3px; padding: 9px; border: 1px solid var(--border-sub); border-radius: 18px; background: #fff; box-shadow: var(--shadow-sm); }
+.download-qr-frame img { display: block; width: min(212px, 100%); height: auto; }
+.download-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; padding: 26px; }
+.download-details h3 { color: var(--ink); font-size: .92rem; margin-bottom: 5px; }
+.download-details p { color: var(--sub); font-size: .78rem; line-height: 1.5; }
+.download-detail-icon { display: grid; place-items: center; width: 39px; height: 39px; margin-bottom: 12px; border-radius: 12px; background: var(--accent-lt); color: var(--accent); font-size: 1.25rem; }
+.download-footnote { color: var(--sub); font-size: .78rem; line-height: 1.6; }
+.download-footnote a { color: var(--accent); font-weight: 700; text-underline-offset: 3px; }
+@media (max-width: 760px) {
+  .download-grid { grid-template-columns: 1fr; }
+  .download-details { grid-template-columns: 1fr; gap: 17px; }
+  .download-details > div { display: grid; grid-template-columns: 39px minmax(0, 1fr); column-gap: 13px; }
+  .download-detail-icon { grid-row: 1 / 3; margin: 0; }
+  .download-details h3 { align-self: end; }
+}
+@media (max-width: 380px) {
+  .download-app-heading { gap: 12px; }
+  .download-app-icon { flex-basis: 68px; width: 68px; height: 68px; }
+  .download-app-icon img { width: 60px; height: 60px; }
+  .download-grid h2 { font-size: 1.16rem; }
+}

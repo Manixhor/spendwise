@@ -10,6 +10,14 @@ class AndroidReleaseTests(TestCase):
         self.assertContains(response, 'Download APK')
         self.assertContains(response, 'Spendwise-QR.png')
 
+    def test_signed_in_download_page_keeps_spendwise_navigation(self):
+        user = User.objects.create_user('download@example.test', 'download@example.test', 'DemoPass123!')
+        self.client.force_login(user)
+        response = self.client.get(reverse('android_download'))
+        self.assertContains(response, 'class="sidebar"')
+        self.assertContains(response, 'aria-label="Dashboard"')
+        self.assertContains(response, 'nav-icon active" aria-label="App Download"')
+
     def test_android_app_hides_website_download_navigation(self):
         user = User.objects.create_user('demo@example.test', 'demo@example.test', 'DemoPass123!')
         self.client.force_login(user)

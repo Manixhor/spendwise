@@ -1,54 +1,33 @@
+{% extends "login/account_page_base.html" %}
 {% load static %}
-<!doctype html>
-<html lang="en" data-theme="dark">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0b1220">
-  <title>Download Spendwise for Android</title>
-  <link rel="stylesheet" href="{% static 'login/android_download.css' %}">
-</head>
-<body>
-  <div class="download-shell">
-    <header class="download-header">
-      <a class="brand" href="{% url 'onboarding' %}" aria-label="Spendwise home">
-        <img src="{% static 'icons/spendwise-sw-icon-192.png' %}" alt="" width="42" height="42">
-        <span>spendwise</span>
-      </a>
-      <a class="back-link" href="{% url 'onboarding' %}">← Back to Spendwise</a>
-    </header>
-    <main>
-      <div class="intro">
-        <p class="eyebrow">SPENDWISE ON ANDROID</p>
-        <h1>Your money dashboard,<br><span>ready to go.</span></h1>
-        <p>Track spending, savings, and monthly reports from your phone.</p>
-      </div>
-      <div class="download-grid">
-        <section class="card app-card" aria-labelledby="app-title">
-          <div class="app-icon"><img src="{% static 'icons/spendwise-sw-icon-192.png' %}" alt="" width="72" height="72"></div>
-          <div class="app-heading">
-            <p class="eyebrow">ANDROID APP</p>
-            <h2 id="app-title">Spendwise</h2>
-            <p>Version 1.0.2 · Android 8.0 or newer</p>
-          </div>
-          <a class="download-button" href="{% static 'downloads/Spendwise.apk' %}" download>↓ Download APK</a>
-          <p class="small-copy">Installing over an older Spendwise APK keeps your app data. Android may ask you to allow installation from your browser.</p>
-        </section>
-        <section class="card qr-card" aria-labelledby="qr-title">
-          <p class="eyebrow">ON YOUR PHONE</p>
-          <h2 id="qr-title">Scan to download</h2>
-          <p>Open your camera and point it at this code to get the latest APK directly.</p>
-          <div class="qr-frame"><img src="{% static 'downloads/Spendwise-QR.png' %}" alt="QR code for the Spendwise Android APK" width="212" height="212"></div>
-          <p class="small-copy">The QR code opens the same download as the button.</p>
-        </section>
-      </div>
-      <section class="card details-card" aria-label="About this app">
-        <div><span class="detail-icon">↗</span><h3>Track expenses</h3><p>Record spending and income as it happens.</p></div>
-        <div><span class="detail-icon">◷</span><h3>See your month</h3><p>Review trends, categories, and reports.</p></div>
-        <div><span class="detail-icon">◎</span><h3>Plan savings</h3><p>Keep goals and budgets in view.</p></div>
-      </section>
-      <p class="footnote">Spendwise needs an internet connection for account features. Push notifications are not supported inside this Android app yet. <a href="https://github.com/Manixhor/spendwise/releases/tag/v1.0.2-android">View the GitHub release</a></p>
-    </main>
-  </div>
-</body>
-</html>
+{% block page_title %}Android app{% endblock %}
+{% block back_href %}{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'onboarding' %}{% endif %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'login/android_download.css' %}">{% endblock %}
+{% block page_eyebrow %}SpendWise on Android{% endblock %}
+{% block page_heading %}Take SpendWise with you{% endblock %}
+{% block page_content %}
+<p class="download-intro">Track spending, savings, and monthly reports from your phone.</p>
+<div class="download-grid">
+  <section class="card download-app-card" aria-labelledby="app-title">
+    <div class="download-app-heading">
+      <span class="download-app-icon"><img src="{% static 'icons/spendwise-sw-icon-192.png' %}" alt="" width="72" height="72"></span>
+      <div><p class="download-label">ANDROID APP</p><h2 id="app-title">SpendWise</h2><p class="download-version">Version 1.0.2 · Android 8.0 or newer</p></div>
+    </div>
+    <a class="download-button" href="{% static 'downloads/Spendwise.apk' %}" download>↓ Download APK</a>
+    <p class="download-help">Installing over an older SpendWise APK keeps your app data. Android may ask you to allow installation from your browser.</p>
+  </section>
+  <section class="card download-qr-card" aria-labelledby="qr-title">
+    <p class="download-label">ON YOUR PHONE</p>
+    <h2 id="qr-title">Scan to download</h2>
+    <p>Open your camera and point it at this code to get the latest APK directly.</p>
+    <div class="download-qr-frame"><img src="{% static 'downloads/Spendwise-QR.png' %}" alt="QR code for the SpendWise Android APK" width="212" height="212"></div>
+    <p class="download-help">The QR code opens the same download as the button.</p>
+  </section>
+</div>
+<section class="card download-details" aria-label="About this app">
+  <div><span class="download-detail-icon" aria-hidden="true">↗</span><h3>Track expenses</h3><p>Record spending and income as it happens.</p></div>
+  <div><span class="download-detail-icon" aria-hidden="true">◷</span><h3>See your month</h3><p>Review trends, categories, and reports.</p></div>
+  <div><span class="download-detail-icon" aria-hidden="true">◎</span><h3>Plan savings</h3><p>Keep goals and budgets in view.</p></div>
+</section>
+<p class="download-footnote">SpendWise needs an internet connection for account features. Push notifications are not supported inside this Android app yet. <a href="https://github.com/Manixhor/spendwise/releases/tag/v1.0.2-android">View the GitHub release</a></p>
+{% endblock %}

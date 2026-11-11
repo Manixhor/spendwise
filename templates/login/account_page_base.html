@@ -7,6 +7,7 @@
   <title>SpendWise – {% block page_title %}{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'login/dashboard.css' %}">
   <link rel="stylesheet" href="{% static 'login/account_pages.css' %}">
+  {% block extra_css %}{% endblock %}
 </head>
 <body class="profile-page account-page{% if not user.is_authenticated %} account-page-guest{% endif %}">
 <div class="app">
@@ -15,7 +16,7 @@
   {% endif %}
   <main class="main account-page-main">
     <header class="main-header account-page-header">
-      <a href="{% if user.is_authenticated %}{% url 'profile' %}{% else %}{% url 'onboarding' %}{% endif %}" class="account-back" aria-label="Back">
+      <a href="{% block back_href %}{% if user.is_authenticated %}{% url 'profile' %}{% else %}{% url 'onboarding' %}{% endif %}{% endblock %}" class="account-back" aria-label="Back">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m7 7-7-7 7-7"/></svg>
       </a>
       <div>

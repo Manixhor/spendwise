@@ -2667,7 +2667,11 @@ def _calculate_goal_allocations(available_amount: float, goals: list) -> dict:
 def android_download(request: HttpRequest) -> HttpResponse:
     if is_android_webview(request):
         return redirect('dashboard' if request.user.is_authenticated else 'onboarding')
-    return render(request, "login/android_download.html")
+    context = {}
+    if request.user.is_authenticated:
+        context["profile"], _ = UserProfile.objects.get_or_create(user=request.user)
+        context["active_nav"] = "download"
+    return render(request, "login/android_download.html", context)
 
 
 @require_GET
