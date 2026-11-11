@@ -3,6 +3,9 @@
 
 {% block title %}SpendWise – Expense Tracker and Budget Planner{% endblock %}
 {% block left_tagline %}Your money, made clearer.<br/>Track spending and savings in one place.{% endblock %}
+{% block structured_data %}
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"SpendWise","url":"{{ seo_url|escapejs }}"}</script>
+{% endblock %}
 
 {% block card_content %}
   <div class="hero-art" aria-hidden="true">
@@ -14,7 +17,7 @@
 
   <p class="eyebrow">PERSONAL FINANCE, MADE SIMPLE</p>
 
-  <h1 class="hero-title">Track spending.<br/><span class="accent">Plan with confidence.</span></h1>
+  <h1 class="hero-title">SpendWise: track spending.<br/><span class="accent">Plan with confidence.</span></h1>
 
   <p class="subcopy">Record expenses, review monthly trends, set a daily allowance, and follow your savings goals with SpendWise.</p>
 

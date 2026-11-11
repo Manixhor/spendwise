@@ -1,3 +1,6 @@
+import json
+import re
+
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -29,3 +32,13 @@ class SearchVisibilityTests(TestCase):
     def test_private_pages_are_not_indexable(self):
         response = self.client.get(reverse("login"))
         self.assertEqual(response["X-Robots-Tag"], "noindex, nofollow")
+
+    def test_homepage_identifies_spendwise_as_site_name(self):
+        response = self.client.get(reverse("onboarding"), secure=True)
+        self.assertContains(response, "<h1 class=\"hero-title\">SpendWise:")
+        match = re.search(r'<script type="application/ld\+json">(.*?)</script>', response.content.decode())
+        self.assertIsNotNone(match)
+        data = json.loads(match.group(1))
+        self.assertEqual(data["@type"], "WebSite")
+        self.assertEqual(data["name"], "SpendWise")
+        self.assertEqual(data["url"], "https://testserver/")

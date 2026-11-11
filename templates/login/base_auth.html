@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   {% include "login/includes/pwa_meta.html" %}
   <title>{% block title %}SpendWise{% endblock %}</title>
+  {% block structured_data %}{% endblock %}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="{% static 'login/auth.css' %}" />
   {% block extra_css %}{% endblock %}
@@ -14,7 +15,7 @@
 
     <!-- Left panel with animated orbs -->
     <div class="left-panel">
-      <div class="brand-large">spendwise</div>
+      <div class="brand-large">SpendWise</div>
       <p class="brand-tagline">{% block left_tagline %}Your money, your rules.<br/>Banking built around you.{% endblock %}</p>
       <div class="left-orbs" aria-hidden="true">
         <div class="lo lo-1"></div>
@@ -28,7 +29,7 @@
     <!-- Right panel / card -->
     <div class="right-panel">
       <div class="card {% block card_class %}{% endblock %}">
-        <span class="brand">spendwise</span>
+        <span class="brand">SpendWise</span>
         {% block card_content %}{% endblock %}
       </div>
     </div>
