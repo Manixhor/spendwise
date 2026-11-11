@@ -4586,6 +4586,7 @@ body[data-theme="dark"] .modal-select--transparent:focus {
 .expense-chatbot-brand { display: flex; align-items: center; gap: 11px; }
 .expense-chatbot-brand h2 { margin: 0; color: #fff; font-size: 0.98rem; }
 .expense-chatbot-brand p { margin: 3px 0 0; color: #94a3b8; font-size: 0.72rem; }
+.expense-chatbot-dashboard-link { color: inherit; text-decoration: underline; }
 .expense-chatbot-brand p span {
   display: inline-block;
   width: 7px;

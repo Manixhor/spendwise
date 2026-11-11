@@ -1,5 +1,5 @@
 {% load static %}
-<div class="expense-chatbot" id="expenseChatbot" data-dashboard-url="{% url 'dashboard' %}" data-dashboard="{% if active_nav == 'dashboard' %}true{% else %}false{% endif %}">
+<div class="expense-chatbot" id="expenseChatbot" data-dashboard="{% if active_nav == 'dashboard' %}true{% else %}false{% endif %}">
   <button class="expense-chatbot-hint" id="expenseChatbotHint" type="button" hidden>
     Tap Quick add to record an expense faster
   </button>
@@ -22,7 +22,7 @@
         <span class="expense-chatbot-avatar" aria-hidden="true">S</span>
         <div>
           <h2 id="expenseChatbotTitle">SpendWise Assistant</h2>
-          <p><span></span> Ready to track</p>
+          <p><a class="expense-chatbot-dashboard-link" id="expenseChatbotDashboard" href="{% url 'dashboard' %}">Open Spendwise ↗</a></p>
         </div>
       </div>
       <button class="expense-chatbot-close" id="expenseChatbotClose" type="button" aria-label="Close assistant">×</button>

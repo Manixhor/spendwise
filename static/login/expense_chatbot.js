@@ -149,11 +149,6 @@
       {label: 'What’s due next?', action: showBills},
       {label: 'Fix a category', action: () => startCategoryCorrection()},
       {label: '+ Add expense', action: resetForAnother},
-      {label: 'Open Spendwise', action: () => {
-        addMessage('Heading to Spendwise. Your dashboard has the full picture.');
-        showSuggestions();
-        window.setTimeout(() => window.location.assign(root.dataset.dashboardUrl), 1500);
-      }},
     ]);
   };
   const checkAllowance = async (proposed = 0) => {
@@ -384,6 +379,18 @@
     }
   };
 
+  const dashboardLink = document.getElementById('expenseChatbotDashboard');
+  dashboardLink?.addEventListener('click', (event) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    if (finishTimer !== null) return;
+    input.blur();
+    addMessage('Heading to Spendwise. Your dashboard has the full picture.');
+    finishTimer = window.setTimeout(() => {
+      window.location.assign(dashboardLink.href);
+    }, 2000);
+  });
+
   function openChat() {
     window.clearTimeout(closeTimer);
     window.clearTimeout(finishTimer);
@@ -409,6 +416,8 @@
 
   function closeChat() {
     window.clearTimeout(closeTimer);
+    window.clearTimeout(finishTimer);
+    finishTimer = null;
     panel.classList.remove('is-open');
     backdrop.classList.remove('is-open');
     document.body.classList.remove('expense-chatbot-open');
