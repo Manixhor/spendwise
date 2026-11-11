@@ -1971,14 +1971,25 @@ body[data-theme="dark"] .txn-icon.lend {
     flex-direction: row;
     gap: 0;
     flex: 1;
-    justify-content: center;
+    min-width: 0;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
 
+  .nav-icons::-webkit-scrollbar { display: none; }
+
   .nav-icon {
-    width: 38px;
+    width: 44px;
     height: 44px;
+    flex: 0 0 44px;
     position: relative;
   }
+
+  .logout-form { flex: 0 0 44px; }
 
   /* Active indicator dot under nav icon */
   .nav-icon.active::after {
@@ -2416,10 +2427,8 @@ body[data-theme="dark"] .txn-icon.lend {
 /* ── Small mobile (≤390px) ──────────────────────────────── */
 @media (max-width: 480px) {
   .sidebar { padding-right: 8px; padding-left: 8px; }
-  .avatar-wrap { margin-right: 4px; }
-  .nav-icons { min-width: 0; justify-content: space-around; }
-  .nav-icon { width: clamp(28px, 8.5vw, 38px); }
-  .sidebar-theme { margin-left: 4px; gap: 0; padding: 3px; }
+  .avatar-wrap { margin-right: 6px; }
+  .sidebar-theme { margin-left: 6px; gap: 0; padding: 3px; }
   .theme-btn { width: 30px; height: 30px; }
 }
 
