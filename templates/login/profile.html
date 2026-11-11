@@ -7,7 +7,7 @@
   <title>SpendWise – Profile</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="{% static 'login/dashboard.css' %}" />
-  <link rel="stylesheet" href="{% static 'login/profile.css' %}" />
+  <link rel="stylesheet" href="{% static 'login/profile.css' %}?v=daily-allowance-1" />
 </head>
 <body class="profile-page">
 <div class="app">
@@ -151,6 +151,30 @@
         <button type="button" class="set-salary-btn" id="setSalaryBtn">
           {% if profile.salary %}Edit Salary{% else %}+ Set Salary{% endif %}
         </button>
+      </div>
+      <div class="pf-allowance-section">
+        <h3>Daily spending allowance</h3>
+        <p class="pf-hint" id="dailyAllowanceHint">
+          {% if profile.salary %}Choose how much you want to spend each day. Your dashboard will show today's progress.{% else %}Set your monthly salary first, then choose a daily amount.{% endif %}
+        </p>
+        <form method="post" class="pf-allowance-form">
+          {% csrf_token %}
+          <fieldset id="dailyAllowanceFields" {% if not profile.salary %}disabled{% endif %}>
+            <label class="modal-field-label" for="dailySpendingAllowance">Amount per day</label>
+            <div class="pf-allowance-controls">
+              <div class="modal-field-wrap">
+                <span class="modal-currency" data-curr>{{ profile.currency_symbol }}</span>
+                <input type="number" id="dailySpendingAllowance" name="daily_spending_allowance"
+                       class="modal-input" min="0.01" max="9999999999.99" step="0.01" required
+                       value="{{ profile.daily_spending_allowance|default_if_none:'' }}" placeholder="e.g. 500" />
+              </div>
+              <button type="submit" name="action" value="daily_allowance" class="modal-save-btn">Save allowance</button>
+              {% if profile.daily_spending_allowance %}
+                <button type="submit" name="action" value="clear_daily_allowance" class="pf-allowance-clear" formnovalidate>Clear</button>
+              {% endif %}
+            </div>
+          </fieldset>
+        </form>
       </div>
     </div>
 
@@ -371,6 +395,12 @@
           salaryDisplay.textContent = currSymbol + parseFloat(data.salary).toLocaleString(locale, {minimumFractionDigits: 2});
         }
         if (openBtn) openBtn.textContent = 'Edit Salary';
+        const allowanceFields = document.getElementById('dailyAllowanceFields');
+        const allowanceHint = document.getElementById('dailyAllowanceHint');
+        if (allowanceFields) allowanceFields.disabled = !(Number(data.salary) > 0);
+        if (allowanceHint) allowanceHint.textContent = Number(data.salary) > 0
+          ? "Choose how much you want to spend each day. Your dashboard will show today's progress."
+          : 'Set your monthly salary first, then choose a daily amount.';
         closeModal();
       } else {
         errorEl.textContent = data.error || 'Something went wrong.';

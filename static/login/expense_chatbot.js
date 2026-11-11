@@ -20,6 +20,8 @@
 
   let step = 'amount';
   let pendingAmount = 0;
+  let pendingTitle = '';
+  let pendingTransaction = null;
   let addedExpense = false;
   let isSaving = false;
   let closeTimer = null;
@@ -127,9 +129,98 @@
     return groups.find(([, words]) => words.some((word) => value.includes(word)))?.[0] || 'other';
   };
 
+  const money = (value) => `${CURR_SYMBOL}${Number(value).toLocaleString(CURR_LOCALE, {maximumFractionDigits: 2})}`;
+  const context = async () => {
+    const response = await fetch('/api/chatbot/tools/');
+    if (!response.ok) throw new Error('Could not load your information.');
+    return response.json();
+  };
+  const mainSuggestions = () => {
+    step = 'amount';
+    pendingAmount = 0;
+    pendingTitle = '';
+    pendingTransaction = null;
+    input.value = '';
+    input.inputMode = 'text';
+    input.placeholder = 'Ask or enter an expense';
+    currency.hidden = true;
+    showSuggestions([
+      {label: 'Can I spend today?', action: () => checkAllowance()},
+      {label: 'What’s due next?', action: showBills},
+      {label: 'Fix a category', action: () => startCategoryCorrection()},
+      {label: '+ Add expense', action: resetForAnother},
+    ]);
+  };
+  const checkAllowance = async (proposed = 0) => {
+    try {
+      const data = await context();
+      if (!data.allowance) {
+        addMessage(data.salary_set ? 'Set your daily allowance in Account to use this check.' : 'Set your salary and daily allowance in Account first.');
+        showSuggestions([{label: 'Open Account', action: () => { window.location.href = '/profile/'; }}, {label: 'More options', action: mainSuggestions}]);
+        return;
+      }
+      const {limit, spent, remaining, over} = data.allowance;
+      addMessage(`Your daily allowance is ${money(limit)}. You've spent ${money(spent)} today. ${Number(over) > 0 ? `You're ${money(over)} over it.` : `${money(remaining)} remains.`}${proposed ? ` A ${money(proposed)} purchase would ${proposed <= Number(remaining) ? 'fit' : 'go over your remaining allowance'}.` : ''}`);
+      mainSuggestions();
+    } catch (_) { addMessage('I could not check your allowance right now.'); mainSuggestions(); }
+  };
+  const showBills = async () => {
+    try {
+      const data = await context();
+      addMessage(data.payments.length ? `Upcoming in the next 30 days:\n${data.payments.map(item => `${item.name} · ${item.date} · ${money(item.amount)}`).join('\n')}` : 'No payments are due in the next 30 days.');
+    } catch (_) { addMessage('I could not load your bills right now.'); }
+    mainSuggestions();
+  };
+  const chooseCategory = async (category) => {
+    if (!pendingTransaction) return;
+    const txn = pendingTransaction;
+    addMessage(`Change ${txn.title} to ${category.label}?`);
+    showSuggestions([
+      {label: 'Confirm change', action: async () => {
+        try {
+          const response = await fetch('/api/chatbot/tools/', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken()}, body: JSON.stringify({transaction_id: txn.id, category: category.key})});
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Could not update it.');
+          addMessage(`${data.title} is now in ${data.category}.`);
+          pendingTransaction = null;
+          addedExpense = true;
+        } catch (_) { addMessage('I could not update that transaction. Please try again.'); }
+        mainSuggestions();
+      }},
+      {label: 'Cancel', action: mainSuggestions},
+    ]);
+  };
+  const startCategoryCorrection = async (request = '') => {
+    try {
+      const data = await context();
+      if (!data.recent.length) { addMessage('There are no recent expenses to change.'); mainSuggestions(); return; }
+      const requested = data.categories.find(category =>
+        request.toLowerCase().includes(category.label.toLowerCase()) ||
+        request.toLowerCase().includes(category.key.toLowerCase()));
+      addMessage('Which recent expense should I change?');
+      showSuggestions(data.recent.map(txn => ({label: `${txn.title} · ${money(txn.amount)} · ${txn.date}`, action: () => {
+        pendingTransaction = txn;
+        if (requested) { chooseCategory(requested); return; }
+        addMessage(`Choose a category for ${txn.title}.`);
+        showSuggestions(data.categories.map(category => ({label: category.label, action: () => chooseCategory(category)})));
+      }})));
+    } catch (_) { addMessage('I could not load recent expenses.'); mainSuggestions(); }
+  };
+  const previewExpense = (title) => {
+    pendingTitle = title || 'Daily expense';
+    step = 'confirm_expense';
+    const category = inferCategory(pendingTitle);
+    addMessage(`Add ${money(pendingAmount)} for ${pendingTitle} today as ${category[0].toUpperCase() + category.slice(1)}?`);
+    showSuggestions([
+      {label: 'Confirm expense', action: () => saveExpense(pendingTitle)},
+      {label: 'Cancel', action: () => { addMessage('Expense cancelled.'); resetForAnother(); }},
+    ]);
+  };
+
   const resetForAnother = () => {
     step = 'amount';
     pendingAmount = 0;
+    pendingTitle = '';
     input.value = '';
     input.inputMode = 'decimal';
     input.placeholder = 'Enter amount';
@@ -155,7 +246,7 @@
 
     addMessage(intro);
     window.setTimeout(() => {
-      if (!panel.hidden) addMessage('How much did you spend today?');
+      if (!panel.hidden) { addMessage('Ask about your allowance or bills, fix a category, or add an expense.'); mainSuggestions(); }
     }, 420);
   };
 
@@ -213,6 +304,7 @@
       currency.hidden = true;
       showSuggestions([
         { label: '+ Add another', action: resetForAnother },
+        { label: 'More options', action: mainSuggestions },
         { label: 'Done', action: finishChat },
       ]);
     } catch (error) {
@@ -231,9 +323,29 @@
     const value = rawValue.trim();
     if (!value || isSaving) return;
 
+    if (/\b(allowance|can i spend|left today|spend today)\b/i.test(value)) {
+      addMessage(value, 'user'); input.value = '';
+      const proposed = value.match(/(?:₹|\$|rs\.?\s*)?(\d+(?:\.\d{1,2})?)/i);
+      checkAllowance(proposed ? Number(proposed[1]) : 0); return;
+    }
+    if (/\b(due|upcoming bills?|next payment|subscriptions?)\b/i.test(value)) {
+      addMessage(value, 'user'); input.value = ''; showBills(); return;
+    }
+    if (/\b(category|categorize|categorise|reclassify|wrong category)\b/i.test(value) || /^that purchase was\b/i.test(value) || /\bchange\b.+\bto\b/i.test(value)) {
+      addMessage(value, 'user'); input.value = ''; startCategoryCorrection(value); return;
+    }
+    if (step === 'confirm_expense') {
+      addMessage(value, 'user'); input.value = '';
+      if (/^(yes|confirm|save|add)$/i.test(value)) saveExpense(pendingTitle);
+      else if (/^(no|cancel)$/i.test(value)) { addMessage('Expense cancelled.'); resetForAnother(); }
+      else addMessage('Choose Confirm expense or Cancel below.');
+      return;
+    }
+
     if (step === 'amount') {
       const symPattern = CURR_SYMBOL === '$' ? '\\$' : '₹';
-      const match = value.replace(/,/g, '').match(new RegExp(`(?:${symPattern}|rs\.?\\s*)?(\\d+(?:\\.\\d{1,2})?)`, 'i'));
+      const normalizedValue = value.replace(/,/g, '');
+      const match = normalizedValue.match(new RegExp(`(?:${symPattern}|rs\.?\\s*)?(\\d+(?:\\.\\d{1,2})?)`, 'i'));
       const amount = match ? Number(match[1]) : 0;
       if (!amount || amount <= 0) {
         addMessage(value, 'user');
@@ -244,10 +356,10 @@
       pendingAmount = amount;
       orb?.classList.add('is-hidden');
       addMessage(`${CURR_SYMBOL}${amount.toLocaleString(CURR_LOCALE)}`, 'user');
-      const possibleTitle = value.replace(match[0], '').trim();
+      const possibleTitle = normalizedValue.replace(match[0], '').replace(/^(?:i\s+)?(?:spent|paid)\b/i, '').replace(/^\s*(?:on|for)\b/i, '').trim();
       input.value = '';
       if (possibleTitle) {
-        saveExpense(possibleTitle);
+        previewExpense(possibleTitle);
         return;
       }
 
@@ -256,14 +368,14 @@
       input.inputMode = 'text';
       input.placeholder = 'e.g. Lunch, cab, coffee';
       addMessage('What was it for?');
-      showSuggestions([{ label: 'Skip', action: () => saveExpense('Daily expense') }]);
+      showSuggestions([{ label: 'Skip', action: () => previewExpense('Daily expense') }]);
       return;
     }
 
     if (step === 'title') {
       addMessage(value, 'user');
       input.value = '';
-      saveExpense(value);
+      previewExpense(value);
     }
   };
 

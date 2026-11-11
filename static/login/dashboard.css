@@ -5357,7 +5357,7 @@ body.modal-keyboard-open #txnModal .modal-card {
 
 .spending-checks {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
 
@@ -5371,13 +5371,8 @@ body.modal-keyboard-open #txnModal .modal-card {
 .spending-check h2 { color: var(--ink); font-size: .95rem; }
 .spending-check-amount { color: var(--ink); font-size: 1.5rem; font-weight: 800; }
 .spending-check-amount small { font-size: .75rem; }
-.spending-check details { margin-top: 8px; }
-.spending-check summary { cursor: pointer; font-weight: 700; }
-.spending-check ul { padding-left: 18px; }
-
-@media (max-width: 640px) {
-  .spending-checks { grid-template-columns: 1fr; }
-}
+.spending-check-link { display: inline-block; margin-top: 10px; color: var(--accent); font-weight: 700; text-decoration: none; }
+.spending-check-link:hover { text-decoration: underline; }
 
 .expense-split {
   margin-top: 12px;

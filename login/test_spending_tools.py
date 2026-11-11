@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 from uuid import uuid4
 
@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import Transaction
-from .views import _daily_spending_allowance, _weekly_spending_check_in
+from .views import _daily_spending_allowance
 
 
 class SpendingToolsTests(TestCase):
@@ -17,33 +17,50 @@ class SpendingToolsTests(TestCase):
         self.profile = self.user.profile
         self.client.force_login(self.user)
 
-    def test_allowance_includes_today_and_reserves_savings(self):
-        self.profile.salary = Decimal("10000")
-        self.profile.target_savings = Decimal("2000")
-        stats = {"excess_income": Decimal("500"), "total_expense": Decimal("2500")}
-        allowance = _daily_spending_allowance(date(2028, 2, 20), self.profile, stats)
-        self.assertEqual(allowance["days"], 10)
-        self.assertEqual(allowance["per_day"], Decimal("600.00"))
-        stats["total_expense"] = Decimal("8600")
-        allowance = _daily_spending_allowance(date(2028, 2, 29), self.profile, stats)
-        self.assertEqual(allowance["days"], 1)
-        self.assertEqual(allowance["per_day"], 0)
-        self.assertEqual(allowance["over"], 100)
+    def test_user_sets_allowance_after_salary_and_sees_today_progress(self):
+        url = reverse("profile")
+        response = self.client.post(url, {
+            "action": "daily_allowance", "daily_spending_allowance": "500.25",
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIsNone(self.profile.daily_spending_allowance)
 
-    def test_weekly_check_in_compares_two_seven_day_windows(self):
-        today = date(2026, 11, 5)
-        for age, category, amount in [(0, "food", 500), (6, "food", 100),
-                                      (7, "food", 200), (13, "rent", 300),
-                                      (14, "food", 1000)]:
-            Transaction.objects.create(
-                user=self.user, title=f"Expense {age}", category=category,
-                txn_type="expense", amount=amount, date=today - timedelta(days=age),
-            )
-        report = _weekly_spending_check_in(self.user, today)
-        self.assertEqual((report["current"], report["previous"]), (600, 500))
-        self.assertEqual(report["category"], "Food")
-        self.assertEqual(report["category_difference"], 400)
-        self.assertEqual([txn.title for txn in report["current_examples"]], ["Expense 0", "Expense 6"])
+        self.profile.salary = Decimal("10000")
+        self.profile.save(update_fields=["salary"])
+        response = self.client.post(url, {
+            "action": "daily_allowance", "daily_spending_allowance": "500.25",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.daily_spending_allowance, Decimal("500.25"))
+
+        today = timezone.localdate()
+        Transaction.objects.create(user=self.user, title="Lunch", category="food",
+                                   txn_type="expense", amount=Decimal("125.25"), date=today)
+        Transaction.objects.create(user=self.user, title="Yesterday", category="food",
+                                   txn_type="expense", amount=Decimal("900"), date=today - timedelta(days=1))
+        allowance = _daily_spending_allowance(today, self.profile)
+        self.assertEqual(allowance["limit"], Decimal("500.25"))
+        self.assertEqual(allowance["spent"], Decimal("125.25"))
+        self.assertEqual(allowance["remaining"], Decimal("375.00"))
+        dashboard = self.client.get(reverse("dashboard"))
+        self.assertContains(dashboard, "Daily spending allowance")
+        self.assertNotContains(dashboard, "Weekly spending check-in")
+
+    def test_allowance_rejects_invalid_amount_and_can_be_cleared(self):
+        self.profile.salary = Decimal("10000")
+        self.profile.save(update_fields=["salary"])
+        url = reverse("profile")
+        for value in ("0", "-1", "NaN", "2.345", "10000000000"):
+            response = self.client.post(url, {
+                "action": "daily_allowance", "daily_spending_allowance": value,
+            })
+            self.assertEqual(response.status_code, 400)
+        self.assertIsNone(self.profile.daily_spending_allowance)
+        self.client.post(url, {"action": "daily_allowance", "daily_spending_allowance": "150"})
+        self.assertEqual(self.client.post(url, {"action": "clear_daily_allowance"}).status_code, 200)
+        self.profile.refresh_from_db()
+        self.assertIsNone(self.profile.daily_spending_allowance)
 
     def test_split_tracks_personal_share_and_retries_without_duplicates(self):
         payload = {

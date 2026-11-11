@@ -5,7 +5,6 @@ import decimal
 import random
 import urllib.error
 import urllib.request
-from calendar import monthrange
 from datetime import date, timedelta
 from decimal import Decimal
 from math import ceil, pi
@@ -2012,54 +2011,19 @@ def logout_view(request: HttpRequest) -> HttpResponse:
     return redirect("onboarding")
 
 
-def _daily_spending_allowance(today, profile, stats):
-    if not profile.salary or profile.salary <= 0:
+def _daily_spending_allowance(today, profile):
+    if not profile.salary or profile.salary <= 0 or not profile.daily_spending_allowance:
         return None
-    target = profile.target_savings or Decimal("0")
-    budget = max(profile.salary + stats["excess_income"] - target, Decimal("0"))
-    remaining = budget - stats["total_expense"]
-    days = monthrange(today.year, today.month)[1] - today.day + 1
+    spent = _active_expense_qs(Transaction.objects.filter(
+        user=profile.user, date=today,
+    )).aggregate(total=Sum("amount"))["total"] or Decimal("0")
+    remaining = profile.daily_spending_allowance - spent
     return {
-        "budget": budget,
-        "spent": stats["total_expense"],
+        "limit": profile.daily_spending_allowance,
+        "spent": spent,
         "remaining": max(remaining, Decimal("0")),
         "over": max(-remaining, Decimal("0")),
-        "days": days,
-        "per_day": (max(remaining, Decimal("0")) / days).quantize(
-            Decimal("0.01"), rounding=decimal.ROUND_DOWN,
-        ),
     }
-
-
-def _weekly_spending_check_in(user, today):
-    current_start = today - timedelta(days=6)
-    previous_start = today - timedelta(days=13)
-    previous_end = current_start - timedelta(days=1)
-    expenses = _active_expense_qs(Transaction.objects.filter(
-        user=user, date__range=(previous_start, today),
-    ))
-    rows = list(expenses.order_by().values("category").annotate(
-        current=Sum("amount", filter=Q(date__gte=current_start), default=0),
-        previous=Sum("amount", filter=Q(date__lt=current_start), default=0),
-    ))
-    current = sum((row["current"] for row in rows), Decimal("0"))
-    previous = sum((row["previous"] for row in rows), Decimal("0"))
-    result = {
-        "current": current, "previous": previous, "difference": abs(current - previous),
-        "current_start": current_start, "today": today,
-        "previous_start": previous_start, "previous_end": previous_end,
-    }
-    biggest = max(rows, key=lambda row: abs(row["current"] - row["previous"]), default=None)
-    if biggest and biggest["current"] != biggest["previous"]:
-        category_expenses = expenses.filter(category=biggest["category"]).order_by("-amount", "-date", "-pk")
-        result.update({
-            "category": dict(Transaction.CATEGORY_CHOICES).get(biggest["category"], biggest["category"]),
-            "category_difference": abs(biggest["current"] - biggest["previous"]),
-            "category_higher": biggest["current"] > biggest["previous"],
-            "current_examples": list(category_expenses.filter(date__gte=current_start)[:5]),
-            "previous_examples": list(category_expenses.filter(date__lt=current_start)[:5]),
-        })
-    return result
 
 
 # ── Dashboard ─────────────────────────────────────────────
@@ -2131,8 +2095,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             "active_nav": "dashboard",
             "quick_add": quick_add in ("1", "repeat"),
             "repeat_expense": repeat_expense,
-            "daily_allowance": _daily_spending_allowance(today, profile, stats),
-            "weekly_check_in": _weekly_spending_check_in(request.user, today),
+            "daily_allowance": _daily_spending_allowance(today, profile),
             **stats,
             "chart_months": json.dumps(stats["chart_months"]),
             "insight_segments_json": json.dumps(stats["insight_segments"]),
@@ -2756,6 +2719,33 @@ def profile_view(request: HttpRequest) -> HttpResponse:
     error = None
 
     if request.method == "POST":
+        action = request.POST.get("action")
+        if action in {"daily_allowance", "clear_daily_allowance"}:
+            if action == "clear_daily_allowance":
+                profile.daily_spending_allowance = None
+            elif not profile.salary or profile.salary <= 0:
+                error = "Set your monthly salary before choosing a daily allowance."
+            else:
+                try:
+                    allowance = Decimal(request.POST.get("daily_spending_allowance", ""))
+                    if (
+                        not allowance.is_finite()
+                        or allowance <= 0
+                        or allowance > Decimal("9999999999.99")
+                        or allowance != allowance.quantize(Decimal("0.01"))
+                    ):
+                        raise ValueError
+                    profile.daily_spending_allowance = allowance
+                except (decimal.InvalidOperation, ValueError):
+                    error = "Enter a daily allowance greater than zero, with up to two decimal places."
+            if error is None:
+                profile.save(update_fields=["daily_spending_allowance"])
+                success = True
+            return render(request, "login/profile.html", {
+                "user": request.user, "profile": profile, "active_nav": "profile",
+                "success": success, "error": error,
+            }, status=400 if error else 200)
+
         first_name = request.POST.get("first_name", "").strip()
         last_name = request.POST.get("last_name", "").strip()
         email = request.POST.get("email", "").strip().lower()

@@ -43,12 +43,12 @@
     <form class="expense-chatbot-composer" id="expenseChatbotForm">
       <span class="expense-chatbot-currency" id="expenseChatbotCurrency">{{ profile.currency_symbol|default:'₹' }}</span>
       <input id="expenseChatbotInput" type="text" inputmode="decimal" autocomplete="off"
-             aria-label="Your answer" placeholder="Enter amount" />
+             aria-label="Your answer" placeholder="Ask or enter an expense" />
       <button id="expenseChatbotSend" type="submit" aria-label="Send">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4.2 14-3-5.2L5 12Z"/><path d="m11.8 13.8 3.6-3.6"/></svg>
       </button>
     </form>
-    <p class="expense-chatbot-note">Expenses are saved to today’s date.</p>
+    <p class="expense-chatbot-note">Expense and category changes need your confirmation.</p>
   </section>
 </div>
 <script src="{% static 'login/expense_chatbot.js' %}" defer></script>

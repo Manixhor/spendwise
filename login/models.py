@@ -41,6 +41,9 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     currency = models.CharField(max_length=5, choices=CURRENCY_CHOICES, default="inr")
     salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    daily_spending_allowance = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+    )
     target_savings = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True
     )

@@ -7,7 +7,7 @@
   {% include "login/includes/pwa_meta.html" %}
   <title>SpendWise – Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}?v=spending-tools-1" />
+  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}?v=spending-tools-2" />
   <link rel="stylesheet" href="{% static 'login/install_prompt.css' %}?v=3" />
   <script src="{% static 'login/install_prompt.js' %}?v=5" defer></script>
 </head>
@@ -73,46 +73,18 @@
       <section class="card spending-check" aria-labelledby="dailyAllowanceTitle">
         <h2 id="dailyAllowanceTitle">Daily spending allowance</h2>
         {% if daily_allowance %}
-          <p class="spending-check-amount"><span data-amount="{{ daily_allowance.per_day|unlocalize }}" data-curr>{{ daily_allowance.per_day|currency:profile.currency }}</span> <small>/ day</small></p>
+          <p class="spending-check-amount"><span data-amount="{{ daily_allowance.limit|unlocalize }}" data-curr>{{ daily_allowance.limit|currency:profile.currency }}</span> <small>/ day</small></p>
           {% if daily_allowance.over %}
-            <p>You're <span data-amount="{{ daily_allowance.over|unlocalize }}" data-curr>{{ daily_allowance.over|currency:profile.currency }}</span> over your monthly budget.</p>
+            <p>You've spent <span data-amount="{{ daily_allowance.spent|unlocalize }}" data-curr>{{ daily_allowance.spent|currency:profile.currency }}</span> today, <span data-amount="{{ daily_allowance.over|unlocalize }}" data-curr>{{ daily_allowance.over|currency:profile.currency }}</span> over your daily allowance.</p>
           {% else %}
-            <p><span data-amount="{{ daily_allowance.remaining|unlocalize }}" data-curr>{{ daily_allowance.remaining|currency:profile.currency }}</span> left across {{ daily_allowance.days }} day{{ daily_allowance.days|pluralize }}, including today.</p>
+            <p><span data-amount="{{ daily_allowance.remaining|unlocalize }}" data-curr>{{ daily_allowance.remaining|currency:profile.currency }}</span> left today after spending <span data-amount="{{ daily_allowance.spent|unlocalize }}" data-curr>{{ daily_allowance.spent|currency:profile.currency }}</span>.</p>
           {% endif %}
-          <details>
-            <summary>How it’s calculated</summary>
-            <p>Monthly budget: <span data-amount="{{ daily_allowance.budget|unlocalize }}" data-curr>{{ daily_allowance.budget|currency:profile.currency }}</span> (salary plus extra income, minus savings target). Logged spending: <span data-amount="{{ daily_allowance.spent|unlocalize }}" data-curr>{{ daily_allowance.spent|currency:profile.currency }}</span>. The remaining budget is divided by the days left this month.</p>
-          </details>
+        {% elif profile.salary %}
+          <p>Choose the amount you want to spend each day in Account.</p>
         {% else %}
-          <p>Set your monthly salary to calculate an allowance from your budget and logged spending.</p>
+          <p>Set your monthly salary in Account, then choose your daily allowance.</p>
         {% endif %}
-      </section>
-      <section class="card spending-check" aria-labelledby="weeklyCheckTitle">
-        <h2 id="weeklyCheckTitle">Weekly spending check-in</h2>
-        <p class="spending-check-amount"><span data-amount="{{ weekly_check_in.current|unlocalize }}" data-curr>{{ weekly_check_in.current|currency:profile.currency }}</span></p>
-        <p>{{ weekly_check_in.current_start|date:"M j" }}–{{ weekly_check_in.today|date:"M j" }} ·
-          {% if weekly_check_in.difference %}
-            <span data-amount="{{ weekly_check_in.difference|unlocalize }}" data-curr>{{ weekly_check_in.difference|currency:profile.currency }}</span> {% if weekly_check_in.current > weekly_check_in.previous %}more{% else %}less{% endif %} than the prior 7 days
-          {% else %}
-            Same as the prior 7 days
-          {% endif %}
-        </p>
-        <details>
-          <summary>See what changed</summary>
-          <p>{{ weekly_check_in.previous_start|date:"M j" }}–{{ weekly_check_in.previous_end|date:"M j" }}: <span data-amount="{{ weekly_check_in.previous|unlocalize }}" data-curr>{{ weekly_check_in.previous|currency:profile.currency }}</span></p>
-          {% if weekly_check_in.category %}
-            <p><strong>{{ weekly_check_in.category }}</strong> changed most: <span data-amount="{{ weekly_check_in.category_difference|unlocalize }}" data-curr>{{ weekly_check_in.category_difference|currency:profile.currency }}</span> {% if weekly_check_in.category_higher %}more{% else %}less{% endif %}.</p>
-            <p>Largest {{ weekly_check_in.category|lower }} expenses by period</p>
-            <ul>
-              {% for entry in weekly_check_in.current_examples %}
-                <li>{{ entry.date|date:"M j" }} · {{ entry.title }} · <span data-amount="{{ entry.amount|unlocalize }}" data-curr>{{ entry.amount|currency:profile.currency }}</span></li>
-              {% endfor %}
-              {% for entry in weekly_check_in.previous_examples %}
-                <li>{{ entry.date|date:"M j" }} · {{ entry.title }} · <span data-amount="{{ entry.amount|unlocalize }}" data-curr>{{ entry.amount|currency:profile.currency }}</span></li>
-              {% endfor %}
-            </ul>
-          {% endif %}
-        </details>
+        <a class="spending-check-link" href="{% url 'profile' %}">{% if daily_allowance %}Edit allowance{% else %}Set allowance{% endif %} →</a>
       </section>
     </div>
 

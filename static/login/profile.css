@@ -401,6 +401,25 @@ body[data-theme="dark"] .pf-currency-card.is-active .pf-currency-check {
   margin: 6px 0 4px 0;
 }
 
+.pf-allowance-section {
+  border-top: 1px solid var(--border-sub);
+  margin-top: 24px;
+  padding-top: 22px;
+}
+
+.pf-allowance-section h3 { color: var(--ink); font-size: 1rem; }
+.pf-allowance-section .pf-hint { font-style: normal; margin: 6px 0 16px; }
+.pf-allowance-form fieldset { border: 0; min-width: 0; }
+.pf-allowance-form fieldset:disabled { opacity: .55; }
+.pf-allowance-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 7px; }
+.pf-allowance-controls .modal-field-wrap { width: min(100%, 220px); margin: 0; }
+.pf-allowance-controls .modal-save-btn { width: auto; min-height: 44px; margin: 0; padding: 0 18px; }
+.pf-allowance-clear { min-height: 44px; border: 1px solid var(--border-sub); border-radius: 12px; background: var(--glass); color: var(--ink); padding: 0 16px; font: inherit; cursor: pointer; }
+@media (max-width: 480px) {
+  .pf-allowance-controls .modal-field-wrap { width: 100%; }
+  .pf-allowance-controls .modal-save-btn { flex: 1; }
+}
+
 @media (max-width: 640px) {
   .pf-salary-section {
     flex-direction: row;
