@@ -17,6 +17,15 @@ class AccountDeletionTests(TestCase):
         self.assertEqual(self.client.get(reverse("delete_account")).status_code, 200)
         self.assertContains(self.client.get(reverse("privacy_policy")), "Delete account")
 
+    def test_signed_in_account_pages_keep_spendwise_navigation(self):
+        self.client.force_login(self.user)
+        for page in ("privacy_policy", "delete_account"):
+            with self.subTest(page=page):
+                response = self.client.get(reverse(page))
+                self.assertContains(response, 'class="sidebar"')
+                self.assertContains(response, 'aria-label="Dashboard"')
+                self.assertContains(response, 'aria-label="Monthly Analysis"')
+
     def test_deletion_requires_password_and_confirmation(self):
         self.client.force_login(self.user)
         response = self.client.post(reverse("delete_account"), {"password": "wrong", "confirmation": "DELETE"})

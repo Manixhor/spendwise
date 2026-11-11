@@ -132,7 +132,7 @@
   const money = (value) => `${CURR_SYMBOL}${Number(value).toLocaleString(CURR_LOCALE, {maximumFractionDigits: 2})}`;
   const context = async () => {
     const response = await fetch('/api/chatbot/tools/');
-    if (!response.ok) throw new Error('Could not load your information.');
+    if (!response.ok) throw new Error('Your information is unavailable right now.');
     return response.json();
   };
   const mainSuggestions = () => {
@@ -160,36 +160,36 @@
     try {
       const data = await context();
       if (!data.allowance) {
-        addMessage(data.salary_set ? 'Set your daily allowance in Account to use this check.' : 'Set your salary and daily allowance in Account first.');
+        addMessage(data.salary_set ? 'Please set your daily allowance in Account, and I can check this for you.' : 'Please set your salary and daily allowance in Account, and I can check this for you.');
         showSuggestions([{label: 'Open Account', action: () => { window.location.href = '/profile/'; }}, {label: 'More options', action: mainSuggestions}]);
         return;
       }
       const {limit, spent, remaining, over} = data.allowance;
-      addMessage(`Your daily allowance is ${money(limit)}. You've spent ${money(spent)} today. ${Number(over) > 0 ? `You're ${money(over)} over it.` : `${money(remaining)} remains.`}${proposed ? ` A ${money(proposed)} purchase would ${proposed <= Number(remaining) ? 'fit' : 'go over your remaining allowance'}.` : ''}`);
+      addMessage(`Your daily allowance is ${money(limit)}. You've spent ${money(spent)} today. ${Number(over) > 0 ? `That is ${money(over)} above your allowance.` : `You have ${money(remaining)} left for today.`}${proposed ? ` A ${money(proposed)} purchase would ${proposed <= Number(remaining) ? 'fit within it' : 'be above your remaining allowance'}.` : ''}`);
       mainSuggestions();
-    } catch (_) { addMessage('I could not check your allowance right now.'); mainSuggestions(); }
+    } catch (_) { addMessage('Sorry, I’m having trouble checking your allowance. Please try again in a moment.'); mainSuggestions(); }
   };
   const showBills = async () => {
     try {
       const data = await context();
-      addMessage(data.payments.length ? `Upcoming in the next 30 days:\n${data.payments.map(item => `${item.name} · ${item.date} · ${money(item.amount)}`).join('\n')}` : 'No payments are due in the next 30 days.');
-    } catch (_) { addMessage('I could not load your bills right now.'); }
+      addMessage(data.payments.length ? `Here are your payments due in the next 30 days:\n${data.payments.map(item => `${item.name} · ${item.date} · ${money(item.amount)}`).join('\n')}` : 'You have no payments due in the next 30 days.');
+    } catch (_) { addMessage('Sorry, I’m having trouble loading your bills. Please try again in a moment.'); }
     mainSuggestions();
   };
   const chooseCategory = async (category) => {
     if (!pendingTransaction) return;
     const txn = pendingTransaction;
-    addMessage(`Change ${txn.title} to ${category.label}?`);
+    addMessage(`Would you like me to change ${txn.title} to ${category.label}?`);
     showSuggestions([
       {label: 'Confirm change', action: async () => {
         try {
           const response = await fetch('/api/chatbot/tools/', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken()}, body: JSON.stringify({transaction_id: txn.id, category: category.key})});
           const data = await response.json();
-          if (!response.ok) throw new Error(data.error || 'Could not update it.');
-          addMessage(`${data.title} is now in ${data.category}.`);
+          if (!response.ok) throw new Error(data.error || 'The update did not go through.');
+          addMessage(`Done. ${data.title} is now in ${data.category}.`);
           pendingTransaction = null;
           addedExpense = true;
-        } catch (_) { addMessage('I could not update that transaction. Please try again.'); }
+        } catch (_) { addMessage('Sorry, I couldn’t update that expense. Please try again.'); }
         mainSuggestions();
       }},
       {label: 'Cancel', action: mainSuggestions},
@@ -198,27 +198,27 @@
   const startCategoryCorrection = async (request = '') => {
     try {
       const data = await context();
-      if (!data.recent.length) { addMessage('There are no recent expenses to change.'); mainSuggestions(); return; }
+      if (!data.recent.length) { addMessage('There are no recent expenses to change yet.'); mainSuggestions(); return; }
       const requested = data.categories.find(category =>
         request.toLowerCase().includes(category.label.toLowerCase()) ||
         request.toLowerCase().includes(category.key.toLowerCase()));
-      addMessage('Which recent expense should I change?');
+      addMessage('Which recent expense would you like to change?');
       showSuggestions(data.recent.map(txn => ({label: `${txn.title} · ${money(txn.amount)} · ${txn.date}`, action: () => {
         pendingTransaction = txn;
         if (requested) { chooseCategory(requested); return; }
-        addMessage(`Choose a category for ${txn.title}.`);
+        addMessage(`Please choose a category for ${txn.title}.`);
         showSuggestions(data.categories.map(category => ({label: category.label, action: () => chooseCategory(category)})));
       }})));
-    } catch (_) { addMessage('I could not load recent expenses.'); mainSuggestions(); }
+    } catch (_) { addMessage('Sorry, I’m having trouble loading your recent expenses. Please try again in a moment.'); mainSuggestions(); }
   };
   const previewExpense = (title) => {
     pendingTitle = title || 'Daily expense';
     step = 'confirm_expense';
     const category = inferCategory(pendingTitle);
-    addMessage(`Add ${money(pendingAmount)} for ${pendingTitle} today as ${category[0].toUpperCase() + category.slice(1)}?`);
+    addMessage(`Would you like to add ${money(pendingAmount)} for ${pendingTitle} today under ${category[0].toUpperCase() + category.slice(1)}?`);
     showSuggestions([
       {label: 'Confirm expense', action: () => saveExpense(pendingTitle)},
-      {label: 'Cancel', action: () => { addMessage('Expense cancelled.'); resetForAnother(); }},
+      {label: 'Cancel', action: () => { addMessage('No problem. I haven’t added that expense.'); resetForAnother(); }},
     ]);
   };
 
@@ -232,17 +232,17 @@
     currency.hidden = false;
     orb?.classList.remove('is-hidden');
     showSuggestions();
-    addMessage('How much did you spend today?');
+    addMessage('How much would you like to record?');
     focusInputNow();
   };
 
   const startConversation = () => {
     const intros = [
-      'Hi! Your wallet and I had a quick meeting. We agreed to track today.',
-      'Hello! Money talks, but today we are making it explain where it went.',
-      'Hi there! No judgement here. Even coffee deserves accurate accounting.',
-      'Welcome back! Let’s solve today’s tiny financial mystery.',
-      'Hey! Your budget is awake, caffeinated, and ready for the truth.',
+      'Hi! I’m here to help you keep track of your spending.',
+      'Hello! What would you like to check today?',
+      'Welcome back! I can help with expenses, bills, and your allowance.',
+      'Hi there! Let’s make your money a little easier to follow.',
+      'Hello! Tell me what you would like to record or review.',
     ];
     const storageKey = 'spendwise-chatbot-intro-index';
     const current = Number(window.localStorage.getItem(storageKey) || 0);
@@ -251,16 +251,16 @@
 
     addMessage(intro);
     window.setTimeout(() => {
-      if (!panel.hidden) { addMessage('Ask about your allowance or bills, fix a category, or add an expense.'); mainSuggestions(); }
+      if (!panel.hidden) { addMessage('You can ask about your allowance or bills, update a category, or add an expense.'); mainSuggestions(); }
     }, 420);
   };
 
   const finishChat = () => {
     const goodbyes = [
-      'Goodbye for now. Save a little today so future you can spend with a smile.',
-      'All caught up. Keep your savings growing, one smart choice at a time.',
-      'See you soon. Your future wallet says thank you for tracking today.',
-      'That is everything. Small savings today make bigger plans possible tomorrow.',
+      'All done for now. I’ll be here whenever you need me.',
+      'Thanks for checking in. See you next time!',
+      'You’re all set. Come back whenever you would like to review your spending.',
+      'That’s everything for now. Take care!',
     ];
     const index = Math.floor(Math.random() * goodbyes.length);
     showSuggestions();
@@ -297,12 +297,12 @@
       });
       const data = await response.json();
       messages.lastElementChild?.remove();
-      if (!response.ok || !data.success) throw new Error(data.error || 'Could not save expense.');
+      if (!response.ok || !data.success) throw new Error(data.error || 'The expense was not saved.');
 
       addedExpense = true;
       step = 'complete';
-      addMessage(`Thank you. ${CURR_SYMBOL}${pendingAmount.toLocaleString(CURR_LOCALE)} for ${title || 'Daily expense'} is added for today.`);
-      addMessage(data.saving_message || 'Tracked money behaves better than mystery money. Nice catch.');
+      addMessage(`Done. I’ve added ${CURR_SYMBOL}${pendingAmount.toLocaleString(CURR_LOCALE)} for ${title || 'Daily expense'} today.`);
+      addMessage(data.saving_message || 'Thanks for keeping your spending up to date.');
       input.value = '';
       input.placeholder = 'Choose an option below';
       input.inputMode = 'text';
@@ -315,8 +315,8 @@
     } catch (error) {
       messages.lastElementChild?.remove();
       addMessage(navigator.onLine
-        ? 'I could not save that one. Please try again.'
-        : 'Your internet is taking a break. Reconnect and I’ll be ready.');
+        ? 'Sorry, I couldn’t save that expense. Please try again.'
+        : 'It looks like you’re offline. Please reconnect and try again.');
       step = 'title';
     } finally {
       isSaving = false;
@@ -342,8 +342,8 @@
     if (step === 'confirm_expense') {
       addMessage(value, 'user'); input.value = '';
       if (/^(yes|confirm|save|add)$/i.test(value)) saveExpense(pendingTitle);
-      else if (/^(no|cancel)$/i.test(value)) { addMessage('Expense cancelled.'); resetForAnother(); }
-      else addMessage('Choose Confirm expense or Cancel below.');
+      else if (/^(no|cancel)$/i.test(value)) { addMessage('No problem. I haven’t added that expense.'); resetForAnother(); }
+      else addMessage('Please choose Confirm expense or Cancel below.');
       return;
     }
 
@@ -354,7 +354,7 @@
       const amount = match ? Number(match[1]) : 0;
       if (!amount || amount <= 0) {
         addMessage(value, 'user');
-        addMessage(`Give me an amount greater than zero, for example ${CURR_SYMBOL}250.`);
+        addMessage(`Please enter an amount greater than zero, such as ${CURR_SYMBOL}250.`);
         return;
       }
 
@@ -372,7 +372,7 @@
       currency.hidden = true;
       input.inputMode = 'text';
       input.placeholder = 'e.g. Lunch, cab, coffee';
-      addMessage('What was it for?');
+      addMessage('What was the expense for?');
       showSuggestions([{ label: 'Skip', action: () => previewExpense('Daily expense') }]);
       return;
     }

@@ -1,0 +1,35 @@
+.account-page-main { width: 100%; max-width: 1100px; margin: 0 auto; gap: 18px; }
+.account-page-header { display: flex; flex-direction: row; align-items: center; gap: 14px; }
+.account-page-header .welcome { font-size: clamp(1.45rem, 3vw, 2rem); }
+.account-back { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border: 1px solid var(--border-sub); border-radius: 14px; background: var(--glass); color: var(--ink); box-shadow: var(--shadow-sm); }
+.account-back svg { width: 20px; height: 20px; }
+.account-back:hover { color: var(--accent); border-color: var(--accent); }
+.account-page-card { width: 100%; padding: clamp(22px, 4vw, 38px); color: var(--sub); line-height: 1.65; }
+.account-page-card h2 { color: var(--ink); font-size: 1.05rem; line-height: 1.35; margin-bottom: 7px; }
+.account-page-card p { max-width: 78ch; }
+.account-page-card a:not(.account-primary-link) { color: var(--accent); text-underline-offset: 3px; }
+.account-page-lead { color: var(--ink); font-size: 1.08rem; font-weight: 650; }
+.account-effective { display: inline-block; margin: 10px 0 18px; padding: 5px 11px; border: 1px solid var(--border-sub); border-radius: 999px; background: var(--accent-lt); color: var(--accent); font-size: .75rem; font-weight: 700; }
+.account-policy section { margin-top: 25px; padding-top: 24px; border-top: 1px solid var(--border-sub); }
+.account-delete { max-width: 650px; }
+.account-delete h2 { font-size: 1.2rem; }
+.account-page-symbol { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 18px; border-radius: 15px; background: var(--accent-lt); color: var(--accent); font-size: 1.5rem; font-weight: 800; }
+.account-page-symbol--danger { background: rgba(239,68,68,.12); color: #dc3545; }
+.account-page-symbol--success { background: rgba(34,197,94,.14); color: #16a34a; }
+.account-delete-form { display: grid; gap: 10px; margin-top: 26px; }
+.account-delete-form label { color: var(--ink); font-size: .83rem; font-weight: 700; }
+.account-delete-form input { width: 100%; min-width: 0; min-height: 48px; margin-bottom: 8px; padding: 0 14px; border: 1px solid var(--border-sub); border-radius: 12px; background: var(--glass); color: var(--ink); font: inherit; font-size: 16px; }
+.account-delete-form input:focus-visible { outline: 3px solid var(--accent-lt); border-color: var(--accent); }
+.account-delete-form button { min-height: 48px; margin-top: 8px; padding: 10px 18px; border: 0; border-radius: 13px; background: #c93c51; color: #fff; font: inherit; font-weight: 750; cursor: pointer; }
+.account-delete-form button:hover { background: #ae2d42; }
+.account-form-error { margin-top: 18px; padding: 12px 14px; border-radius: 12px; background: rgba(239,68,68,.12); color: #c32b42; }
+.account-primary-link { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; margin-top: 22px; padding: 9px 17px; border-radius: 12px; background: var(--btn-primary-bg); color: white; text-decoration: none; font-weight: 700; }
+.account-secondary-link { display: inline-block; margin-top: 22px; font-size: .86rem; }
+.account-guest-home { align-self: flex-start; color: var(--accent); font-weight: 700; }
+body.account-page-guest .app { display: block; }
+@media (max-width: 640px) {
+  .account-page-main { padding: 18px 12px 30px; }
+  .account-page-card { padding: 22px 18px; }
+  .account-page-header .welcome { font-size: 1.4rem; }
+  .account-policy section { margin-top: 20px; padding-top: 20px; }
+}

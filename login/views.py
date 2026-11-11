@@ -551,9 +551,9 @@ def _chatbot_savings_message(profile, stats, previous_variant=None):
 
     if salary <= 0:
         choices = [
-            "Tiny entries build sharp money habits. Your future wallet noticed.",
-            "Expense logged. Your budget brain just earned one experience point.",
-            "Tracked money behaves better than mystery money. Nice catch.",
+            "Thanks for recording this expense. You can set a salary in Account to see more insights.",
+            "Your expense is recorded. Thank you for keeping your spending up to date.",
+            "This expense is now in your records. You can review it anytime.",
         ]
     else:
         spend_ratio = spent / salary
@@ -562,33 +562,33 @@ def _chatbot_savings_message(profile, stats, previous_variant=None):
         if saved < 0:
             over_text = _fmt_currency(abs(saved), profile)
             choices = [
-                f"You are −{over_text} over budget. No judgement — noticing it gives you a way back.",
-                f"The balance is −{over_text}. Pause, reset, and let the next small choice help.",
-                f"You have crossed the budget by −{over_text}. Tracking it honestly is already progress.",
+                f"Your spending is {over_text} above this month's salary. You can review your expenses when you're ready.",
+                f"You've spent {over_text} more than this month's salary. I can help you review the details.",
+                f"Your monthly balance is {over_text} below zero. Thank you for keeping your records current.",
             ]
         elif spend_ratio >= Decimal("0.9"):
             choices = [
-            f"You have {remaining_text} left from this month's salary. Wallet, enter stealth mode.",
-            f"Only {remaining_text} remains. Even your cart needs a quiet day.",
-            f"{remaining_text} is still standing. Protect it like the last slice of pizza.",
+            f"You have {remaining_text} left from this month's salary. You may want to review upcoming payments.",
+            f"You have {remaining_text} remaining this month. I can help you check what's due next.",
+            f"Your remaining monthly balance is {remaining_text}. Thank you for tracking this expense.",
             ]
         elif spend_ratio >= Decimal("0.6"):
             choices = [
-            f"{remaining_text} remains. The budget is bending, not breaking.",
-            f"You still have {remaining_text}. A no-spend evening would look excellent here.",
-            f"{remaining_text} left. Future you votes for keeping some of it.",
+            f"You have {remaining_text} left from this month's salary.",
+            f"Your remaining monthly balance is {remaining_text}. You can check upcoming bills anytime.",
+            f"You have {remaining_text} remaining this month. Thanks for recording this expense.",
             ]
         elif spend_ratio >= Decimal("0.3"):
             choices = [
-            f"{remaining_text} remains. Good tracking is doing the heavy lifting.",
-            f"You still have {remaining_text}. Your savings plan is very much alive.",
-            f"{remaining_text} left. SpendWise approves this level of awareness.",
+            f"You have {remaining_text} left from this month's salary. Thanks for keeping track.",
+            f"Your remaining monthly balance is {remaining_text}.",
+            f"You have {remaining_text} remaining this month. Your expense has been recorded.",
             ]
         else:
             choices = [
-            f"{remaining_text} remains. Strong start, keep the impulse buys guessing.",
-            f"You still have {remaining_text}. Your salary can breathe comfortably.",
-            f"{remaining_text} left. Future you just sent a tiny thank-you note.",
+            f"You have {remaining_text} left from this month's salary. Thanks for tracking this expense.",
+            f"Your remaining monthly balance is {remaining_text}.",
+            f"You have {remaining_text} remaining this month. I can help you review your spending anytime.",
             ]
 
     available_variants = [
@@ -2678,13 +2678,20 @@ def android_latest_version(request: HttpRequest) -> JsonResponse:
 
 @require_GET
 def privacy_policy(request: HttpRequest) -> HttpResponse:
-    return render(request, "login/privacy.html", {"privacy_contact_email": settings.PRIVACY_CONTACT_EMAIL})
+    context = {"privacy_contact_email": settings.PRIVACY_CONTACT_EMAIL}
+    if request.user.is_authenticated:
+        context["profile"], _ = UserProfile.objects.get_or_create(user=request.user)
+        context["active_nav"] = "profile"
+    return render(request, "login/privacy.html", context)
 
 
 @require_http_methods(["GET", "POST"])
 def delete_account(request: HttpRequest) -> HttpResponse:
     if not request.user.is_authenticated:
         return render(request, "login/delete_account.html", {"needs_login": True})
+
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    page_context = {"profile": profile, "active_nav": "profile"}
 
     if request.method == "POST":
         password = request.POST.get("password", "")
@@ -2693,6 +2700,7 @@ def delete_account(request: HttpRequest) -> HttpResponse:
                     else request.POST.get("email", "").strip().lower() == request.user.email.lower())
         if confirmation != "DELETE" or not verified:
             return render(request, "login/delete_account.html", {
+                **page_context,
                 "error": "Confirm your account and type DELETE to continue.",
             }, status=400)
 
@@ -2709,7 +2717,7 @@ def delete_account(request: HttpRequest) -> HttpResponse:
                 logger.exception("Could not remove avatar after account deletion")
         return render(request, "login/delete_account.html", {"deleted": True})
 
-    return render(request, "login/delete_account.html")
+    return render(request, "login/delete_account.html", page_context)
 
 
 @login_required(login_url="/login/")

@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  {% include "login/includes/pwa_meta.html" %}
+  <title>SpendWise – {% block page_title %}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'login/account_pages.css' %}">
+</head>
+<body class="profile-page account-page{% if not user.is_authenticated %} account-page-guest{% endif %}">
+<div class="app">
+  {% if user.is_authenticated %}
+    {% include "login/includes/sidebar.html" %}
+  {% endif %}
+  <main class="main account-page-main">
+    <header class="main-header account-page-header">
+      <a href="{% if user.is_authenticated %}{% url 'profile' %}{% else %}{% url 'onboarding' %}{% endif %}" class="account-back" aria-label="Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m7 7-7-7 7-7"/></svg>
+      </a>
+      <div>
+        <p class="monthly-eyebrow">{% block page_eyebrow %}{% endblock %}</p>
+        <h1 class="welcome">{% block page_heading %}{% endblock %}</h1>
+      </div>
+    </header>
+    {% block page_content %}{% endblock %}
+    {% if not user.is_authenticated %}<a class="account-guest-home" href="{% url 'onboarding' %}">SpendWise home</a>{% endif %}
+  </main>
+</div>
+</body>
+</html>
