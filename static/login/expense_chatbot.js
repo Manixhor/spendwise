@@ -268,7 +268,7 @@
     }, 3000);
   };
 
-  const saveExpense = async (title) => {
+  const saveExpense = async (title, allowanceConfirmed = false) => {
     if (isSaving) return;
     isSaving = true;
     input.disabled = true;
@@ -288,10 +288,21 @@
           category: inferCategory(title || ''),
           txn_type: 'expense',
           date: localDate(),
+          warn_on_allowance: true,
+          allowance_confirmed: allowanceConfirmed,
         }),
       });
       const data = await response.json();
       messages.lastElementChild?.remove();
+      if (response.status === 409 && data.allowance_warning) {
+        step = 'confirm_allowance';
+        addMessage(data.message);
+        showSuggestions([
+          { label: 'Add anyway', action: () => saveExpense(title, true) },
+          { label: 'Change amount', action: resetForAnother },
+        ]);
+        return;
+      }
       if (!response.ok || !data.success) throw new Error(data.error || 'The expense was not saved.');
 
       addedExpense = true;
@@ -339,6 +350,14 @@
       if (/^(yes|confirm|save|add)$/i.test(value)) saveExpense(pendingTitle);
       else if (/^(no|cancel)$/i.test(value)) { addMessage('No problem. I haven’t added that expense.'); resetForAnother(); }
       else addMessage('Please choose Confirm expense or Cancel below.');
+      return;
+    }
+
+    if (step === 'confirm_allowance') {
+      addMessage(value, 'user'); input.value = '';
+      if (/^(yes|confirm|add|add anyway)$/i.test(value)) saveExpense(pendingTitle, true);
+      else if (/^(no|cancel|change|change amount)$/i.test(value)) resetForAnother();
+      else addMessage('Please choose Add anyway or Change amount below.');
       return;
     }
 

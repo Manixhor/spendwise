@@ -299,6 +299,10 @@
     </template>
 
     <p class="modal-error" id="txnError"></p>
+    <div class="txn-allowance-warning" id="txnAllowanceWarning" role="alert" hidden>
+      <p id="txnAllowanceMessage"></p>
+      <button type="button" id="txnAllowanceConfirm">Add anyway</button>
+    </div>
     <button class="modal-save-btn" id="txnSave">Add Transaction</button>
   </div>
 </div>
@@ -1019,6 +1023,9 @@ try {
   const txnError    = document.getElementById('txnError');
   const txnCategoryInput = document.getElementById('txnCategory');
   const txnAmountInput = document.getElementById('txnAmount');
+  const txnAllowanceWarning = document.getElementById('txnAllowanceWarning');
+  const txnAllowanceMessage = document.getElementById('txnAllowanceMessage');
+  const txnAllowanceConfirm = document.getElementById('txnAllowanceConfirm');
   const txnTitleInput = document.getElementById('txnTitle');
   txnTitleInput?.addEventListener('input', () => {
     if (!txnCategoryInput || txnCategoryInput.value !== 'other') return;
@@ -1317,8 +1324,22 @@ try {
   expenseSplitRows.addEventListener('input', updateSplitForm);
   txnAmountInput.addEventListener('input', updateSplitForm);
 
+  function clearAllowanceWarning() {
+    txnAllowanceWarning.hidden = true;
+    txnAllowanceMessage.textContent = '';
+    delete txnSaveBtn.dataset.allowanceConfirmed;
+  }
+  txnModal.addEventListener('input', clearAllowanceWarning);
+  txnModal.addEventListener('change', clearAllowanceWarning);
+  txnAllowanceConfirm.addEventListener('click', () => {
+    txnAllowanceWarning.hidden = true;
+    txnSaveBtn.dataset.allowanceConfirmed = 'true';
+    txnSaveBtn.click();
+  });
+
   function openTxnModal(focusField = txnCategoryInput) {
     if (!txnModal) return;
+    clearAllowanceWarning();
     if (!txnSaveBtn || !txnSaveBtn.dataset.editingId) {
       document.getElementById('txnModalTitle').textContent = 'Add Transaction';
       if (txnSaveBtn) txnSaveBtn.textContent = 'Add Transaction';
@@ -1333,6 +1354,7 @@ try {
     splitKey = undefined;
     updateSplitForm();
     txnModal.classList.add('active');
+    document.body.classList.add('transaction-modal-open');
     syncAppVisualViewport();
     requestAnimationFrame(() => focusField?.focus());
   }
@@ -1389,6 +1411,7 @@ try {
   function closeTxnModal() {
     if (!txnModal) return;
     txnModal.classList.remove('active');
+    document.body.classList.remove('transaction-modal-open');
     document.body.classList.remove('modal-input-active', 'modal-keyboard-open');
     syncAppVisualViewport();
     if (txnError) txnError.textContent = '';
@@ -1481,6 +1504,12 @@ try {
       offlineExpense = { ...payload, amount: personalCents / 100 };
     }
 
+    if (!editingId && navigator.onLine) {
+      payload.warn_on_allowance = true;
+      payload.allowance_confirmed = txnSaveBtn.dataset.allowanceConfirmed === 'true';
+    }
+    delete txnSaveBtn.dataset.allowanceConfirmed;
+
     txnSaveBtn.disabled = true;
     txnSaveBtn.textContent = editingId ? 'Updating…' : 'Saving…';
     txnError.textContent = '';
@@ -1513,6 +1542,14 @@ try {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
+
+      if (res.status === 409 && data.allowance_warning) {
+        txnAllowanceMessage.textContent = data.message;
+        txnAllowanceWarning.hidden = false;
+        txnSaveBtn.disabled = false;
+        txnSaveBtn.textContent = 'Add Transaction';
+        return;
+      }
 
       if (res.ok && data.success) {
         const savingsAmount = document.getElementById('savingsAmount');

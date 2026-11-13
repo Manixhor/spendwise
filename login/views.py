@@ -3684,6 +3684,35 @@ def api_add_transaction(request: HttpRequest) -> JsonResponse:
                 status=400,
             )
 
+        if (
+            data.get("warn_on_allowance") is True
+            and data.get("allowance_confirmed") is not True
+            and txn_type == "expense"
+            and txn_date == timezone.localdate()
+        ):
+            profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            allowance = _daily_spending_allowance(txn_date, profile)
+            personal_amount = amount_decimal
+            if "shares" in data and isinstance(data["shares"], list):
+                try:
+                    personal_amount -= sum(Decimal(str(share["amount"])) for share in data["shares"])
+                except (KeyError, TypeError, decimal.InvalidOperation, ValueError):
+                    personal_amount = Decimal("0")
+            if not personal_amount.is_finite():
+                personal_amount = Decimal("0")
+            if allowance and personal_amount > allowance["remaining"] and personal_amount > 0:
+                over_total = allowance["spent"] + personal_amount - allowance["limit"]
+                return JsonResponse({
+                    "allowance_warning": True,
+                    "remaining": str(allowance["remaining"]),
+                    "over_by": str(over_total),
+                    "message": (
+                        f"This expense would put today's spending {_fmt_currency(over_total, profile)} "
+                        f"over your daily allowance. You have {_fmt_currency(allowance['remaining'], profile)} "
+                        "left today. Would you like to add it anyway?"
+                    ),
+                }, status=409)
+
         fields = {
             "account": account, "title": title, "amount": amount_decimal, "txn_type": txn_type,
             "category": category, "date": txn_date, "note": data.get("note", ""),

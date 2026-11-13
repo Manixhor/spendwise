@@ -1,6 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 from uuid import uuid4
+import json
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -61,6 +62,39 @@ class SpendingToolsTests(TestCase):
         self.assertEqual(self.client.post(url, {"action": "clear_daily_allowance"}).status_code, 200)
         self.profile.refresh_from_db()
         self.assertIsNone(self.profile.daily_spending_allowance)
+
+    def test_expense_over_daily_allowance_requires_confirmation(self):
+        self.profile.salary = Decimal("10000")
+        self.profile.daily_spending_allowance = Decimal("500")
+        self.profile.save(update_fields=["salary", "daily_spending_allowance"])
+        today = timezone.localdate().isoformat()
+        Transaction.objects.create(user=self.user, title="Breakfast", category="food",
+                                   txn_type="expense", amount=Decimal("200"), date=today)
+        payload = {"title": "Lunch", "amount": "350", "category": "food",
+                   "date": today, "warn_on_allowance": True}
+        url = reverse("api_add_transaction")
+        response = self.client.post(url, json.dumps(payload), content_type="application/json")
+        self.assertEqual(response.status_code, 409)
+        self.assertTrue(response.json()["allowance_warning"])
+        self.assertEqual(Decimal(response.json()["remaining"]), Decimal("300"))
+        self.assertEqual(Decimal(response.json()["over_by"]), Decimal("50"))
+        self.assertFalse(Transaction.objects.filter(user=self.user, title="Lunch").exists())
+
+        payload["allowance_confirmed"] = True
+        response = self.client.post(url, json.dumps(payload), content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Transaction.objects.filter(user=self.user, title="Lunch").exists())
+
+    def test_allowance_warning_uses_personal_share_only(self):
+        self.profile.salary = Decimal("10000")
+        self.profile.daily_spending_allowance = Decimal("500")
+        self.profile.save(update_fields=["salary", "daily_spending_allowance"])
+        payload = {"title": "Shared dinner", "amount": "1000", "category": "food",
+                   "date": timezone.localdate().isoformat(), "warn_on_allowance": True,
+                   "split_key": str(uuid4()), "shares": [{"name": "Alex", "amount": "600"}]}
+        response = self.client.post(reverse("api_add_transaction"), json.dumps(payload), content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Transaction.objects.get(user=self.user, split_key=payload["split_key"]).amount, Decimal("400"))
 
     def test_split_tracks_personal_share_and_retries_without_duplicates(self):
         payload = {
