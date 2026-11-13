@@ -36,8 +36,8 @@ class SearchVisibilityTests(TestCase):
     def test_homepage_identifies_spendwise_as_site_name(self):
         response = self.client.get(reverse("onboarding"), secure=True)
         self.assertContains(response, "<h1 class=\"hero-title\">SpendWise:")
-        self.assertContains(response, "MANI'S SPENDWISE")
-        self.assertContains(response, "Mani&#x27;s SpendWise – Expense Tracker and Budget Planner")
+        self.assertContains(response, '<p class="homepage-credit">Mani\'s SpendWise</p>')
+        self.assertContains(response, "<title>SpendWise – Expense Tracker and Budget Planner</title>")
         match = re.search(r'<script type="application/ld\+json">(.*?)</script>', response.content.decode())
         self.assertIsNotNone(match)
         data = json.loads(match.group(1))

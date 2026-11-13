@@ -482,6 +482,15 @@ body.ios-keyboard-open .brand {
 .footer-copy.center { text-align: center; }
 .footer-copy.muted  { color: var(--muted); }
 
+.homepage-credit {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
 .auth-secondary-action {
   margin-top: 12px;
 }

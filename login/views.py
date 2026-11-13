@@ -1387,7 +1387,7 @@ def onboarding(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
     return render(request, "login/onboarding.html", {
-        "seo_title": "Mani's SpendWise – Expense Tracker and Budget Planner",
+        "seo_title": "SpendWise – Expense Tracker and Budget Planner",
         "seo_description": "Mani's SpendWise helps you track daily expenses, plan your budget, review monthly spending, and follow savings goals on web and Android.",
         "seo_url": request.build_absolute_uri(reverse("onboarding")),
     })

@@ -1,7 +1,7 @@
 {% extends "login/base_auth.html" %}
 {% load static %}
 
-{% block title %}Mani's SpendWise – Expense Tracker and Budget Planner{% endblock %}
+{% block title %}SpendWise – Expense Tracker and Budget Planner{% endblock %}
 {% block left_tagline %}Your money, made clearer.<br/>Track spending and savings in one place.{% endblock %}
 {% block structured_data %}
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"SpendWise","alternateName":["Mani's SpendWise","Manis SpendWise"],"url":"{{ seo_url|escapejs }}"}</script>
@@ -15,7 +15,7 @@
     <div class="orb orb-right"></div>
   </div>
 
-  <p class="eyebrow">MANI'S SPENDWISE · PERSONAL FINANCE, MADE SIMPLE</p>
+  <p class="eyebrow">PERSONAL FINANCE, MADE SIMPLE</p>
 
   <h1 class="hero-title">SpendWise: track spending.<br/><span class="accent">Plan with confidence.</span></h1>
 
@@ -28,4 +28,5 @@
     Already have an account? <a href="{% url 'login' %}" class="link-accent">Sign in</a>
   </p>
   <p class="footer-copy"><a href="{% url 'privacy_policy' %}" class="link-accent">Privacy policy</a></p>
+  <p class="homepage-credit">Mani's SpendWise</p>
 {% endblock %}
