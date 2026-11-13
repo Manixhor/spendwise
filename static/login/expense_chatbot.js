@@ -211,6 +211,15 @@
     step = 'confirm_expense';
     const category = inferCategory(pendingTitle);
     addMessage(`Would you like to add ${money(pendingAmount)} for ${pendingTitle} today under ${category[0].toUpperCase() + category.slice(1)}?`);
+    const previewAmount = pendingAmount;
+    context().then((data) => {
+      if (step !== 'confirm_expense' || pendingAmount !== previewAmount || !data.allowance) return;
+      const remaining = Number(data.allowance.remaining);
+      if (previewAmount > remaining) {
+        const over = Number(data.allowance.spent) + previewAmount - Number(data.allowance.limit);
+        addMessage(`Heads up: this would put today's spending ${money(over)} over your daily allowance. You have ${money(remaining)} left today.`);
+      }
+    }).catch(() => {});
     showSuggestions([
       {label: 'Confirm expense', action: () => saveExpense(pendingTitle)},
       {label: 'Cancel', action: () => { addMessage('No problem. I haven’t added that expense.'); resetForAnother(); }},
@@ -246,7 +255,10 @@
 
     addMessage(intro);
     window.setTimeout(() => {
-      if (!panel.hidden) { addMessage('You can ask about your allowance or bills, update a category, or add an expense.'); mainSuggestions(); }
+      if (!panel.hidden && step === 'amount' && pendingAmount === 0) {
+        addMessage('You can ask about your allowance or bills, update a category, or add an expense.');
+        mainSuggestions();
+      }
     }, 420);
   };
 
