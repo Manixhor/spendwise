@@ -4613,7 +4613,6 @@ body[data-theme="dark"] .modal-select--transparent:focus {
 .expense-chatbot-brand { display: flex; align-items: center; gap: 11px; }
 .expense-chatbot-brand h2 { margin: 0; color: #fff; font-size: 0.98rem; }
 .expense-chatbot-brand p { margin: 3px 0 0; color: #94a3b8; font-size: 0.72rem; }
-.expense-chatbot-dashboard-link { color: inherit; text-decoration: underline; }
 .expense-chatbot-brand p span {
   display: inline-block;
   width: 7px;
@@ -5408,8 +5407,22 @@ body.modal-keyboard-open #txnModal .modal-card {
 .spending-check h2 { color: var(--ink); font-size: .95rem; }
 .spending-check-amount { color: var(--ink); font-size: 1.5rem; font-weight: 800; }
 .spending-check-amount small { font-size: .75rem; }
-.spending-check-link { display: inline-block; margin-top: 10px; color: var(--accent); font-weight: 700; text-decoration: none; }
-.spending-check-link:hover { text-decoration: underline; }
+.spending-check-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  margin-top: 12px;
+  padding: 8px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+.spending-check-link:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.spending-check-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.motivation-badge[hidden] { display: none; }
 
 .expense-split {
   margin-top: 12px;

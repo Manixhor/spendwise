@@ -20,6 +20,7 @@
 
   let step = 'amount';
   let pendingAmount = 0;
+  let warnedAmount = 0;
   let pendingTitle = '';
   let pendingTransaction = null;
   let addedExpense = false;
@@ -211,24 +212,28 @@
     step = 'confirm_expense';
     const category = inferCategory(pendingTitle);
     addMessage(`Would you like to add ${money(pendingAmount)} for ${pendingTitle} today under ${category[0].toUpperCase() + category.slice(1)}?`);
-    const previewAmount = pendingAmount;
-    context().then((data) => {
-      if (step !== 'confirm_expense' || pendingAmount !== previewAmount || !data.allowance) return;
-      const remaining = Number(data.allowance.remaining);
-      if (previewAmount > remaining) {
-        const over = Number(data.allowance.spent) + previewAmount - Number(data.allowance.limit);
-        addMessage(`Heads up: this would put today's spending ${money(over)} over your daily allowance. You have ${money(remaining)} left today.`);
-      }
-    }).catch(() => {});
     showSuggestions([
       {label: 'Confirm expense', action: () => saveExpense(pendingTitle)},
       {label: 'Cancel', action: () => { addMessage('No problem. I haven’t added that expense.'); resetForAnother(); }},
     ]);
   };
 
+  const warnForAllowance = (amount) => {
+    context().then((data) => {
+      if (pendingAmount !== amount || !['title', 'confirm_expense'].includes(step) || !data.allowance || warnedAmount === amount) return;
+      const remaining = Number(data.allowance.remaining);
+      if (amount > remaining) {
+        const over = Number(data.allowance.spent) + amount - Number(data.allowance.limit);
+        warnedAmount = amount;
+        addMessage(`Heads up: this would put today's spending ${money(over)} over your daily allowance. You have ${money(remaining)} left today.`);
+      }
+    }).catch(() => {});
+  };
+
   const resetForAnother = () => {
     step = 'amount';
     pendingAmount = 0;
+    warnedAmount = 0;
     pendingTitle = '';
     input.value = '';
     input.inputMode = 'decimal';
@@ -385,12 +390,14 @@
       }
 
       pendingAmount = amount;
+      warnedAmount = 0;
       orb?.classList.add('is-hidden');
       addMessage(`${CURR_SYMBOL}${amount.toLocaleString(CURR_LOCALE)}`, 'user');
       const possibleTitle = normalizedValue.replace(match[0], '').replace(/^(?:i\s+)?(?:spent|paid)\b/i, '').replace(/^\s*(?:on|for)\b/i, '').trim();
       input.value = '';
       if (possibleTitle) {
         previewExpense(possibleTitle);
+        warnForAllowance(amount);
         return;
       }
 
@@ -400,6 +407,7 @@
       input.placeholder = 'e.g. Lunch, cab, coffee';
       addMessage('What was the expense for?');
       showSuggestions([{ label: 'Skip', action: () => previewExpense('Daily expense') }]);
+      warnForAllowance(amount);
       return;
     }
 
@@ -409,18 +417,6 @@
       previewExpense(value);
     }
   };
-
-  const dashboardLink = document.getElementById('expenseChatbotDashboard');
-  dashboardLink?.addEventListener('click', (event) => {
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    event.preventDefault();
-    if (finishTimer !== null) return;
-    input.blur();
-    addMessage('Heading to Spendwise. Your dashboard has the full picture.');
-    finishTimer = window.setTimeout(() => {
-      window.location.assign(dashboardLink.href);
-    }, 2000);
-  });
 
   function openChat() {
     window.clearTimeout(closeTimer);

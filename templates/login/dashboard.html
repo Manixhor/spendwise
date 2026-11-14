@@ -84,7 +84,7 @@
         {% else %}
           <p>Set your monthly salary in Account, then choose your daily allowance.</p>
         {% endif %}
-        <a class="spending-check-link" href="{% url 'profile' %}">{% if daily_allowance %}Edit allowance{% else %}Set allowance{% endif %} →</a>
+        <a class="spending-check-link" href="{% url 'profile' %}">{% if daily_allowance %}Edit allowance{% else %}Set allowance{% endif %} <span aria-hidden="true">→</span></a>
       </section>
     </div>
 
@@ -1846,7 +1846,7 @@ try {
     let tone = 'start';
 
     if (saved <= 0 && spent > 0) {
-      badge = 'Reset';
+      badge = '';
       tone = 'reset';
     } else if (saved > 0 && ratio < 0.25) {
       badge = 'Build';
@@ -1868,6 +1868,7 @@ try {
     }
 
     badgeEl.textContent = badge;
+    badgeEl.hidden = !badge;
     metaEl.textContent = `Saved: ${formatCurrency(saved)} · Spent: ${formatCurrency(spent)}`;
     cardEl.dataset.tone = tone;
 
