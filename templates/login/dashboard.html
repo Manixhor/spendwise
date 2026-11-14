@@ -7,7 +7,7 @@
   {% include "login/includes/pwa_meta.html" %}
   <title>SpendWise – Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}?v=spending-tools-2" />
+  <link rel="stylesheet" href="{% static 'login/dashboard.css' %}?v=simple-expense-1" />
   <link rel="stylesheet" href="{% static 'login/install_prompt.css' %}?v=3" />
   <script src="{% static 'login/install_prompt.js' %}?v=5" defer></script>
 </head>
@@ -84,7 +84,7 @@
         {% else %}
           <p>Set your monthly salary in Account, then choose your daily allowance.</p>
         {% endif %}
-        <a class="spending-check-link" href="{% url 'profile' %}">{% if daily_allowance %}Edit allowance{% else %}Set allowance{% endif %} <span aria-hidden="true">→</span></a>
+        <button class="spending-check-link allowance-open" type="button">{% if daily_allowance %}Edit allowance{% else %}Set allowance{% endif %} <span aria-hidden="true">→</span></button>
       </section>
     </div>
 
@@ -250,6 +250,35 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="allowanceModal" role="dialog" aria-modal="true" aria-labelledby="allowanceModalTitle">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 class="modal-title" id="allowanceModalTitle">Daily spending allowance</h2>
+      <button class="modal-close" id="allowanceModalClose" type="button" aria-label="Close">&times;</button>
+    </div>
+    {% if profile.salary %}
+      <p class="form-sub">Choose how much you want to spend each day.</p>
+      <label class="modal-field-label" for="allowanceAmount">Amount per day</label>
+      <div class="modal-field-wrap">
+        <span class="modal-currency" data-curr>₹</span>
+        <input type="number" id="allowanceAmount" class="modal-input" min="0.01" step="0.01" inputmode="decimal" value="{{ profile.daily_spending_allowance|default:''|unlocalize }}" />
+      </div>
+      <p class="modal-error" id="allowanceError" role="alert"></p>
+      <button class="modal-save-btn" id="allowanceSave" type="button">Save allowance</button>
+      <div class="allowance-notifications">
+        <strong>Phone reminders</strong>
+        <p>Get your daily allowance on this phone at 8:00 AM.</p>
+        <button type="button" id="enablePhoneNotifications">Enable notifications</button>
+        <button type="button" id="disablePhoneNotifications" hidden>Turn off notifications</button>
+        <p id="phoneNotificationStatus" role="status"></p>
+      </div>
+    {% else %}
+      <p class="form-sub">Set your monthly salary first, then choose your daily allowance.</p>
+      <button class="modal-save-btn" id="allowanceSetSalary" type="button">Set monthly salary</button>
+    {% endif %}
+  </div>
+</div>
+
 <!-- ── Add Transaction Modal ──────────────────────────── -->
 <div class="modal-overlay" id="txnModal" role="dialog" aria-modal="true" aria-labelledby="txnModalTitle">
   <div class="modal-card">
@@ -258,30 +287,26 @@
       <button class="modal-close" id="txnModalClose" aria-label="Close">&times;</button>
     </div>
 
-    <label class="modal-field-label" for="txnCategory">Category</label>
-    <select id="txnCategory" class="modal-select modal-select--transparent" style="margin-bottom:4px;">
-      <option value="other">Category (optional)</option>
-      {% for val, label in categories %}
-      <option value="{{ val }}">{{ label }}</option>
-      {% endfor %}
-    </select>
-
     <label class="modal-field-label" for="txnAmount">Amount</label>
     <div class="modal-field-wrap">
       <span class="modal-currency" data-curr>₹</span>
       <input type="number" id="txnAmount" class="modal-input" placeholder="0.00" min="1" step="0.01" inputmode="decimal" enterkeyhint="next" />
     </div>
 
-    <div class="txn-modal-grid">
-      <div>
-        <label class="modal-field-label" for="txnTitle">Title</label>
-        <input type="text" id="txnTitle" class="modal-select modal-select--transparent" placeholder="e.g. Rent" autocomplete="off" enterkeyhint="next" />
-      </div>
-      <div>
-        <label class="modal-field-label" for="txnDate">Date</label>
-        <input type="date" id="txnDate" class="modal-select modal-select--transparent" value="{{ today }}" enterkeyhint="done" />
-      </div>
-    </div>
+    <label class="modal-field-label" for="txnTitle">What was it for? <span class="field-optional">Optional</span></label>
+    <input type="text" id="txnTitle" class="modal-select modal-select--transparent" placeholder="e.g. Lunch, cab, coffee" autocomplete="off" enterkeyhint="done" />
+
+    <details class="expense-more" id="expenseMore">
+      <summary>More options <span>Category, date &amp; splitting</span></summary>
+      <label class="modal-field-label" for="txnCategory">Category</label>
+      <select id="txnCategory" class="modal-select modal-select--transparent">
+        <option value="other">Choose automatically</option>
+        {% for val, label in categories %}
+        <option value="{{ val }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+      <label class="modal-field-label" for="txnDate">Date</label>
+      <input type="date" id="txnDate" class="modal-select modal-select--transparent" value="{{ today }}" enterkeyhint="done" />
 
     <details class="expense-split" id="expenseSplit">
       <summary>Split with friends</summary>
@@ -297,13 +322,14 @@
         <button type="button" data-remove-friend aria-label="Remove friend">×</button>
       </div>
     </template>
+    </details>
 
     <p class="modal-error" id="txnError"></p>
     <div class="txn-allowance-warning" id="txnAllowanceWarning" role="alert" hidden>
       <p id="txnAllowanceMessage"></p>
       <button type="button" id="txnAllowanceConfirm">Add anyway</button>
     </div>
-    <button class="modal-save-btn" id="txnSave">Add Transaction</button>
+    <button class="modal-save-btn" id="txnSave">Add expense</button>
   </div>
 </div>
 
@@ -416,6 +442,7 @@
       btn.textContent = 'Update Transaction';
 
       if (_openTxnModal) _openTxnModal();
+      document.getElementById('expenseMore').open = true;
     } catch (error) {
       console.error('editTransaction error:', error);
     }
@@ -573,6 +600,45 @@ try {
   const salarySkipBtn = document.getElementById('salarySkipBtn');
   const salaryInput = document.getElementById('salaryInput');
   const salaryError = document.getElementById('salaryError');
+  const allowanceModal = document.getElementById('allowanceModal');
+  const allowanceAmount = document.getElementById('allowanceAmount');
+  const allowanceError = document.getElementById('allowanceError');
+  const allowanceSave = document.getElementById('allowanceSave');
+  document.querySelector('.allowance-open')?.addEventListener('click', () => {
+    allowanceModal.classList.add('active');
+    allowanceError && (allowanceError.textContent = '');
+    requestAnimationFrame(() => allowanceAmount?.focus());
+  });
+  document.getElementById('allowanceModalClose')?.addEventListener('click', () => allowanceModal.classList.remove('active'));
+  allowanceModal?.addEventListener('click', (event) => {
+    if (event.target === allowanceModal) allowanceModal.classList.remove('active');
+  });
+  document.getElementById('allowanceSetSalary')?.addEventListener('click', () => {
+    allowanceModal.classList.remove('active');
+    salarySetupModal.classList.add('active');
+    salaryInput?.focus();
+  });
+  allowanceSave?.addEventListener('click', async () => {
+    allowanceError.textContent = '';
+    allowanceSave.disabled = true;
+    try {
+      const response = await fetch('/api/daily-allowance/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify({amount: allowanceAmount.value}),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        allowanceError.textContent = data.error || 'Please try again.';
+        return;
+      }
+      window.location.reload();
+    } catch (_) {
+      allowanceError.textContent = 'Sorry, we couldn’t save your allowance. Please try again.';
+    } finally {
+      allowanceSave.disabled = false;
+    }
+  });
 
   if (salarySaveBtn && salaryInput && salaryError) {
     salarySaveBtn.addEventListener('click', async () => {
@@ -1337,17 +1403,18 @@ try {
     txnSaveBtn.click();
   });
 
-  function openTxnModal(focusField = txnCategoryInput) {
+  function openTxnModal(focusField = txnAmountInput) {
     if (!txnModal) return;
     clearAllowanceWarning();
     if (!txnSaveBtn || !txnSaveBtn.dataset.editingId) {
-      document.getElementById('txnModalTitle').textContent = 'Add Transaction';
-      if (txnSaveBtn) txnSaveBtn.textContent = 'Add Transaction';
+      document.getElementById('txnModalTitle').textContent = 'Add expense';
+      if (txnSaveBtn) txnSaveBtn.textContent = 'Add expense';
       document.getElementById('txnTitle').value = '';
       document.getElementById('txnAmount').value = '';
       document.getElementById('txnCategory').value = 'other';
       document.getElementById('txnDate').value = getLocalDateInputValue();
     }
+    document.getElementById('expenseMore').open = false;
     expenseSplit.open = false;
     expenseSplitRows.replaceChildren();
     addFriendRow();
@@ -1404,6 +1471,7 @@ try {
     if (txnSaveBtn) delete txnSaveBtn.dataset.editingId;
     openTxnModal();
     if (txnCategoryInput) txnCategoryInput.value = 'lend';
+    document.getElementById('expenseMore').open = true;
     updateSplitForm();
     txnAmountInput?.focus();
   }
@@ -1416,9 +1484,9 @@ try {
     syncAppVisualViewport();
     if (txnError) txnError.textContent = '';
     // Always reset modal state on close
-    document.getElementById('txnModalTitle').textContent = 'Add Transaction';
+    document.getElementById('txnModalTitle').textContent = 'Add expense';
     if (txnSaveBtn) {
-      txnSaveBtn.textContent = 'Add Transaction';
+      txnSaveBtn.textContent = 'Add expense';
       delete txnSaveBtn.dataset.editingId;
     }
   }
@@ -1450,7 +1518,7 @@ try {
     txnTitleInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        txnDateInput?.focus();
+        txnSaveBtn?.focus();
       }
     });
   }
@@ -1466,7 +1534,7 @@ try {
 
   if (txnSaveBtn && txnError) {
     txnSaveBtn.addEventListener('click', async () => {
-    const title     = document.getElementById('txnTitle').value.trim() || 'Untitled';
+    const title     = document.getElementById('txnTitle').value.trim() || 'Expense';
     const amount    = parseFloat(document.getElementById('txnAmount').value) || 0;
     const category  = document.getElementById('txnCategory').value || 'other';
     const txnDate   = document.getElementById('txnDate').value || getLocalDateInputValue();
@@ -1908,6 +1976,7 @@ try {
 } catch(e) { console.error('Dashboard init error:', e); }
  </script>
 {% include "login/includes/expense_chatbot.html" %}
+<script src="{% static 'login/phone_notifications.js' %}?v=daily-allowance-1" defer></script>
 <script src="{% static 'login/currency_sync.js' %}" defer></script>
 </body>
 </html>

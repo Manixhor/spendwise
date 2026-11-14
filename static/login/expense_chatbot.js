@@ -30,6 +30,7 @@
   let inputBlurTimer = null;
   let hintTimer = null;
   let swipeStart = null;
+  const aiHistory = [];
 
   const settleKeyboardLayout = () => {
     syncVisualViewport();
@@ -347,6 +348,40 @@
     }
   };
 
+  const askAI = async (message) => {
+    addMessage(message, 'user');
+    input.value = '';
+    input.disabled = true;
+    showSuggestions();
+    step = 'ai';
+    const waiting = document.createElement('div');
+    waiting.className = 'expense-chatbot-message is-assistant';
+    waiting.textContent = 'Thinking…';
+    messages.appendChild(waiting);
+    try {
+      const response = await fetch('/api/chatbot/message/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken()},
+        body: JSON.stringify({message, history: aiHistory.slice(-8)}),
+      });
+      const data = await response.json();
+      waiting.remove();
+      if (!response.ok) throw new Error(data.error || 'Sorry, I couldn’t answer just now.');
+      addMessage(data.answer);
+      aiHistory.push({role: 'user', content: message}, {role: 'assistant', content: data.answer});
+      input.placeholder = 'Ask a follow-up or enter an expense';
+      input.inputMode = 'text';
+      currency.hidden = true;
+      showSuggestions([{label: '+ Add expense', action: resetForAnother}, {label: 'More options', action: mainSuggestions}]);
+    } catch (error) {
+      waiting.remove();
+      addMessage(error.message || 'Sorry, I couldn’t answer just now.');
+      mainSuggestions();
+    } finally {
+      input.disabled = false;
+    }
+  };
+
   const handleAnswer = (rawValue) => {
     const value = rawValue.trim();
     if (!value || isSaving) return;
@@ -378,14 +413,18 @@
       return;
     }
 
-    if (step === 'amount') {
+    if (step === 'amount' || step === 'ai') {
+      if (/^(how|what|why|when|where|explain|tell me|help me)\b/i.test(value)
+          && !/\b(add|record|spent|paid)\b/i.test(value)) {
+        askAI(value);
+        return;
+      }
       const symPattern = CURR_SYMBOL === '$' ? '\\$' : '₹';
       const normalizedValue = value.replace(/,/g, '');
       const match = normalizedValue.match(new RegExp(`(?:${symPattern}|rs\.?\\s*)?(\\d+(?:\\.\\d{1,2})?)`, 'i'));
       const amount = match ? Number(match[1]) : 0;
       if (!amount || amount <= 0) {
-        addMessage(value, 'user');
-        addMessage(`Please enter an amount greater than zero, such as ${CURR_SYMBOL}250.`);
+        askAI(value);
         return;
       }
 
@@ -401,12 +440,7 @@
         return;
       }
 
-      step = 'title';
-      currency.hidden = true;
-      input.inputMode = 'text';
-      input.placeholder = 'e.g. Lunch, cab, coffee';
-      addMessage('What was the expense for?');
-      showSuggestions([{ label: 'Skip', action: () => previewExpense('Daily expense') }]);
+      previewExpense('Expense');
       warnForAllowance(amount);
       return;
     }

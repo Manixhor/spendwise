@@ -4,7 +4,7 @@
   const status = document.getElementById('phoneNotificationStatus');
   if (!enable || !disable || !status) return;
   const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-  const csrf = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
+  const csrf = document.cookie.split('; ').find(item => item.startsWith('csrftoken='))?.split('=').slice(1).join('') || '';
   const keyBytes = (value) => {
     const padded = (value + '='.repeat((4 - value.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/');
     return Uint8Array.from(atob(padded), char => char.charCodeAt(0));

@@ -38,6 +38,7 @@ from .views import (
     api_mark_lend_paid,
     api_update_transaction,
     api_set_salary,
+    api_daily_allowance,
     api_set_currency,
     api_excess_income,
     api_set_target_savings,
@@ -56,12 +57,19 @@ from .views import (
 from .views_import import api_import_transactions
 from .gold import api_gold_price
 from .chatbot import chatbot_tools
+from .chatbot_ai import chatbot_message
 from .seo import robots_txt, sitemap
+from .push_views import push_key, push_subscribe, push_unsubscribe
 
 urlpatterns = [
+    path("api/push/key/", push_key, name="push_key"),
+    path("api/push/subscribe/", push_subscribe, name="push_subscribe"),
+    path("api/push/unsubscribe/", push_unsubscribe, name="push_unsubscribe"),
+    path("api/daily-allowance/", api_daily_allowance, name="api_daily_allowance"),
     path("robots.txt", robots_txt, name="robots_txt"),
     path("sitemap.xml", sitemap, name="sitemap"),
     path("api/chatbot/tools/", chatbot_tools, name="chatbot_tools"),
+    path("api/chatbot/message/", chatbot_message, name="chatbot_message"),
     path("api/gold/price/", api_gold_price, name="api_gold_price"),
     path("", onboarding, name="onboarding"),
     path("signup/", signup, name="signup"),

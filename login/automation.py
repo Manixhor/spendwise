@@ -43,6 +43,16 @@ def run_due_jobs(now=None):
         call_command('send_monthly_analysis_emails')
     except Exception:
         logger.exception('SpendWise monthly analysis job failed')
+    try:
+        from .daily_allowance import send_due_allowance_emails
+        send_due_allowance_emails(now)
+    except Exception:
+        logger.exception('SpendWise daily allowance job failed')
+    try:
+        from .push import send_due_allowance_push
+        send_due_allowance_push(now)
+    except Exception:
+        logger.exception('SpendWise daily allowance push job failed')
     return True
 
 

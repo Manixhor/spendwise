@@ -2738,6 +2738,37 @@ def delete_account(request: HttpRequest) -> HttpResponse:
 
 
 @login_required(login_url="/login/")
+@require_POST
+def api_daily_allowance(request: HttpRequest) -> JsonResponse:
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    if not profile.salary or profile.salary <= 0:
+        return JsonResponse({"error": "Set your monthly salary before choosing a daily allowance."}, status=400)
+    try:
+        data = json.loads(request.body)
+        allowance = Decimal(str(data.get("amount", "")))
+        if (
+            not allowance.is_finite()
+            or allowance <= 0
+            or allowance > Decimal("9999999999.99")
+            or allowance != allowance.quantize(Decimal("0.01"))
+        ):
+            raise ValueError
+    except (json.JSONDecodeError, decimal.InvalidOperation, TypeError, ValueError):
+        return JsonResponse({"error": "Enter a daily allowance greater than zero, with up to two decimal places."}, status=400)
+    first_allowance = not profile.daily_spending_allowance
+    profile.daily_spending_allowance = allowance
+    profile.save(update_fields=["daily_spending_allowance"])
+    mail_sent = False
+    if first_allowance:
+        try:
+            from .daily_allowance import send_allowance_email
+            mail_sent = send_allowance_email(request.user)
+        except Exception:
+            logger.exception("First daily allowance email failed for user %s", request.user.pk)
+    return JsonResponse({"success": True, "amount": str(allowance), "mail_sent": mail_sent})
+
+
+@login_required(login_url="/login/")
 def profile_view(request: HttpRequest) -> HttpResponse:
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     success = False
@@ -2746,6 +2777,7 @@ def profile_view(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         action = request.POST.get("action")
         if action in {"daily_allowance", "clear_daily_allowance"}:
+            first_allowance = not profile.daily_spending_allowance
             if action == "clear_daily_allowance":
                 profile.daily_spending_allowance = None
             elif not profile.salary or profile.salary <= 0:
@@ -2766,6 +2798,12 @@ def profile_view(request: HttpRequest) -> HttpResponse:
             if error is None:
                 profile.save(update_fields=["daily_spending_allowance"])
                 success = True
+                if action == "daily_allowance" and first_allowance:
+                    try:
+                        from .daily_allowance import send_allowance_email
+                        send_allowance_email(request.user)
+                    except Exception:
+                        logger.exception("First daily allowance email failed for user %s", request.user.pk)
             return render(request, "login/profile.html", {
                 "user": request.user, "profile": profile, "active_nav": "profile",
                 "success": success, "error": error,

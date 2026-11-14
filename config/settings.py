@@ -407,3 +407,4 @@ PRIVACY_CONTACT_EMAIL = os.getenv('PRIVACY_CONTACT_EMAIL', 'manigururam06@gmail.
 # OpenAI (optional): used for dashboard savings motivation message generation.
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '').strip()
 OPENAI_MOTIVATION_MODEL = os.getenv('OPENAI_MOTIVATION_MODEL', 'gpt-4.1-mini').strip()
+OPENAI_CHAT_MODEL = os.getenv('OPENAI_CHAT_MODEL', 'gpt-4.1-mini').strip()

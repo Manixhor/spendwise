@@ -291,8 +291,9 @@ SMTP_FROM_EMAIL=SpendWise <you@gmail.com>
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 
-# OpenAI (optional — for AI motivation messages)
+# OpenAI (optional — for AI motivation messages and general assistant chat)
 OPENAI_API_KEY=sk-...
+OPENAI_CHAT_MODEL=gpt-4.1-mini
 ```
 
 ### Deployment to Northflank
@@ -309,6 +310,10 @@ automatic recurring expenses, and opted-in payment and budget reminders hourly.
 No separate cron job is required. Multiple web workers share a database check
 time and recipients are recorded to avoid duplicate sends. The service must
 remain running and have working SMTP credentials.
+Daily allowance emails go to active users with a verified email, salary, and
+saved allowance at or after 08:00 Asia/Kolkata. The first allowance is emailed
+when saved. Phone push reminders go to devices that enable notifications from
+the dashboard allowance popup. The browser and device must support Web Push.
 Monthly analysis is scheduled for the 8th of each month at 00:00 Asia/Kolkata
 by default and catches up later in the month if the service misses that time.
 

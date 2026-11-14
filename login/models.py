@@ -149,6 +149,24 @@ class PhoneSubscription(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
+class DailyAllowanceDelivery(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateField()
+    email_sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user', 'date'], name='unique_daily_allowance_delivery')]
+
+
+class DailyAllowancePushDelivery(models.Model):
+    subscription = models.ForeignKey(PhoneSubscription, on_delete=models.CASCADE)
+    date = models.DateField()
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['subscription', 'date'], name='unique_daily_allowance_push')]
+
+
 class PhoneNotificationDelivery(models.Model):
     subscription = models.ForeignKey(PhoneSubscription, on_delete=models.CASCADE)
     payment = models.ForeignKey('RecurringPayment', on_delete=models.CASCADE)
