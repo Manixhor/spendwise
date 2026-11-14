@@ -1008,6 +1008,10 @@ class MonthlyAnalysisTests(TestCase):
         self.assertIn('May 2026', mail.outbox[0].subject)
         self.assertIn('Rent', mail.outbox[0].body)
         self.assertIn('₹3,200.00', mail.outbox[0].body)
+        self.assertEqual(mail.outbox[0].alternatives[0].mimetype, 'text/html')
+        html = mail.outbox[0].alternatives[0].content
+        self.assertIn('background:#0b1222', html)
+        self.assertIn('View monthly report', html)
 
 
 class OfficeMoneyFlowTests(TestCase):

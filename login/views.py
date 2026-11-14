@@ -1157,6 +1157,7 @@ def _build_monthly_analysis_email_context(user, profile, analysis: dict) -> dict
         "top_days": top_days,
         "donut_segments": donut_segments[:6],
         "donut_gradient": ",".join(donut_gradient_parts),
+        "report_url": f"{settings.PUBLIC_SITE_URL}/monthly/",
     }
 
 
