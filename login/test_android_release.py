@@ -8,6 +8,7 @@ class AndroidReleaseTests(TestCase):
     def test_download_page_has_apk_and_qr(self):
         response = self.client.get(reverse('android_download'))
         self.assertContains(response, 'Download APK')
+        self.assertContains(response, reverse('android_apk'))
         self.assertContains(response, 'Spendwise-QR.png')
 
     def test_signed_in_download_page_keeps_spendwise_navigation(self):
@@ -29,7 +30,15 @@ class AndroidReleaseTests(TestCase):
     def test_latest_version_points_to_apk(self):
         response = self.client.get(reverse('android_latest_version'))
         self.assertEqual(response.json()['version_code'], 4)
-        self.assertTrue(response.json()['download_url'].endswith('.apk'))
+        self.assertEqual(response.json()['download_url'], reverse('android_apk'))
+
+    def test_apk_download_has_android_filename_and_type(self):
+        response = self.client.get(reverse('android_apk'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/vnd.android.package-archive')
+        self.assertIn('filename="Spendwise.apk"', response['Content-Disposition'])
+        self.assertEqual(response['X-Content-Type-Options'], 'nosniff')
+        response.close()
 
     def test_download_page_is_hidden_inside_installed_app(self):
         response = self.client.get(reverse('android_download'), HTTP_USER_AGENT='Mozilla/5.0 (Linux; Android 16; wv)')

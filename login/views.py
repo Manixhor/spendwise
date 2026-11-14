@@ -23,7 +23,7 @@ from django.core.paginator import Paginator
 from django.core.validators import DecimalValidator, validate_email
 from django.db import transaction
 from django.db.models import Sum, Q
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import FileResponse, Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -2700,7 +2700,19 @@ def android_download(request: HttpRequest) -> HttpResponse:
 @require_GET
 @never_cache
 def android_latest_version(request: HttpRequest) -> JsonResponse:
-    return JsonResponse({"version_code": 4, "version_name": "1.0.3", "download_url": "/static/downloads/Spendwise.apk"})
+    return JsonResponse({"version_code": 4, "version_name": "1.0.3", "download_url": reverse("android_apk")})
+
+
+@require_GET
+def android_apk(request: HttpRequest) -> FileResponse:
+    apk_path = settings.BASE_DIR / "static" / "downloads" / "Spendwise.apk"
+    try:
+        apk = apk_path.open("rb")
+    except FileNotFoundError as exc:
+        raise Http404("Android app is unavailable") from exc
+    response = FileResponse(apk, as_attachment=True, filename="Spendwise.apk", content_type="application/vnd.android.package-archive")
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @require_GET

@@ -27,6 +27,7 @@ from .views import (
     profile_view,
     android_download,
     android_latest_version,
+    android_apk,
     privacy_policy,
     delete_account,
     api_email_monthly_analysis,
@@ -113,6 +114,7 @@ urlpatterns = [
     path("profile/", profile_view, name="profile"),
     path("download/android/", android_download, name="android_download"),
     path("android/latest.json", android_latest_version, name="android_latest_version"),
+    path("android/Spendwise.apk", android_apk, name="android_apk"),
     path("privacy/", privacy_policy, name="privacy_policy"),
     path("account/delete/", delete_account, name="delete_account"),
     # Transaction APIs

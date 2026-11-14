@@ -96,6 +96,10 @@ public class MainActivity extends Activity {
                 return;
             }
             String fileName = URLUtil.guessFileName(url, disposition, mime).replaceAll("[^A-Za-z0-9._-]", "_");
+            if (uri.getPath() != null && uri.getPath().toLowerCase(java.util.Locale.ROOT).endsWith(".apk")) {
+                fileName = "Spendwise.apk";
+                mime = "application/vnd.android.package-archive";
+            }
             DownloadManager.Request download = new DownloadManager.Request(uri);
             download.setTitle(fileName);
             download.setMimeType(mime);
