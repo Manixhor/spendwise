@@ -1,14 +1,18 @@
 """Optional general conversation for the SpendWise assistant."""
 
 import json
+import logging
 import urllib.error
 import urllib.request
+from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+
+logger = logging.getLogger(__name__)
 
 
 def _response_text(payload):
@@ -20,9 +24,19 @@ def _response_text(payload):
     ).strip()
 
 
+def _gemini_text(payload):
+    return ' '.join(
+        part['text'].strip()
+        for candidate in payload.get('candidates', []) if isinstance(candidate, dict)
+        for part in candidate.get('content', {}).get('parts', []) if isinstance(part, dict)
+        if isinstance(part.get('text'), str) and part['text'].strip()
+    ).strip()
+
+
 @login_required(login_url='/login/')
 @require_POST
 def chatbot_message(request):
+    gemini_key = getattr(settings, 'GEMINI_API_KEY', '')
     groq_key = getattr(settings, 'GROQ_API_KEY', '')
     openai_key = settings.OPENAI_API_KEY
     try:
@@ -41,7 +55,7 @@ def chatbot_message(request):
         ]
     except (KeyError, TypeError, ValueError, json.JSONDecodeError):
         return JsonResponse({'error': 'Please send a shorter message.'}, status=400)
-    if not (groq_key or openai_key):
+    if not (gemini_key or groq_key or openai_key):
         if message.lower().rstrip('!. ') in ('hi', 'hello', 'hey', 'good morning', 'good evening'):
             return JsonResponse({'answer': 'Hi! What would you like to do today? I can help with an expense, your allowance, or upcoming bills.'})
         return JsonResponse({'error': 'AI chat is not configured yet. You can still add expenses and check your allowance or bills.'}, status=503)
@@ -62,15 +76,31 @@ def chatbot_message(request):
         'For account-specific actions, suggest using the assistant’s expense, allowance, '
         'bills, or category options. Do not give definitive investment, tax, or legal advice.'
     )
-    if groq_key:
+    if gemini_key:
+        contents = [
+            {'role': 'model' if item['role'] == 'assistant' else 'user',
+             'parts': [{'text': item['content']}]}
+            for item in clean_history
+        ] + [{'role': 'user', 'parts': [{'text': message}]}]
         payload = {
-            'model': getattr(settings, 'GROQ_CHAT_MODEL', 'llama-3.3-70b-versatile'),
+            'systemInstruction': {'parts': [{'text': instructions}]},
+            'contents': contents,
+            'generationConfig': {'maxOutputTokens': 350},
+        }
+        model = quote(getattr(settings, 'GEMINI_CHAT_MODEL', 'gemini-flash-lite-latest'), safe='-._')
+        endpoint = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
+        headers = {'x-goog-api-key': gemini_key}
+        provider = 'Gemini'
+    elif groq_key:
+        payload = {
+            'model': getattr(settings, 'GROQ_CHAT_MODEL', 'openai/gpt-oss-120b'),
             'messages': [{'role': 'system', 'content': instructions}]
                         + clean_history + [{'role': 'user', 'content': message}],
             'max_completion_tokens': 350,
         }
         endpoint = 'https://api.groq.com/openai/v1/chat/completions'
-        api_key = groq_key
+        headers = {'Authorization': f'Bearer {groq_key}'}
+        provider = 'Groq'
     else:
         payload = {
             'model': getattr(settings, 'OPENAI_CHAT_MODEL', 'gpt-4.1-mini'),
@@ -80,20 +110,29 @@ def chatbot_message(request):
             'store': False,
         }
         endpoint = 'https://api.openai.com/v1/responses'
-        api_key = openai_key
+        headers = {'Authorization': f'Bearer {openai_key}'}
+        provider = 'OpenAI'
     req = urllib.request.Request(
         endpoint,
         data=json.dumps(payload).encode(),
-        headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
+        headers={**headers, 'Content-Type': 'application/json', 'User-Agent': 'SpendWise/1.0'},
         method='POST',
     )
     try:
         with urllib.request.urlopen(req, timeout=20) as response:
             result = json.loads(response.read())
-            choices = result.get('choices') or [{}]
-            answer = (choices[0].get('message', {}).get('content', '')
-                      if groq_key else _response_text(result))
-    except (urllib.error.URLError, ValueError, TimeoutError):
+            if gemini_key:
+                answer = _gemini_text(result)
+            elif groq_key:
+                choices = result.get('choices') or [{}]
+                answer = choices[0].get('message', {}).get('content', '')
+            else:
+                answer = _response_text(result)
+    except urllib.error.HTTPError as exc:
+        logger.warning('AI chat provider returned HTTP %s (%s)', exc.code, provider)
+        return JsonResponse({'error': 'Sorry, I couldn’t answer just now. Please try again.'}, status=502)
+    except (urllib.error.URLError, ValueError, TimeoutError) as exc:
+        logger.warning('AI chat provider request failed (%s)', type(exc).__name__)
         return JsonResponse({'error': 'Sorry, I couldn’t answer just now. Please try again.'}, status=502)
     if not answer:
         return JsonResponse({'error': 'Sorry, I couldn’t answer just now. Please try again.'}, status=502)
