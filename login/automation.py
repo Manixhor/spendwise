@@ -10,7 +10,6 @@ import threading
 from datetime import datetime, time, timedelta
 
 from django.conf import settings
-from django.core.management import call_command
 from django.db import transaction
 from django.db import close_old_connections
 from django.utils import timezone
@@ -40,7 +39,10 @@ def run_due_jobs(now=None):
     if not claimed:
         return False
     try:
-        call_command('send_monthly_analysis_emails')
+        from .monthly_mailer import send_due_monthly_analysis_emails
+        monthly_result = send_due_monthly_analysis_emails(now)
+        if monthly_result and monthly_result['failed']:
+            logger.error('SpendWise monthly analysis failed for %s recipient(s)', monthly_result['failed'])
     except Exception:
         logger.exception('SpendWise monthly analysis job failed')
     try:

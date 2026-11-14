@@ -8,13 +8,13 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from .models import MonthlyAnalysisDelivery, MonthlyAnalysisMailSetting
-from .monthly_mailer import send_monthly_analysis_batch
+from .monthly_mailer import send_due_monthly_analysis_emails, send_monthly_analysis_batch
 
 
 class MonthlyDeliveryTests(TestCase):
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
     @patch('login.management.commands.send_monthly_analysis_emails.timezone.localtime')
-    @patch('login.management.commands.send_monthly_analysis_emails.send_monthly_analysis_batch')
+    @patch('login.monthly_mailer.send_monthly_analysis_batch')
     def test_default_schedule_sends_on_eighth(self, batch, localtime):
         setting = MonthlyAnalysisMailSetting.objects.create(pk=1)
         self.assertEqual(setting.send_day, 8)
@@ -29,7 +29,7 @@ class MonthlyDeliveryTests(TestCase):
 
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
     @patch('login.management.commands.send_monthly_analysis_emails.timezone.localtime')
-    @patch('login.management.commands.send_monthly_analysis_emails.send_monthly_analysis_batch')
+    @patch('login.monthly_mailer.send_monthly_analysis_batch')
     def test_missed_schedule_catches_up_later_in_month(self, batch, localtime):
         MonthlyAnalysisMailSetting.objects.create(pk=1, send_day=1, send_time=time(9))
         localtime.return_value = timezone.make_aware(datetime(2026, 11, 4, 10))
@@ -56,11 +56,29 @@ class MonthlyDeliveryTests(TestCase):
         self.assertEqual(result['failed'], 1)
         self.assertEqual(MonthlyAnalysisMailSetting.objects.get(pk=1).last_sent_month, '')
         self.assertTrue(MonthlyAnalysisDelivery.objects.filter(user=first, month='2026-10').exists())
+        self.assertFalse(MonthlyAnalysisDelivery.objects.filter(user=second, month='2026-10').exists())
         with patch('login.monthly_mailer.send_monthly_analysis_email', return_value=second.email) as sender:
             result = send_monthly_analysis_batch('2026-10')
         sender.assert_called_once_with(second, '2026-10')
         self.assertEqual(result['skipped'], 1)
         self.assertEqual(MonthlyAnalysisMailSetting.objects.get(pk=1).last_sent_month, '2026-10')
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_previous_batch_marker_does_not_hide_unsent_staff_user(self):
+        MonthlyAnalysisMailSetting.objects.create(pk=1, last_sent_month='2026-10')
+        already_sent = User.objects.create_user(username='sent@example.com', email='sent@example.com')
+        staff = User.objects.create_user(username='staff@example.com', email='staff@example.com', is_staff=True)
+        MonthlyAnalysisDelivery.objects.create(user=already_sent, month='2026-10', sent_at=timezone.now())
+        due = timezone.make_aware(datetime(2026, 11, 8, 0, 0))
+        with patch('login.monthly_mailer.send_monthly_analysis_email', return_value=staff.email) as sender:
+            result = send_due_monthly_analysis_emails(due)
+        self.assertEqual(result['sent'], 1)
+        self.assertEqual(result['skipped'], 1)
+        sender.assert_called_once_with(staff, '2026-10')
+        self.assertIsNotNone(MonthlyAnalysisDelivery.objects.get(user=staff, month='2026-10').sent_at)
+        with patch('login.monthly_mailer.send_monthly_analysis_email') as sender:
+            self.assertEqual(send_due_monthly_analysis_emails(due)['sent'], 0)
+        sender.assert_not_called()
 
     @override_settings(DEBUG=False, EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend')
     def test_missing_smtp_fails_in_production(self):

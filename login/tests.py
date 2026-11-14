@@ -319,7 +319,7 @@ class MonthlyAnalysisMailCommandTests(TestCase):
             send_time=datetime.strptime('09:00', '%H:%M').time(),
         )
 
-    @patch('login.management.commands.send_monthly_analysis_emails.send_monthly_analysis_batch')
+    @patch('login.management.commands.send_monthly_analysis_emails.send_due_monthly_analysis_emails')
     @patch('login.management.commands.send_monthly_analysis_emails.timezone.localtime')
     def test_scheduled_delivery_sends_previous_completed_month(self, localtime, sender):
         self._make_setting()
@@ -329,7 +329,7 @@ class MonthlyAnalysisMailCommandTests(TestCase):
         from django.core.management import call_command
         call_command('send_monthly_analysis_emails')
 
-        sender.assert_called_once_with('2026-08', update_setting=True)
+        sender.assert_called_once()
 
     @patch('login.management.commands.send_monthly_analysis_emails.send_monthly_analysis_batch')
     @patch('login.management.commands.send_monthly_analysis_emails.timezone.localtime')

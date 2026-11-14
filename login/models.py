@@ -118,7 +118,7 @@ class MonthlyAnalysisMailSetting(models.Model):
 class MonthlyAnalysisDelivery(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     month = models.CharField(max_length=7)
-    sent_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['user', 'month'], name='unique_monthly_analysis_delivery')]

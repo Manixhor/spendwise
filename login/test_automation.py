@@ -10,26 +10,29 @@ from django.contrib.auth.models import User
 
 
 class AutomationTests(TestCase):
-    @patch('login.automation.call_command')
-    def test_due_jobs_run_once_per_interval(self, command):
+    @patch('login.monthly_mailer.send_due_monthly_analysis_emails')
+    def test_due_jobs_run_once_per_interval(self, monthly_mail):
+        monthly_mail.return_value = None
         now = timezone.make_aware(datetime(2026, 11, 7, 12, 0))
         self.assertTrue(run_due_jobs(now))
         self.assertFalse(run_due_jobs(now + timedelta(minutes=59)))
         self.assertTrue(run_due_jobs(now + timedelta(hours=1)))
-        self.assertEqual(command.call_count, 2)
+        self.assertEqual(monthly_mail.call_count, 2)
         self.assertEqual(AutomationState.objects.count(), 1)
 
-    @patch('login.automation.call_command')
-    def test_scheduler_checks_at_local_midnight(self, command):
+    @patch('login.monthly_mailer.send_due_monthly_analysis_emails')
+    def test_scheduler_checks_at_local_midnight(self, monthly_mail):
+        monthly_mail.return_value = None
         now = timezone.make_aware(datetime(2026, 11, 7, 23, 30))
         self.assertTrue(run_due_jobs(now))
         state = AutomationState.objects.get(pk=1)
         self.assertEqual(timezone.localtime(state.next_check_at).hour, 0)
         self.assertEqual(timezone.localtime(state.next_check_at).minute, 0)
 
-    @patch('login.automation.call_command')
+    @patch('login.monthly_mailer.send_due_monthly_analysis_emails')
     @patch('login.views.send_monthly_analysis_email')
-    def test_one_time_mail_runs_at_eleven_pm_once(self, send_mail, command):
+    def test_one_time_mail_runs_at_eleven_pm_once(self, send_mail, monthly_mail):
+        monthly_mail.return_value = None
         user = User.objects.create_user(username='scheduled@example.com', email='scheduled@example.com')
         due = timezone.make_aware(datetime(2026, 11, 4, 23, 0))
         item = ScheduledTestMail.objects.create(user=user, report_month='2026-10', scheduled_at=due)
