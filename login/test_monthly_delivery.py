@@ -20,10 +20,10 @@ class MonthlyDeliveryTests(TestCase):
         self.assertEqual(setting.send_day, 8)
         self.assertEqual(setting.send_time, time(0))
         batch.return_value = {'month': '2026-10', 'sent': 1, 'failed': 0, 'failures': []}
-        localtime.return_value = timezone.make_aware(datetime(2026, 11, 7, 10))
+        localtime.return_value = timezone.make_aware(datetime(2026, 11, 7, 23, 59))
         call_command('send_monthly_analysis_emails')
         batch.assert_not_called()
-        localtime.return_value = timezone.make_aware(datetime(2026, 11, 8, 10))
+        localtime.return_value = timezone.make_aware(datetime(2026, 11, 8, 0, 0))
         call_command('send_monthly_analysis_emails')
         batch.assert_called_once_with('2026-10', update_setting=True)
 
@@ -35,7 +35,17 @@ class MonthlyDeliveryTests(TestCase):
         localtime.return_value = timezone.make_aware(datetime(2026, 11, 4, 10))
         batch.return_value = {'month': '2026-10', 'sent': 1, 'failed': 0, 'failures': []}
         call_command('send_monthly_analysis_emails')
+        batch.assert_not_called()
+        localtime.return_value = timezone.make_aware(datetime(2026, 11, 9, 10))
+        call_command('send_monthly_analysis_emails')
         batch.assert_called_once_with('2026-10', update_setting=True)
+
+    def test_staff_recipient_is_included(self):
+        user = User.objects.create_user(username='staff@example.com', email='staff@example.com', is_staff=True)
+        with patch('login.monthly_mailer.send_monthly_analysis_email', return_value=user.email) as sender:
+            result = send_monthly_analysis_batch('2026-10')
+        self.assertEqual(result['sent'], 1)
+        sender.assert_called_once_with(user, '2026-10')
 
     def test_partial_failure_retries_only_failed_recipient(self):
         MonthlyAnalysisMailSetting.objects.create(pk=1)

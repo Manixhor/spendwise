@@ -5145,26 +5145,10 @@ button.spending-check-link {
   cursor: pointer;
 }
 
-.allowance-notifications {
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(157, 177, 218, 0.22);
+.split-bill-btn {
+  background: linear-gradient(135deg, #667eea, #8b5cf6);
 }
 
-.allowance-notifications p {
-  margin: 5px 0 10px;
-  color: var(--muted, #9aa9c5);
-  font-size: 0.88rem;
-}
-
-.allowance-notifications button {
-  padding: 9px 14px;
-  border: 1px solid rgba(167, 139, 250, 0.6);
-  border-radius: 10px;
-  background: rgba(139, 92, 246, 0.18);
-  color: var(--ink);
-  cursor: pointer;
-}
 
 #txnModal .expense-more {
   margin-top: 16px;

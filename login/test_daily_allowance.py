@@ -28,6 +28,8 @@ class DailyAllowanceEmailTests(TestCase):
         self.assertTrue(response.json()['mail_sent'])
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('200', mail.outbox[0].subject)
+        self.assertEqual(mail.outbox[0].alternatives[0].mimetype, 'text/html')
+        self.assertIn('Open dashboard', mail.outbox[0].alternatives[0].content)
         self.client.post(reverse('api_daily_allowance'),
                          data='{"amount":"250.00"}', content_type='application/json')
         self.assertEqual(len(mail.outbox), 1)

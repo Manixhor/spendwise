@@ -168,25 +168,14 @@ class InvitationSetupTests(TestCase):
         self.profile = UserProfile.objects.get(user=self.user)
 
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
-    def test_invited_user_completes_otp_and_profile_setup_before_login(self):
+    def test_invited_user_completes_profile_setup_without_login_otp(self):
         response = self.client.post(
             reverse('login'),
             {'email': 'invited@example.com', 'password': 'TemporaryPass123!'},
         )
 
-        self.assertRedirects(response, reverse('invitation_verify'))
-        self.profile.refresh_from_db()
-        self.assertTrue(self.profile.email_verification_code.startswith('pbkdf2_'))
-        self.assertEqual(len(mail.outbox), 1)
-
-        response = self.client.post(
-            reverse('invitation_verify'),
-            {'otp': re.search(r'OTP.*?: (\d{4})', mail.outbox[0].body).group(1)},
-        )
-
         self.assertRedirects(response, reverse('invitation_setup'))
-        self.profile.refresh_from_db()
-        self.assertTrue(self.profile.email_is_verified)
+        self.assertEqual(len(mail.outbox), 0)
 
         response = self.client.post(
             reverse('invitation_setup'),
@@ -334,7 +323,7 @@ class MonthlyAnalysisMailCommandTests(TestCase):
     @patch('login.management.commands.send_monthly_analysis_emails.timezone.localtime')
     def test_scheduled_delivery_sends_previous_completed_month(self, localtime, sender):
         self._make_setting()
-        localtime.return_value = timezone.make_aware(datetime(2026, 9, 1, 10, 0))
+        localtime.return_value = timezone.make_aware(datetime(2026, 9, 8, 0, 0))
         sender.return_value = {'month': '2026-08', 'sent': 1, 'failed': 0, 'failures': []}
 
         from django.core.management import call_command
@@ -407,8 +396,8 @@ class MonthlyAnalysisMailCommandTests(TestCase):
         setting = MonthlyAnalysisMailSetting.objects.get(pk=1)
         self.assertEqual(setting.last_sent_month, '')
 
-        # The automated run on 1 Nov delivers October, and it is not skipped.
-        localtime.return_value = timezone.make_aware(datetime(2026, 11, 1, 10, 0))
+        # The automated run on 8 Nov delivers October, and it is not skipped.
+        localtime.return_value = timezone.make_aware(datetime(2026, 11, 8, 0, 0))
         with self.settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend'):
             call_command('send_monthly_analysis_emails')
 

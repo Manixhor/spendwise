@@ -145,6 +145,7 @@
     <section class="card txn-section">
       <div class="txn-header-row">
         <button class="add-expense-btn" type="button" id="addExpenseBtn">+ Add Expense</button>
+        <button class="add-expense-btn split-bill-btn" type="button" id="splitBillBtn">+ Split bill</button>
         {% if profile.salary %}
         <button class="add-expense-btn" type="button" id="addExcessIncomeBtn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
           {% if has_excess_income %}✓ Excess Income{% else %}+ Excess Income{% endif %}
@@ -265,13 +266,6 @@
       </div>
       <p class="modal-error" id="allowanceError" role="alert"></p>
       <button class="modal-save-btn" id="allowanceSave" type="button">Save allowance</button>
-      <div class="allowance-notifications">
-        <strong>Phone reminders</strong>
-        <p>Get your daily allowance on this phone at 8:00 AM.</p>
-        <button type="button" id="enablePhoneNotifications">Enable notifications</button>
-        <button type="button" id="disablePhoneNotifications" hidden>Turn off notifications</button>
-        <p id="phoneNotificationStatus" role="status"></p>
-      </div>
     {% else %}
       <p class="form-sub">Set your monthly salary first, then choose your daily allowance.</p>
       <button class="modal-save-btn" id="allowanceSetSalary" type="button">Set monthly salary</button>
@@ -283,7 +277,7 @@
 <div class="modal-overlay" id="txnModal" role="dialog" aria-modal="true" aria-labelledby="txnModalTitle">
   <div class="modal-card">
     <div class="modal-header">
-      <h2 class="modal-title" id="txnModalTitle">Add Transaction</h2>
+      <h2 class="modal-title" id="txnModalTitle">Add expense</h2>
       <button class="modal-close" id="txnModalClose" aria-label="Close">&times;</button>
     </div>
 
@@ -297,7 +291,7 @@
     <input type="text" id="txnTitle" class="modal-select modal-select--transparent" placeholder="e.g. Lunch, cab, coffee" autocomplete="off" enterkeyhint="done" />
 
     <details class="expense-more" id="expenseMore">
-      <summary>More options <span>Category, date &amp; splitting</span></summary>
+      <summary>More options <span>Category &amp; date</span></summary>
       <label class="modal-field-label" for="txnCategory">Category</label>
       <select id="txnCategory" class="modal-select modal-select--transparent">
         <option value="other">Choose automatically</option>
@@ -307,6 +301,7 @@
       </select>
       <label class="modal-field-label" for="txnDate">Date</label>
       <input type="date" id="txnDate" class="modal-select modal-select--transparent" value="{{ today }}" enterkeyhint="done" />
+    </details>
 
     <details class="expense-split" id="expenseSplit">
       <summary>Split with friends</summary>
@@ -322,7 +317,6 @@
         <button type="button" data-remove-friend aria-label="Remove friend">×</button>
       </div>
     </template>
-    </details>
 
     <p class="modal-error" id="txnError"></p>
     <div class="txn-allowance-warning" id="txnAllowanceWarning" role="alert" hidden>
@@ -1366,7 +1360,7 @@ try {
   }
 
   function updateSplitForm() {
-    expenseSplit.hidden = Boolean(txnSaveBtn?.dataset.editingId) || txnCategoryInput.value === 'lend';
+    expenseSplit.hidden = txnModal.dataset.splitMode !== 'true' || Boolean(txnSaveBtn?.dataset.editingId) || txnCategoryInput.value === 'lend';
     if (expenseSplit.hidden) expenseSplit.open = false;
     const owedCents = Array.from(expenseSplitRows.querySelectorAll('[data-friend-amount]'))
       .reduce((sum, input) => sum + Math.round(Number(input.value) * 100), 0);
@@ -1406,6 +1400,7 @@ try {
   function openTxnModal(focusField = txnAmountInput) {
     if (!txnModal) return;
     clearAllowanceWarning();
+    txnModal.dataset.splitMode = 'false';
     if (!txnSaveBtn || !txnSaveBtn.dataset.editingId) {
       document.getElementById('txnModalTitle').textContent = 'Add expense';
       if (txnSaveBtn) txnSaveBtn.textContent = 'Add expense';
@@ -1435,6 +1430,15 @@ try {
       openTxnModal();
     });
   }
+  document.getElementById('splitBillBtn')?.addEventListener('click', () => {
+    delete txnSaveBtn.dataset.editingId;
+    openTxnModal();
+    txnModal.dataset.splitMode = 'true';
+    document.getElementById('txnModalTitle').textContent = 'Split a bill';
+    txnSaveBtn.textContent = 'Split bill';
+    updateSplitForm();
+    expenseSplit.open = true;
+  });
 
   function openRepeatedExpense(expense) {
     if (!txnSaveBtn) return;
@@ -1588,7 +1592,7 @@ try {
         renderOfflineTransaction(offlineExpense);
         closeTxnModal();
         txnSaveBtn.disabled = false;
-        txnSaveBtn.textContent = 'Add Transaction';
+        txnSaveBtn.textContent = txnModal.dataset.splitMode === 'true' ? 'Split bill' : 'Add expense';
         return;
       }
 
@@ -1615,7 +1619,7 @@ try {
         txnAllowanceMessage.textContent = data.message;
         txnAllowanceWarning.hidden = false;
         txnSaveBtn.disabled = false;
-        txnSaveBtn.textContent = 'Add Transaction';
+        txnSaveBtn.textContent = txnModal.dataset.splitMode === 'true' ? 'Split bill' : 'Add expense';
         return;
       }
 
@@ -1647,7 +1651,7 @@ try {
       } else {
         txnError.textContent = data.error || 'Something went wrong.';
         txnSaveBtn.disabled = false;
-        txnSaveBtn.textContent = editingId ? 'Update Transaction' : 'Add Transaction';
+        txnSaveBtn.textContent = editingId ? 'Update Transaction' : (txnModal.dataset.splitMode === 'true' ? 'Split bill' : 'Add expense');
       }
     } catch (err) {
       if (!editingId) {
@@ -1655,7 +1659,7 @@ try {
         renderOfflineTransaction(offlineExpense);
         closeTxnModal();
         txnSaveBtn.disabled = false;
-        txnSaveBtn.textContent = 'Add Transaction';
+        txnSaveBtn.textContent = txnModal.dataset.splitMode === 'true' ? 'Split bill' : 'Add expense';
       } else {
           queueOfflineMutation({ op: 'update', txnId: editingId, payload });
         renderOfflineUpdate(editingId, payload);
@@ -1976,7 +1980,6 @@ try {
 } catch(e) { console.error('Dashboard init error:', e); }
  </script>
 {% include "login/includes/expense_chatbot.html" %}
-<script src="{% static 'login/phone_notifications.js' %}?v=daily-allowance-1" defer></script>
 <script src="{% static 'login/currency_sync.js' %}" defer></script>
 </body>
 </html>

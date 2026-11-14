@@ -23,9 +23,8 @@ def _response_text(payload):
 @login_required(login_url='/login/')
 @require_POST
 def chatbot_message(request):
-    api_key = settings.OPENAI_API_KEY
-    if not api_key:
-        return JsonResponse({'error': 'AI chat is not configured yet. You can still add expenses and check your allowance or bills.'}, status=503)
+    groq_key = getattr(settings, 'GROQ_API_KEY', '')
+    openai_key = settings.OPENAI_API_KEY
     try:
         data = json.loads(request.body)
         message = data['message'].strip()
@@ -42,6 +41,10 @@ def chatbot_message(request):
         ]
     except (KeyError, TypeError, ValueError, json.JSONDecodeError):
         return JsonResponse({'error': 'Please send a shorter message.'}, status=400)
+    if not (groq_key or openai_key):
+        if message.lower().rstrip('!. ') in ('hi', 'hello', 'hey', 'good morning', 'good evening'):
+            return JsonResponse({'answer': 'Hi! What would you like to do today? I can help with an expense, your allowance, or upcoming bills.'})
+        return JsonResponse({'error': 'AI chat is not configured yet. You can still add expenses and check your allowance or bills.'}, status=503)
     rate_key = f'chatbot-ai-hour-{request.user.pk}'
     if not cache.add(rate_key, 1, 3600):
         try:
@@ -50,28 +53,46 @@ def chatbot_message(request):
             count = 1
         if count > 30:
             return JsonResponse({'error': 'You have reached the chat limit for now. Please try again later.'}, status=429)
-    payload = {
-        'model': getattr(settings, 'OPENAI_CHAT_MODEL', 'gpt-4.1-mini'),
-        'instructions': (
-            'You are the SpendWise assistant. Be clear, warm, and concise. '
-            'Help with general budgeting and app questions. You do not have access to '
-            'the user’s account data here. Do not claim to have added or changed a transaction. '
-            'For account-specific actions, suggest using the assistant’s expense, allowance, '
-            'bills, or category options. Do not give definitive investment, tax, or legal advice.'
-        ),
-        'input': clean_history + [{'role': 'user', 'content': message}],
-        'max_output_tokens': 350,
-        'store': False,
-    }
+    instructions = (
+        'You are the SpendWise assistant. Speak naturally, warmly, and briefly. '
+        'If greeted, greet back and ask how you can help; do not give a generic help menu unless useful. '
+        'Remember the recent conversation and answer follow-up questions directly. '
+        'Help with general budgeting and app questions. You do not have access to '
+        'the user’s account data here. Do not claim to have added or changed a transaction. '
+        'For account-specific actions, suggest using the assistant’s expense, allowance, '
+        'bills, or category options. Do not give definitive investment, tax, or legal advice.'
+    )
+    if groq_key:
+        payload = {
+            'model': getattr(settings, 'GROQ_CHAT_MODEL', 'llama-3.3-70b-versatile'),
+            'messages': [{'role': 'system', 'content': instructions}]
+                        + clean_history + [{'role': 'user', 'content': message}],
+            'max_completion_tokens': 350,
+        }
+        endpoint = 'https://api.groq.com/openai/v1/chat/completions'
+        api_key = groq_key
+    else:
+        payload = {
+            'model': getattr(settings, 'OPENAI_CHAT_MODEL', 'gpt-4.1-mini'),
+            'instructions': instructions,
+            'input': clean_history + [{'role': 'user', 'content': message}],
+            'max_output_tokens': 350,
+            'store': False,
+        }
+        endpoint = 'https://api.openai.com/v1/responses'
+        api_key = openai_key
     req = urllib.request.Request(
-        'https://api.openai.com/v1/responses',
+        endpoint,
         data=json.dumps(payload).encode(),
         headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
         method='POST',
     )
     try:
         with urllib.request.urlopen(req, timeout=20) as response:
-            answer = _response_text(json.loads(response.read()))
+            result = json.loads(response.read())
+            choices = result.get('choices') or [{}]
+            answer = (choices[0].get('message', {}).get('content', '')
+                      if groq_key else _response_text(result))
     except (urllib.error.URLError, ValueError, TimeoutError):
         return JsonResponse({'error': 'Sorry, I couldn’t answer just now. Please try again.'}, status=502)
     if not answer:

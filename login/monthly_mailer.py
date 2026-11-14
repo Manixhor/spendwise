@@ -21,7 +21,7 @@ def send_monthly_analysis_batch(month: str, update_setting: bool = True) -> dict
     month, and recording that would make the scheduled run for the same month
     believe it had already been delivered.
     """
-    users = User.objects.filter(is_active=True, is_staff=False, email__gt="").order_by("id")
+    users = User.objects.filter(is_active=True, email__gt="").order_by("id")
     sent = 0
     failed = 0
     skipped = 0

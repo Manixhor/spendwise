@@ -386,6 +386,13 @@
     const value = rawValue.trim();
     if (!value || isSaving) return;
 
+    if (/^(hi|hello|hey|good morning|good evening)[!. ]*$/i.test(value)
+        && step !== 'confirm_expense' && step !== 'confirm_allowance') {
+      pendingAmount = 0;
+      askAI(value);
+      return;
+    }
+
     if (/\b(allowance|can i spend|left today|spend today)\b/i.test(value)) {
       addMessage(value, 'user'); input.value = '';
       const proposed = value.match(/(?:₹|\$|rs\.?\s*)?(\d+(?:\.\d{1,2})?)/i);
@@ -401,7 +408,7 @@
       addMessage(value, 'user'); input.value = '';
       if (/^(yes|confirm|save|add)$/i.test(value)) saveExpense(pendingTitle);
       else if (/^(no|cancel)$/i.test(value)) { addMessage('No problem. I haven’t added that expense.'); resetForAnother(); }
-      else addMessage('Please choose Confirm expense or Cancel below.');
+      else previewExpense(value);
       return;
     }
 
@@ -440,7 +447,12 @@
         return;
       }
 
-      previewExpense('Expense');
+      step = 'title';
+      currency.hidden = true;
+      input.inputMode = 'text';
+      input.placeholder = 'e.g. Lunch, cab, coffee';
+      addMessage('What was it for? You can skip this.');
+      showSuggestions([{label: 'Skip', action: () => previewExpense('Expense')}]);
       warnForAllowance(amount);
       return;
     }
@@ -448,7 +460,12 @@
     if (step === 'title') {
       addMessage(value, 'user');
       input.value = '';
-      previewExpense(value);
+      if (/^(cancel|stop)$/i.test(value)) {
+        addMessage('No problem. I haven’t added that expense.');
+        mainSuggestions();
+      } else {
+        previewExpense(/^(skip|none|no)$/i.test(value) ? 'Expense' : value);
+      }
     }
   };
 

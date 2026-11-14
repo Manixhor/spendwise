@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
+from django.template.loader import render_to_string
 from django.utils import timezone
 
 from .models import DailyAllowanceDelivery
@@ -45,11 +46,19 @@ def send_allowance_email(user, day=None):
         subject = f'Your SpendWise allowance for today: {amount}'
         body = (
             f'Hello {user.first_name or user.username},\n\n'
-            f'Your daily spending allowance for {day:%d %B %Y} is {amount}.\n'
-            'You can check how much is left on your SpendWise dashboard.\n\n'
+            f'Your allowance for {day:%d %B %Y} is {amount}.\n'
+            f'Check what is left: {settings.PUBLIC_SITE_URL}/dashboard/\n\n'
             'Have a good day,\nSpendWise'
         )
-        EmailMultiAlternatives(subject, body, settings.DEFAULT_FROM_EMAIL, [user.email]).send(fail_silently=False)
+        html = render_to_string('login/emails/daily_allowance.html', {
+            'name': user.first_name or 'there',
+            'amount': amount,
+            'day': day,
+            'dashboard_url': f'{settings.PUBLIC_SITE_URL}/dashboard/',
+        })
+        email = EmailMultiAlternatives(subject, body, settings.DEFAULT_FROM_EMAIL, [user.email])
+        email.attach_alternative(html, 'text/html')
+        email.send(fail_silently=False)
         delivery.email_sent_at = timezone.now()
         delivery.save(update_fields=['email_sent_at'])
     return True

@@ -33,7 +33,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from .security import otp_limited, clean_avatar
+from .security import otp_limited, clean_avatar, login_attempt_state, record_failed_login, clear_login_attempts
 from .context_processors import is_android_webview
 
 logger = logging.getLogger(__name__)
@@ -1701,7 +1701,14 @@ def invitation_setup(request: HttpRequest) -> HttpResponse:
         return redirect('login')
 
     profile, _ = UserProfile.objects.get_or_create(user=user)
-    if not profile.email_is_verified:
+    password_confirmed_at = request.session.get('invitation_password_confirmed_at', 0)
+    password_confirmed = bool(password_confirmed_at and timezone.now().timestamp() - password_confirmed_at < 600)
+    if request.session.get('invitation_password_confirmed') and not password_confirmed:
+        request.session.pop('pending_invitation_setup_user_id', None)
+        request.session.pop('invitation_password_confirmed', None)
+        request.session.pop('invitation_password_confirmed_at', None)
+        return redirect('login')
+    if not profile.email_is_verified and not password_confirmed:
         request.session['pending_invitation_user_id'] = user.id
         return redirect('invitation_verify')
 
@@ -1732,8 +1739,14 @@ def invitation_setup(request: HttpRequest) -> HttpResponse:
             user.set_password(password)
             user.save(update_fields=['first_name', 'last_name', 'password'])
             profile.currency = currency
-            profile.save(update_fields=['currency'])
+            if password_confirmed:
+                profile.email_is_verified = True
+                profile.save(update_fields=['currency', 'email_is_verified'])
+            else:
+                profile.save(update_fields=['currency'])
             request.session.pop('pending_invitation_setup_user_id', None)
+            request.session.pop('invitation_password_confirmed', None)
+            request.session.pop('invitation_password_confirmed_at', None)
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, 'Your SpendWise account is ready.')
             return redirect('dashboard')
@@ -1954,7 +1967,6 @@ def forgot_password_reset(request: HttpRequest) -> HttpResponse:
 # ── Login ─────────────────────────────────────────────────
 @never_cache
 @ensure_csrf_cookie
-@otp_limited
 def login_view(request: HttpRequest) -> HttpResponse:
     if request.method == "GET":
         for mode in ("1", "repeat"):
@@ -1981,23 +1993,26 @@ def login_view(request: HttpRequest) -> HttpResponse:
             errors["password"] = "Password is required."
 
         if not errors:
+            attempts, retry_after = login_attempt_state(request, email)
+            if any(row.attempts >= limit for row, limit in attempts):
+                response = render(request, 'login/login.html', {
+                    'errors': {'general': 'Too many unsuccessful sign-in attempts. Please try again in a few minutes.'},
+                    'form': request.POST,
+                }, status=429)
+                response['Retry-After'] = str(retry_after)
+                return response
             user = authenticate(request, username=email, password=password)
             if user is not None:
+                clear_login_attempts(attempts[:1])
                 profile, _ = UserProfile.objects.get_or_create(user=user)
-                if not profile.email_is_verified:
-                    request.session['pending_invitation_user_id'] = user.id
-                    try:
-                        _send_new_signup_otp(user, profile)
-                    except Exception:
-                        errors['general'] = 'We could not send the OTP. Please check SMTP settings.'
-                    else:
-                        return redirect('invitation_verify')
-                if errors:
-                    return render(
-                        request, 'login/login.html', {'errors': errors, 'form': request.POST}
-                    )
+                if not profile.email_is_verified and not user.first_name:
+                    request.session['pending_invitation_setup_user_id'] = user.id
+                    request.session['invitation_password_confirmed'] = True
+                    request.session['invitation_password_confirmed_at'] = timezone.now().timestamp()
+                    return redirect('invitation_setup')
                 login(request, user)
                 return redirect("dashboard")
+            record_failed_login(attempts)
             errors["general"] = "Invalid email or password."
 
         return render(
@@ -2685,7 +2700,7 @@ def android_download(request: HttpRequest) -> HttpResponse:
 @require_GET
 @never_cache
 def android_latest_version(request: HttpRequest) -> JsonResponse:
-    return JsonResponse({"version_code": 3, "version_name": "1.0.2", "download_url": "/static/downloads/Spendwise.apk"})
+    return JsonResponse({"version_code": 4, "version_name": "1.0.3", "download_url": "/static/downloads/Spendwise.apk"})
 
 
 @require_GET

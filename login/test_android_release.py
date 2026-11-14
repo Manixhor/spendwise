@@ -28,7 +28,7 @@ class AndroidReleaseTests(TestCase):
 
     def test_latest_version_points_to_apk(self):
         response = self.client.get(reverse('android_latest_version'))
-        self.assertEqual(response.json()['version_code'], 3)
+        self.assertEqual(response.json()['version_code'], 4)
         self.assertTrue(response.json()['download_url'].endswith('.apk'))
 
     def test_download_page_is_hidden_inside_installed_app(self):

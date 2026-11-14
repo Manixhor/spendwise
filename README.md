@@ -291,9 +291,12 @@ SMTP_FROM_EMAIL=SpendWise <you@gmail.com>
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 
-# OpenAI (optional — for AI motivation messages and general assistant chat)
+# OpenAI (optional — for AI motivation messages and fallback assistant chat)
 OPENAI_API_KEY=sk-...
 OPENAI_CHAT_MODEL=gpt-4.1-mini
+# Groq (preferred for general assistant chat; set this in hosting secrets)
+GROQ_API_KEY=your-groq-api-key
+GROQ_CHAT_MODEL=llama-3.3-70b-versatile
 ```
 
 ### Deployment to Northflank
@@ -312,10 +315,12 @@ time and recipients are recorded to avoid duplicate sends. The service must
 remain running and have working SMTP credentials.
 Daily allowance emails go to active users with a verified email, salary, and
 saved allowance at or after 08:00 Asia/Kolkata. The first allowance is emailed
-when saved. Phone push reminders go to devices that enable notifications from
-the dashboard allowance popup. The browser and device must support Web Push.
+when saved. Android reminders use the locally saved allowance shown in the app;
+Android may delay delivery because of battery management.
 Monthly analysis is scheduled for the 8th of each month at 00:00 Asia/Kolkata
-by default and catches up later in the month if the service misses that time.
+and catches up later in the month if the service misses that time. The batch
+includes active accounts with an email address, sends the previous completed
+month's report, and retries recipients that failed on the next check.
 
 The [GitHub Actions workflow](.github/workflows/ci.yml) runs Django checks,
 migration checks, tests, and a production static build on pushes to `main` and

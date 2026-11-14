@@ -55,7 +55,7 @@
     </div>
     {% if errors.password %}<p class="field-msg">{{ errors.password }}</p>{% endif %}
 
-    <button type="submit" class="cta-btn su-btn-disabled" id="liSubmitBtn" disabled>
+    <button type="submit" class="cta-btn" id="liSubmitBtn">
       Login &rarr;
     </button>
   </form>
@@ -89,9 +89,9 @@
   /* ── Password toggle ── */
   /* ── Submit button state ── */
   function updateSubmitBtn() {
-    var ok = emailValid && pwValid;
-    submitBtn.disabled = !ok;
-    submitBtn.classList.toggle('su-btn-disabled', !ok);
+    // Android autofill can populate fields without firing input events.
+    // Keep native form submission available; the server validates credentials.
+    submitBtn.classList.remove('su-btn-disabled');
   }
 
   /* ── Email validation ── */
@@ -155,7 +155,7 @@
     if (e.key === 'Enter') { e.preventDefault(); pwInput.focus(); }
   });
   pwInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); if (emailValid && pwValid) document.getElementById('liForm').submit(); }
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('liForm').requestSubmit(); }
   });
 
   /* ── Initial state: check if fields already have values (server re-render) ── */

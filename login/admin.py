@@ -254,7 +254,7 @@ class MonthlyAnalysisMailSettingAdmin(admin.ModelAdmin):
         'last_sent_at',
         'updated_at',
     )
-    readonly_fields = ('last_sent_month', 'last_sent_at', 'updated_at')
+    readonly_fields = ('send_day', 'send_time', 'last_sent_month', 'last_sent_at', 'updated_at')
 
     fieldsets = (
         ('Automatic delivery', {

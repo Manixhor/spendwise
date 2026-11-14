@@ -2,7 +2,7 @@
 {% load static %}
 {% block page_title %}Android app{% endblock %}
 {% block back_href %}{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'onboarding' %}{% endif %}{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'login/android_download.css' %}">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'login/android_download.css' %}?v=dark-qr-1">{% endblock %}
 {% block page_eyebrow %}SpendWise on Android{% endblock %}
 {% block page_heading %}Take SpendWise with you{% endblock %}
 {% block page_content %}
@@ -11,7 +11,7 @@
   <section class="card download-app-card" aria-labelledby="app-title">
     <div class="download-app-heading">
       <span class="download-app-icon"><img src="{% static 'icons/spendwise-sw-icon-192.png' %}" alt="" width="72" height="72"></span>
-      <div><p class="download-label">ANDROID APP</p><h2 id="app-title">SpendWise</h2><p class="download-version">Version 1.0.2 · Android 8.0 or newer</p></div>
+      <div><p class="download-label">ANDROID APP</p><h2 id="app-title">SpendWise</h2><p class="download-version">Version 1.0.3 · Android 8.0 or newer</p></div>
     </div>
     <a class="download-button" href="{% static 'downloads/Spendwise.apk' %}" download>↓ Download APK</a>
     <p class="download-help">Installing over an older SpendWise APK keeps your app data. Android may ask you to allow installation from your browser.</p>
@@ -29,5 +29,5 @@
   <div><span class="download-detail-icon" aria-hidden="true">◷</span><h3>See your month</h3><p>Review trends, categories, and reports.</p></div>
   <div><span class="download-detail-icon" aria-hidden="true">◎</span><h3>Plan savings</h3><p>Keep goals and budgets in view.</p></div>
 </section>
-<p class="download-footnote">SpendWise needs an internet connection for account features. Push notifications are not supported inside this Android app yet. <a href="https://github.com/Manixhor/spendwise/releases/tag/v1.0.2-android">View the GitHub release</a></p>
+<p class="download-footnote">SpendWise needs an internet connection for account features. The Android app can remind you of your saved daily allowance when notifications are enabled.</p>
 {% endblock %}

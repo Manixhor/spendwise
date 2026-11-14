@@ -13,7 +13,7 @@ mkdir -p "$OUT/compiled" "$OUT/classes" "$OUT/dex"
 "$TOOLS/aapt2" link -I "$PLATFORM" --manifest "$ROOT/app/src/main/AndroidManifest.xml" \
   --auto-add-overlay -o "$OUT/unsigned.apk" "$OUT/compiled/drawable_app_icon.png.flat"
 "$JAVA_HOME/bin/javac" -source 8 -target 8 -cp "$PLATFORM" -d "$OUT/classes" \
-  "$ROOT/app/src/main/java/com/manixhor/spendwise/MainActivity.java"
+  "$ROOT"/app/src/main/java/com/manixhor/spendwise/*.java
 "$TOOLS/d8" --lib "$PLATFORM" --output "$OUT/dex" \
   "$OUT"/classes/com/manixhor/spendwise/*.class
 cp "$OUT/unsigned.apk" "$OUT/with-dex.apk"

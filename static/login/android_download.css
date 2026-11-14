@@ -15,8 +15,8 @@
 .download-app-card .download-help { margin-top: 16px; }
 .download-qr-card { text-align: center; }
 .download-qr-card > p:not(.download-label) { max-width: 32ch; margin: 9px auto 0; }
-.download-qr-frame { display: inline-grid; place-items: center; max-width: 100%; margin: 16px auto 3px; padding: 9px; border: 1px solid var(--border-sub); border-radius: 18px; background: #fff; box-shadow: var(--shadow-sm); }
-.download-qr-frame img { display: block; width: min(212px, 100%); height: auto; }
+.download-qr-frame { display: inline-grid; place-items: center; max-width: 100%; margin: 16px auto 3px; padding: 9px; border: 1px solid #343b52; border-radius: 18px; background: #050505; box-shadow: var(--shadow-sm); }
+.download-qr-frame img { display: block; width: min(212px, 100%); height: auto; border-radius: 8px; background: #fff; }
 .download-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; padding: 26px; }
 .download-details h3 { color: var(--ink); font-size: .92rem; margin-bottom: 5px; }
 .download-details p { color: var(--sub); font-size: .78rem; line-height: 1.5; }

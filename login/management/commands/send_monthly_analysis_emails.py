@@ -53,9 +53,9 @@ class Command(BaseCommand):
         reason = None
 
         if not should_send:
-            primary_due = local_now.day > setting.send_day or (
-                local_now.day == setting.send_day and local_now.time().replace(microsecond=0) >= setting.send_time
-            )
+            # The report is sent for the preceding complete month on the 8th,
+            # at midnight in the configured Asia/Kolkata timezone.
+            primary_due = local_now.day >= 8
             if primary_due and setting.last_sent_month != month:
                 reason = 'primary'
                 should_send = True

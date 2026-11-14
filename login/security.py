@@ -47,6 +47,37 @@ def otp_limited(view):
     return wrapped
 
 
+def login_attempt_state(request, identity):
+    """Return the current failed-login window without counting successful sign-ins."""
+    from .models import AuthAttemptWindow
+    now = timezone.now()
+    AuthAttemptWindow.objects.filter(expires_at__lt=now).delete()
+    bucket = int(now.timestamp()) // 900
+    identities = (
+        ('account:' + identity, 10),
+        ('ip:' + request.META.get('REMOTE_ADDR', 'unknown'), 100),
+    )
+    rows = []
+    for identity_key, limit in identities:
+        key = hashlib.sha256(f'login:{identity_key}:{bucket}'.encode()).hexdigest()
+        row, _ = AuthAttemptWindow.objects.get_or_create(
+            key=key, defaults={'expires_at': now + timedelta(minutes=30)},
+        )
+        rows.append((row, limit))
+    return rows, 900 - int(now.timestamp()) % 900
+
+
+def record_failed_login(rows):
+    from .models import AuthAttemptWindow
+    for row, _ in rows:
+        AuthAttemptWindow.objects.filter(pk=row.pk).update(attempts=F('attempts') + 1)
+
+
+def clear_login_attempts(rows):
+    from .models import AuthAttemptWindow
+    AuthAttemptWindow.objects.filter(pk__in=[row.pk for row, _ in rows]).delete()
+
+
 def validate_avatar(upload):
     if upload.size > 2 * 1024 * 1024:
         raise ValidationError('Choose an image smaller than 2 MB.')

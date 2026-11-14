@@ -403,8 +403,11 @@ else:
     DEFAULT_FROM_EMAIL = 'SpendWise <no-reply@spendwise.local>'
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 PRIVACY_CONTACT_EMAIL = os.getenv('PRIVACY_CONTACT_EMAIL', 'manigururam06@gmail.com').strip()
+PUBLIC_SITE_URL = os.getenv('PUBLIC_SITE_URL', 'https://site--spendwise--m9lhjm5ftxzt.code.run').rstrip('/')
 
 # OpenAI (optional): used for dashboard savings motivation message generation.
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '').strip()
 OPENAI_MOTIVATION_MODEL = os.getenv('OPENAI_MOTIVATION_MODEL', 'gpt-4.1-mini').strip()
 OPENAI_CHAT_MODEL = os.getenv('OPENAI_CHAT_MODEL', 'gpt-4.1-mini').strip()
+GROQ_API_KEY = os.getenv('GROQ_API_KEY', '').strip()
+GROQ_CHAT_MODEL = os.getenv('GROQ_CHAT_MODEL', 'llama-3.3-70b-versatile').strip()
