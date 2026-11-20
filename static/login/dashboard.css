@@ -2147,6 +2147,16 @@ body[data-theme="dark"] .sw-tab-switcher-theme .sidebar-theme::before {
 
   .nav-icons::-webkit-scrollbar { display: none; }
 
+  /* Let SpendWise handle a held tab instead of Safari opening its link preview. */
+  .nav-icons .nav-icon,
+  .nav-icons .nav-icon *,
+  .sw-tab-switcher-option,
+  .sw-tab-switcher-option * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
   .nav-icon {
     width: 44px;
     height: 44px;
