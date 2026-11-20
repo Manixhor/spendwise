@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
         webView.getSettings().setAllowFileAccessFromFileURLs(false);
         webView.getSettings().setAllowUniversalAccessFromFileURLs(false);
         webView.getSettings().setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        webView.getSettings().setUserAgentString(webView.getSettings().getUserAgentString() + " SpendwiseAndroid/6");
+        webView.getSettings().setUserAgentString(webView.getSettings().getUserAgentString() + " SpendwiseAndroid/7");
         CookieManager.getInstance().setAcceptCookie(true);
         webView.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {

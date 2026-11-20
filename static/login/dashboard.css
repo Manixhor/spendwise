@@ -1942,7 +1942,17 @@ body[data-theme="dark"] .txn-icon.lend {
   color: #f5f5f6;
   box-shadow: 0 -18px 50px #0008;
   z-index: 300;
+  transition: background .3s ease, color .3s ease, border-color .3s ease;
 }
+body[data-theme="light"] .sw-tab-switcher { background: #f8f7fc; color: #171827; border-color: #dcd9ea; }
+body[data-theme="light"] .sw-tab-switcher h2 { color: #171827; }
+body[data-theme="light"] .sw-tab-switcher-close { background: #e9e7f0; color: #252335; }
+body[data-theme="light"] .sw-tab-switcher-option { color: #343445; }
+body[data-theme="light"] .sw-tab-switcher-icon { background: #e8e6ef; color: #555369; }
+body[data-theme="light"] .sw-tab-switcher-option.is-selected .sw-tab-switcher-icon { background: #8b5cf6; color: #fff; }
+body[data-theme="light"] .sw-tab-switcher-theme .sidebar-theme { background: #e8e6ef; border-color: #d8d4e5; }
+body[data-theme="light"] .sw-tab-switcher-theme .theme-btn { color: #666478; }
+body[data-theme="light"] .sw-tab-switcher-theme .theme-btn.active { color: #fff; }
 .sw-tab-switcher::backdrop {
   background: #000a;
   backdrop-filter: blur(5px);
@@ -2090,6 +2100,7 @@ body[data-theme="dark"] .sw-tab-switcher-theme .sidebar-theme::before {
     box-shadow: 0 8px 24px #0005;
   }
   .mobile-profile-link svg { width: 23px; height: 23px; }
+  body[data-theme="light"] .mobile-profile-link { background: #fff; color: #6944cb; border-color: #d8cff3; box-shadow: 0 8px 24px #51447724; }
   .app {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto;
