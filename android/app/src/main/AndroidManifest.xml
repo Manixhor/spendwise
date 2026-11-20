@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.manixhor.spendwise" android:versionCode="5" android:versionName="1.0.4">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.manixhor.spendwise" android:versionCode="6" android:versionName="1.0.5">
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />

@@ -2016,23 +2016,55 @@ body[data-theme="dark"] .txn-icon.lend {
   margin-top: 14px;
 }
 .sw-tab-switcher-theme .sidebar-theme {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  gap: 0;
   margin: 0;
   padding: 3px;
+  border-radius: 12px;
   background: #292b30;
   border-color: #3d3e45;
   box-shadow: none;
 }
+.sw-tab-switcher-theme .sidebar-theme::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #8b5cf6;
+  transform: translateX(0);
+  transition: transform .25s ease;
+}
+body[data-theme="dark"] .sw-tab-switcher-theme .sidebar-theme::before {
+  transform: translateX(30px);
+}
 .sw-tab-switcher-theme .theme-btn {
+  position: relative;
+  z-index: 1;
   width: 30px;
   height: 30px;
   color: #c4c4ca;
+  border: 0;
+  box-shadow: none;
+  transform: none;
 }
 .sw-tab-switcher-theme .theme-btn.active {
   color: #fff;
-  background: #8b5cf6;
+  background: transparent;
   border-color: transparent;
   box-shadow: none;
 }
+.sw-tab-switcher-theme .theme-btn:hover,
+.sw-tab-switcher-theme .theme-btn.is-switching {
+  background: transparent;
+  animation: none;
+  transform: none;
+}
+.sw-tab-switcher-theme .theme-btn.is-switching svg { animation: none; }
 .sw-tab-switcher-hint {
   margin: 16px 0 0;
   color: #95979f;

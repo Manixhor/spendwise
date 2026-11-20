@@ -31,7 +31,7 @@ class AndroidReleaseTests(TestCase):
 
     def test_latest_version_points_to_apk(self):
         response = self.client.get(reverse('android_latest_version'))
-        self.assertEqual(response.json()['version_code'], 5)
+        self.assertEqual(response.json()['version_code'], 6)
         self.assertEqual(response.json()['download_url'], reverse('android_apk'))
 
     def test_apk_download_has_android_filename_and_type(self):
