@@ -1924,7 +1924,148 @@ body[data-theme="dark"] .txn-icon.lend {
 }
 
 /* ── Small tablet (≤768px) ──────────────────────────────── */
+.sw-tab-switcher:not([open]) { display: none; }
+.mobile-profile-link { display: none; }
+.sw-tab-switcher {
+  position: fixed;
+  inset: auto 0 0;
+  width: min(100%, 720px);
+  max-width: none;
+  max-height: min(80dvh, 480px);
+  margin: 0 auto;
+  padding: 24px 18px calc(28px + env(safe-area-inset-bottom, 0px));
+  overflow: auto;
+  border: 1px solid #32343b;
+  border-bottom: 0;
+  border-radius: 26px 26px 0 0;
+  background: #131416;
+  color: #f5f5f6;
+  box-shadow: 0 -18px 50px #0008;
+  z-index: 300;
+}
+.sw-tab-switcher::backdrop {
+  background: #000a;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.sw-tab-switcher h2 {
+  margin: 0 40px 28px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 750;
+  color: #f5f5f6;
+}
+.sw-tab-switcher-close {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: #303136;
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+.sw-tab-switcher-options {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 0 8px;
+  scrollbar-width: none;
+}
+.sw-tab-switcher-options:not(:has(.sw-tab-switcher-option:nth-child(6))) {
+  justify-content: center;
+}
+.sw-tab-switcher-options::-webkit-scrollbar { display: none; }
+.sw-tab-switcher-option {
+  display: flex;
+  flex: 0 0 clamp(64px, 16vw, 104px);
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  color: #f5f5f6;
+  text-decoration: none;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+.sw-tab-switcher-icon {
+  display: grid;
+  place-items: center;
+  width: clamp(64px, 16vw, 104px);
+  height: clamp(64px, 16vw, 104px);
+  border-radius: 50%;
+  background: #2e3034;
+  color: #b7b8bd;
+  transition: transform .18s ease, background .18s ease;
+}
+.sw-tab-switcher-icon svg { width: 42%; height: 42%; }
+.sw-tab-switcher-option.is-selected .sw-tab-switcher-icon,
+.sw-tab-switcher-option:focus-visible .sw-tab-switcher-icon {
+  background: #8b5cf6;
+  color: #fff;
+  transform: scale(1.05);
+}
+.sw-tab-switcher-option.is-selected .sw-tab-switcher-label { color: #b99aff; }
+.sw-tab-switcher-theme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding: 15px 4px 0;
+  border-top: 1px solid #34363c;
+  color: #c9c9cf;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sw-tab-switcher-theme .sidebar-theme {
+  margin: 0;
+  padding: 3px;
+  background: #292b30;
+  border-color: #3d3e45;
+  box-shadow: none;
+}
+.sw-tab-switcher-theme .theme-btn {
+  width: 36px;
+  height: 36px;
+  color: #c4c4ca;
+}
+.sw-tab-switcher-theme .theme-btn.active {
+  color: #fff;
+  background: #8b5cf6;
+  border-color: transparent;
+  box-shadow: none;
+}
+.sw-tab-switcher-hint {
+  margin: 16px 0 0;
+  color: #95979f;
+  text-align: center;
+  font-size: 12px;
+}
 @media (max-width: 768px) {
+  .avatar-wrap { display: none; }
+  .main-header { padding-right: 0; }
+  .mobile-profile-link {
+    position: absolute;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    left: 14px;
+    z-index: 90;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(167, 139, 250, .3);
+    border-radius: 50%;
+    background: #1b2030;
+    color: #d7c8ff;
+    box-shadow: 0 8px 24px #0005;
+  }
+  .mobile-profile-link svg { width: 23px; height: 23px; }
   .app {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto;
@@ -1972,7 +2113,7 @@ body[data-theme="dark"] .txn-icon.lend {
     gap: 0;
     flex: 1;
     min-width: 0;
-    justify-content: flex-start;
+    justify-content: space-evenly;
     overflow-x: auto;
     overflow-y: hidden;
     overscroll-behavior-x: contain;
@@ -4459,6 +4600,10 @@ body[data-theme="dark"] .modal-select--transparent:focus {
   transform: scale(1.08);
   box-shadow: 0 0 0 3px rgba(94,92,230,0.30);
   border-radius: 50%;
+}
+
+@media (max-width: 768px) {
+  .main { padding-top: 66px; }
 }
 
 /* ── Mobile-first expense assistant ─────────────────────── */

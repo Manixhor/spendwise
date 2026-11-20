@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
         webView.getSettings().setAllowFileAccessFromFileURLs(false);
         webView.getSettings().setAllowUniversalAccessFromFileURLs(false);
         webView.getSettings().setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        webView.getSettings().setUserAgentString(webView.getSettings().getUserAgentString() + " SpendwiseAndroid/4");
+        webView.getSettings().setUserAgentString(webView.getSettings().getUserAgentString() + " SpendwiseAndroid/5");
         CookieManager.getInstance().setAcceptCookie(true);
         webView.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -154,8 +154,17 @@ public class MainActivity extends Activity {
     }
 
     @Override public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
+        if (webView == null) {
+            super.onBackPressed();
+            return;
+        }
+        webView.evaluateJavascript(
+                "Boolean(window.spendwiseCloseTabSwitcher && window.spendwiseCloseTabSwitcher())",
+                result -> {
+                    if ("true".equals(result)) return;
+                    if (webView.canGoBack()) webView.goBack();
+                    else MainActivity.super.onBackPressed();
+                });
     }
 
     @Override protected void onDestroy() {

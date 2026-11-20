@@ -26,10 +26,12 @@ class AndroidReleaseTests(TestCase):
         android = self.client.get(reverse('dashboard'), HTTP_USER_AGENT='Mozilla/5.0 (Linux; Android 16; wv) SpendwiseAndroid/2')
         self.assertContains(web, 'aria-label="App Download"')
         self.assertNotContains(android, 'aria-label="App Download"')
+        self.assertContains(android, 'id="swTabSwitcher"')
+        self.assertContains(android, 'tab_switcher.js')
 
     def test_latest_version_points_to_apk(self):
         response = self.client.get(reverse('android_latest_version'))
-        self.assertEqual(response.json()['version_code'], 4)
+        self.assertEqual(response.json()['version_code'], 5)
         self.assertEqual(response.json()['download_url'], reverse('android_apk'))
 
     def test_apk_download_has_android_filename_and_type(self):
