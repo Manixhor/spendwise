@@ -57,6 +57,7 @@
   }
 
   const targets = sidebar.querySelectorAll('.nav-icons .nav-icon');
+  const iosTouch = navigator.maxTouchPoints > 0 && CSS.supports('-webkit-touch-callout', 'none');
   targets.forEach((target) => {
     let timer = null;
     let startX = 0;
@@ -67,7 +68,7 @@
       timer = null;
     };
     target.addEventListener('pointerdown', (event) => {
-      if (!mobile.matches || event.button !== 0) return;
+      if (!mobile.matches || event.button !== 0 || (iosTouch && event.pointerType === 'touch')) return;
       cancelTimer();
       startX = event.clientX;
       startY = event.clientY;
@@ -76,6 +77,33 @@
         openSwitcher(target);
       }, 500);
     });
+    if (iosTouch) {
+      target.addEventListener('touchstart', (event) => {
+        if (!mobile.matches || event.touches.length !== 1) return;
+        event.preventDefault();
+        cancelTimer();
+        startX = event.touches[0].clientX;
+        startY = event.touches[0].clientY;
+        timer = window.setTimeout(() => {
+          suppressClickUntil = Date.now() + 900;
+          openSwitcher(target);
+          timer = null;
+        }, 500);
+      }, { passive: false });
+      target.addEventListener('touchmove', (event) => {
+        if (event.touches.length !== 1 || Math.hypot(event.touches[0].clientX - startX, event.touches[0].clientY - startY) > 12) cancelTimer();
+      });
+      target.addEventListener('touchend', (event) => {
+        event.preventDefault();
+        const wasTap = timer !== null;
+        cancelTimer();
+        if (wasTap) {
+          suppressClickUntil = 0;
+          target.click();
+        }
+      }, { passive: false });
+      target.addEventListener('touchcancel', cancelTimer);
+    }
     target.addEventListener('pointermove', (event) => {
       if (Math.hypot(event.clientX - startX, event.clientY - startY) > 12) cancelTimer();
     });

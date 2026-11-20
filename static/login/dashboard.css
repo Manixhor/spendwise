@@ -1953,6 +1953,12 @@ body[data-theme="light"] .sw-tab-switcher-option.is-selected .sw-tab-switcher-ic
 body[data-theme="light"] .sw-tab-switcher-theme .sidebar-theme { background: #e8e6ef; border-color: #d8d4e5; }
 body[data-theme="light"] .sw-tab-switcher-theme .theme-btn { color: #666478; }
 body[data-theme="light"] .sw-tab-switcher-theme .theme-btn.active { color: #fff; }
+body.theme-transitioning .sw-tab-switcher { animation: switcherThemePulse .48s ease; }
+@keyframes switcherThemePulse {
+  0% { filter: brightness(1); }
+  45% { filter: brightness(1.22); }
+  100% { filter: brightness(1); }
+}
 .sw-tab-switcher::backdrop {
   background: #000a;
   backdrop-filter: blur(5px);
