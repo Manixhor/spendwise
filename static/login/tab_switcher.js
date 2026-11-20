@@ -21,10 +21,7 @@
   const pageLinks = [...sidebar.querySelectorAll('.nav-icons > a.nav-icon')].filter((link) =>
     ['Dashboard', 'Monthly Analysis', 'Lend Tracker', 'Savings Goals'].includes(link.getAttribute('aria-label'))
   );
-  const profileLink = sidebar.querySelector('.avatar-link');
-
-  const labelFor = (link) => link === profileLink ? 'Profile' :
-    (link.getAttribute('aria-label') || link.title || 'Page');
+  const labelFor = (link) => link.getAttribute('aria-label') || link.title || 'Page';
   const shortLabelFor = (link) => ({
     Dashboard: 'Home',
     'Monthly Analysis': 'Monthly',
@@ -59,8 +56,7 @@
     closeButton.focus();
   }
 
-  const targets = [...sidebar.querySelectorAll('.avatar-link, .nav-icons .nav-icon'),
-    document.querySelector('.mobile-profile-link')].filter(Boolean);
+  const targets = sidebar.querySelectorAll('.nav-icons .nav-icon');
   targets.forEach((target) => {
     let timer = null;
     let startX = 0;
