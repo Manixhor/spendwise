@@ -1929,10 +1929,10 @@ body[data-theme="dark"] .txn-icon.lend {
 .sw-tab-switcher {
   position: fixed;
   inset: auto 0 0;
-  width: min(calc(100% - 16px), 360px);
+  width: 100%;
   max-width: none;
   max-height: min(80dvh, 480px);
-  margin: 0 auto;
+  margin: 0;
   padding: 18px 14px calc(18px + env(safe-area-inset-bottom, 0px));
   overflow: auto;
   border: 1px solid #32343b;
