@@ -26,6 +26,7 @@
   const labelFor = (link) => link === profileLink ? 'Profile' :
     (link.getAttribute('aria-label') || link.title || 'Page');
   const shortLabelFor = (link) => ({
+    Dashboard: 'Home',
     'Monthly Analysis': 'Monthly',
     'Lend Tracker': 'Lend',
     'Savings Goals': 'Savings',
@@ -33,8 +34,7 @@
 
   function openSwitcher(source) {
     if (!mobile.matches || dialog.open) return;
-    const selectedLabel = labelFor(source);
-    title.textContent = `${selectedLabel} Tab`;
+    title.textContent = 'Quick switch';
     options.replaceChildren();
     pageLinks.forEach((link) => {
       const option = document.createElement('a');
