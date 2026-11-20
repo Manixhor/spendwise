@@ -107,6 +107,12 @@
   };
   window.spendwiseCloseTabSwitcher = closeSwitcher;
   closeButton.addEventListener('click', closeSwitcher);
+  options.addEventListener('click', (event) => {
+    const link = event.target.closest('a.sw-tab-switcher-option');
+    if (!link) return;
+    closeSwitcher();
+    if (new URL(link.href).pathname === window.location.pathname) event.preventDefault();
+  });
   dialog.addEventListener('click', (event) => {
     if (event.target === dialog) closeSwitcher();
   });

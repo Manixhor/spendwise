@@ -1929,15 +1929,15 @@ body[data-theme="dark"] .txn-icon.lend {
 .sw-tab-switcher {
   position: fixed;
   inset: auto 0 0;
-  width: min(100%, 720px);
+  width: min(calc(100% - 16px), 360px);
   max-width: none;
   max-height: min(80dvh, 480px);
   margin: 0 auto;
-  padding: 24px 18px calc(28px + env(safe-area-inset-bottom, 0px));
+  padding: 18px 14px calc(18px + env(safe-area-inset-bottom, 0px));
   overflow: auto;
   border: 1px solid #32343b;
   border-bottom: 0;
-  border-radius: 26px 26px 0 0;
+  border-radius: 20px 20px 0 0;
   background: #131416;
   color: #f5f5f6;
   box-shadow: 0 -18px 50px #0008;
@@ -1949,23 +1949,23 @@ body[data-theme="dark"] .txn-icon.lend {
   -webkit-backdrop-filter: blur(5px);
 }
 .sw-tab-switcher h2 {
-  margin: 0 40px 20px;
+  margin: 0 36px 16px;
   text-align: center;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 750;
   color: #f5f5f6;
 }
 .sw-tab-switcher-close {
   position: absolute;
-  top: 16px;
-  right: 18px;
-  width: 32px;
-  height: 32px;
+  top: 12px;
+  right: 14px;
+  width: 28px;
+  height: 28px;
   border: 0;
   border-radius: 50%;
   background: #303136;
   color: #fff;
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
 }
@@ -1980,10 +1980,10 @@ body[data-theme="dark"] .txn-icon.lend {
 .sw-tab-switcher-options::-webkit-scrollbar { display: none; }
 .sw-tab-switcher-option {
   display: flex;
-  flex: 0 0 clamp(44px, 19vw, 84px);
+  flex: 0 0 clamp(44px, 16vw, 64px);
   flex-direction: column;
   align-items: center;
-  gap: 9px;
+  gap: 7px;
   color: #f5f5f6;
   text-decoration: none;
   text-align: center;
@@ -1994,8 +1994,8 @@ body[data-theme="dark"] .txn-icon.lend {
 .sw-tab-switcher-icon {
   display: grid;
   place-items: center;
-  width: clamp(44px, 19vw, 84px);
-  height: clamp(44px, 19vw, 84px);
+  width: clamp(44px, 16vw, 64px);
+  height: clamp(44px, 16vw, 64px);
   border-radius: 50%;
   background: #2e3034;
   color: #b7b8bd;
@@ -2013,7 +2013,7 @@ body[data-theme="dark"] .txn-icon.lend {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 18px;
+  margin-top: 14px;
 }
 .sw-tab-switcher-theme .sidebar-theme {
   margin: 0;
@@ -2023,8 +2023,8 @@ body[data-theme="dark"] .txn-icon.lend {
   box-shadow: none;
 }
 .sw-tab-switcher-theme .theme-btn {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   color: #c4c4ca;
 }
 .sw-tab-switcher-theme .theme-btn.active {
@@ -4595,7 +4595,7 @@ body[data-theme="dark"] .modal-select--transparent:focus {
 }
 
 @media (max-width: 768px) {
-  .main { padding-top: 66px; }
+  .app > .main { padding-top: 66px; }
 }
 
 /* ── Mobile-first expense assistant ─────────────────────── */
